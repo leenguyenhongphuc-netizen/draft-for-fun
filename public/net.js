@@ -8,8 +8,10 @@ import { Room } from './game/room.js';
 import { XiDachRoom } from './game/xidach.js';
 import { BaiCaoRoom } from './game/baicao.js';
 import { CaNguaRoom } from './game/cangua.js';
+import { TyPhuRoom } from './game/typhu.js';
+import { LoToRoom } from './game/loto.js';
 
-const GAME_CLASSES = { tienlen: Room, xidach: XiDachRoom, baicao: BaiCaoRoom, cangua: CaNguaRoom };
+const GAME_CLASSES = { tienlen: Room, xidach: XiDachRoom, baicao: BaiCaoRoom, cangua: CaNguaRoom, typhu: TyPhuRoom, loto: LoToRoom };
 import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
 
 const THEMES = ['candy', 'garden', 'night', 'tet', 'ocean', 'winter', 'sakura', 'cafe', 'rainbow'];
@@ -308,7 +310,7 @@ export function createNet(playerId) {
     let tries = 0;
     clearInterval(joinTimer);
     joinTimer = setInterval(() => {
-      if (++tries > 4) {
+      if (++tries > 8) {
         clearInterval(joinTimer);
         closeRoom(false);
         store.set('lastRoom', null);

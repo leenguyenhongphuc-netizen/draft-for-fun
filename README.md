@@ -1,6 +1,6 @@
 # 🐷 Game nhà Pum
 
-Cổng game chơi online cùng gia đình, bạn bè: **Tiến Lên Miền Nam**, **Xì Dách**, **Bài Cào**, **Cờ Cá Ngựa**, giao diện pastel dễ thương, có **phòng chơi 3D** (Three.js) với bàn tròn, ghế đệm, nhân vật thú bông, bóng bay, đèn nháy, kệ sách, mèo ngủ, cửa sổ có mây/trăng…
+Cổng 6 game chơi online cùng gia đình, bạn bè: **Tiến Lên Miền Nam**, **Xì Dách**, **Bài Cào**, **Cờ Cá Ngựa**, **Cờ Tỷ Phú Việt Nam**, **Lô Tô**, giao diện pastel dễ thương, có **phòng chơi 3D** (Three.js) với bàn tròn, ghế đệm, nhân vật thú bông, bóng bay, đèn nháy, kệ sách, mèo ngủ, cửa sổ có mây/trăng…
 
 ## Các trò chơi
 | | Trò chơi | Cách chơi |
@@ -9,8 +9,10 @@ Cổng game chơi online cùng gia đình, bạn bè: **Tiến Lên Miền Nam**
 | 🂡 | **Xì Dách** | Nhà cái xoay vòng. Xì bàn > xì dách > ngũ linh > điểm; quá 21 là quắc. Người chơi đủ 16, nhà cái đủ 15 mới được dằn. |
 | 🎴 | **Bài Cào** | 3 lá, chạm từng lá để nặn bài. Điểm = hàng đơn vị; ba tây lớn nhất; người cao nhất ăn hết. |
 | 🐴 | **Cờ Cá Ngựa** | Gieo 6 ra quân, ra 6 gieo thêm, đá ngựa đối thủ về chuồng, vào đích phải đúng số. |
+| 🏙️ | **Cờ Tỷ Phú Việt Nam** | 28 ô từ Cà Mau tới Hà Nội, mua đất, xây nhà/khách sạn, Cơ hội & Khí vận lì xì Tết, vào tù, phá sản. 15 vòng, ai giàu nhất thắng. |
+| 🎪 | **Lô Tô hội chợ** | Sân khấu xổ liên tục: mở bán vé → lồng cầu quay, MC hò số (có đọc thành tiếng) → ai đủ 5 số một hàng là KINH. Tới 10 người, vào lúc nào cũng được. |
 
-Tất cả đều có: phòng 2–4 người, bot, chế độ ghi nợ, chat/emoji, 9 kiểu phòng 3D.
+Tất cả đều có: phòng chơi (2–4 người, Lô Tô tới 10), bot, chế độ ghi nợ, chat/emoji, 9 kiểu phòng 3D.
 
 ## Tính năng
 - 🃏 Đủ luật Tiến Lên Miền Nam: rác, đôi, sám, tứ quý, sảnh, đôi thông; **chặt heo** (3 đôi thông / tứ quý / 4 đôi thông); **tới trắng** (tứ quý heo, sảnh rồng, 6 đôi, 5 đôi thông); **cóng**, **thối heo**.
@@ -51,7 +53,7 @@ Thử nhiều người trên 1 máy không cần mạng: mở nhiều tab `http:
 public/shared/rules.js  Luật chơi
 public/game/room.js     Tiến Lên: chia bài, lượt, vòng, chặt, kết quả
 public/game/base.js     Khung chung cho các game mới (ghế, bot, sổ nợ, hẹn giờ)
-public/game/xidach.js, baicao.js, cangua.js   Luật Xì Dách, Bài Cào, Cá Ngựa
+public/game/xidach.js, baicao.js, cangua.js, typhu.js, loto.js   Luật từng game
 public/ui/              Giao diện riêng từng game mới
 public/game/bot.js      AI bot
 public/net.js           Kết nối online (Supabase Realtime / thử nhiều tab)

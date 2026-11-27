@@ -24,7 +24,7 @@ export class BaseRoom {
     this.theme = theme;
     this.isPublic = isPublic;
     this.hostId = null;
-    this.seats = [null, null, null, null];
+    this.seats = new Array(this.constructor.MAX || 4).fill(null);
     this.state = 'waiting'; // waiting | playing | ended
     this.g = null;          // dữ liệu ván hiện tại (tuỳ game)
     this.results = null;
@@ -82,7 +82,7 @@ export class BaseRoom {
   addBot(seat) {
     if (this.state === 'playing') return 'Đang chơi, chưa thêm bot được';
     if (seat == null) seat = this.seats.findIndex((p) => !p);
-    if (seat < 0 || seat > 3 || this.seats[seat]) return 'Ghế này có người rồi';
+    if (seat < 0 || seat >= this.seats.length || this.seats[seat]) return 'Ghế này có người rồi';
     const used = new Set(this.seats.filter(Boolean).map((p) => p.name));
     const pick = BOT_NAMES.find(([n]) => !used.has(n)) || BOT_NAMES[0];
     this.seats[seat] = { id: 'bot-' + Math.random().toString(36).slice(2, 8), name: pick[0], avatar: pick[1], isBot: true, connected: true, botCoins: 1000 };
@@ -115,6 +115,9 @@ export class BaseRoom {
   clearTimer(name) { clearTimeout(this.timers[name]); delete this.timers[name]; }
   destroy() { Object.values(this.timers).forEach(clearTimeout); this.timers = {}; }
 
+  scheduleAuto() { /* game nào cần bot đánh thay thì tự viết lại */ }
+  resume() { /* khôi phục hẹn giờ khi chủ phòng tải lại trang */ }
+
   isAuto(seat) { const p = this.seats[seat]; return !!p && (p.isBot || !p.connected); }
 
   // Bắt đầu ván: dọn người đã rời, kiểm tra số người, gọi subclass
@@ -138,6 +141,15 @@ export class BaseRoom {
   /** rows: [{seat, parts, rank?, badge?, note, show?}] -> chốt ván */
   finish(rows) {
     this.destroy();
+    const unit = this.applyDeltas(rows);
+    this.results = rows;
+    this.state = 'ended';
+    this.hooks.emitEvent(this, { kind: 'end', results: rows, unit, debt: this.settings.debt });
+    this.hooks.emitState(this);
+  }
+
+  /** Tính tiền cho các dòng kết quả (không kết thúc phòng) */
+  applyDeltas(rows) {
     const unit = this.unitInfo();
     rows.forEach((r) => { r.delta = Math.round(r.parts * unit.mult * 100) / 100; });
     // Làm tròn khi chia đều có thể lệch vài xu: dồn phần lẻ cho người thắng đầu tiên để tổng luôn bằng 0
@@ -152,10 +164,7 @@ export class BaseRoom {
       }
     });
     if (this.settings.debt) this.recordDebt(rows, unit);
-    this.results = rows;
-    this.state = 'ended';
-    this.hooks.emitEvent(this, { kind: 'end', results: rows, unit, debt: this.settings.debt });
-    this.hooks.emitState(this);
+    return unit;
   }
 
   recordDebt(rows, unit) {
@@ -182,7 +191,7 @@ export class BaseRoom {
     const mySeat = this.seatOf(id);
     return {
       game: this.gameType, code: this.code, name: this.name, theme: this.theme, isPublic: this.isPublic,
-      hostId: this.hostId, state: this.state, mySeat,
+      hostId: this.hostId, state: this.state, mySeat, maxSeats: this.seats.length,
       seats: this.seats.map((p, s) => p && {
         id: p.id, name: p.name, avatar: p.avatar, isBot: p.isBot, connected: p.connected,
         coins: p.isBot ? p.botCoins : this.hooks.getCoins(p.id),

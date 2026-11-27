@@ -9,12 +9,16 @@ import * as fx from './fx.js';
 import * as uiXiDach from './ui/xidach.js';
 import * as uiBaiCao from './ui/baicao.js';
 import * as uiCaNgua from './ui/cangua.js';
+import * as uiTyPhu from './ui/typhu.js';
+import * as uiLoTo from './ui/loto.js';
 
 const GAMES = {
   tienlen: { icon: '🃏', name: 'Tiến Lên', desc: 'Miền Nam · 2–4 người', ui: null },
   xidach: { icon: '🂡', name: 'Xì Dách', desc: 'Nhà cái xoay vòng · 2–4 người', ui: uiXiDach },
   baicao: { icon: '🎴', name: 'Bài Cào', desc: '3 cây · nặn bài · 2–4 người', ui: uiBaiCao },
   cangua: { icon: '🐴', name: 'Cá Ngựa', desc: 'Gieo xúc xắc · 2–4 người', ui: uiCaNgua },
+  typhu: { icon: '🏙️', name: 'Tỷ Phú', desc: 'Bản đồ Việt Nam · 2–4 người', ui: uiTyPhu },
+  loto: { icon: '🎪', name: 'Lô Tô', desc: 'Sân khấu hội chợ · tới 10 người', ui: uiLoTo },
 };
 
 const $ = (s) => document.querySelector(s);
@@ -211,7 +215,7 @@ function cardEl(id) {
 }
 
 // ---------- Trạng thái phòng ----------
-const relPos = (seat) => (state.mySeat < 0 ? seat : (seat - state.mySeat + 4) % 4);
+const relPos = (seat) => (state.mySeat < 0 ? seat % 4 : (((seat - state.mySeat) % 4) + 4) % 4);
 
 function onState(prev, s) {
   $('#roomTitle').textContent = s.name;
@@ -269,7 +273,8 @@ function renderSeats() {
   const isHost = s.hostId === playerId;
   const scenePlayers = [null, null, null, null];
   s.seats.forEach((p, seat) => {
-    const pos = relPos(seat);
+    if (seat >= 4 && seat !== s.mySeat) return; // Lô tô có thể tới 10 người: chỉ hiện trong dãy khán giả
+    const pos = seat === s.mySeat ? 0 : relPos(seat);
     const el = document.createElement('div');
     el.className = 'seat';
     el.dataset.pos = pos;
@@ -324,7 +329,7 @@ function renderSeats() {
     (pos === 0 ? $('#meTag') : wrap).appendChild(el);
     scenePlayers[pos] = { avatar: p.avatar, active, passed: p.passed, rank: p.rank };
   });
-  scene3d.setSeats(scenePlayers);
+  scene3d.setSeats(s.game === 'loto' ? [null, null, null, null] : scenePlayers.slice(0, 4));
 }
 
 function statusOf(p) {
@@ -515,12 +520,15 @@ function renderControls() {
   $('#waitPanel').classList.toggle('hidden', !waiting);
   if (waiting) {
     const count = s.seats.filter(Boolean).length;
-    $('#waitTitle').textContent = s.state === 'ended' ? 'Làm thêm ván nữa không? 🃏' : count < 2 ? 'Đang chờ người chơi…' : `Đã có ${count}/4 người 🎈`;
-    $('#waitSub').textContent = isHost ? (count < 4 ? 'Gửi mã phòng cho bạn bè hoặc thêm bot nhé!' : 'Đủ người rồi, bắt đầu thôi!') : 'Chờ chủ phòng 👑 bắt đầu nha…';
+    const max = s.maxSeats || 4;
+    const isLoto = s.game === 'loto';
+    $('#waitTitle').textContent = s.state === 'ended' ? 'Làm thêm ván nữa không? 🃏' : isLoto ? `🎪 Sân khấu lô tô (${count}/${max} khán giả)` : count < 2 ? 'Đang chờ người chơi…' : `Đã có ${count}/${max} người 🎈`;
+    $('#waitSub').textContent = isLoto ? (isHost ? 'Bấm mở sân khấu là xổ liên tục, ai vào cũng mua vé được!' : 'Chờ chủ phòng 👑 mở sân khấu nha…') : isHost ? (count < max ? 'Gửi mã phòng cho bạn bè hoặc thêm bot nhé!' : 'Đủ người rồi, bắt đầu thôi!') : 'Chờ chủ phòng 👑 bắt đầu nha…';
     renderRuleChips();
     $('#startBtn').classList.toggle('hidden', !isHost);
-    $('#addBotBtn').classList.toggle('hidden', !isHost || count >= 4);
-    $('#startBtn').disabled = count < 2;
+    $('#addBotBtn').classList.toggle('hidden', !isHost || count >= max);
+    $('#startBtn').disabled = count < (isLoto ? 1 : 2);
+    $('#startBtn').textContent = isLoto ? 'Mở sân khấu 🎪' : 'Bắt đầu 🃏';
   }
 }
 
@@ -951,7 +959,8 @@ const uiCtx = {
   mySeat: () => (state ? state.mySeat : -1),
   hopSeat: (seat, p) => { if (state) scene3d.hop(relPos(seat), p); },
   now: () => Date.now() + clockOffset,
-  banner(text, mine) { const b = $('#turnBanner'); b.textContent = text; b.classList.toggle('mine', !!mine); },
+  banner(text, mine, html = false) { const b = $('#turnBanner'); if (html) b.innerHTML = text; else b.textContent = text; b.classList.toggle('mine', !!mine); },
+  playerId: () => playerId,
 };
 
 // ---------- Hiệu ứng ----------

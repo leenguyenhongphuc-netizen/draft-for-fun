@@ -109,20 +109,25 @@ export function render(s, prev, ctx) {
   const { $ } = ctx;
   const board = $('#board');
   const cn = s.cn;
-  if (!cn) { board.classList.add('hidden'); $('#stageMine').innerHTML = ''; ctx.banner('', false); return; }
+  if (!cn) { board.className = 'hidden'; $('#stageMine').innerHTML = ''; ctx.banner('', false); return; }
   board.classList.remove('hidden');
+  board.className = 'ludo tilt-board';
   const key = s.mySeat + ':' + cn.inGame.join('');
   if (!built || built.key !== key || !board.contains(built.svg)) {
     board.innerHTML = '';
+    // Mặt bàn nghiêng ra sau (nhìn xéo kiểu 3D), quân cờ đứng thẳng trên mặt bàn
+    const plane = document.createElement('div');
+    plane.className = 'tilt-plane';
     const svg = buildBoard(s, ctx);
     const layer = document.createElement('div');
     layer.className = 'ludo-layer';
-    board.append(svg, layer);
-    built = { key, svg, layer, pieces: {} };
+    plane.append(svg, layer);
+    board.append(plane);
+    built = { key, svg, layer, plane, pieces: {} };
   }
   const T = view(s.mySeat);
   // Tên người chơi ở góc chuồng
-  board.querySelectorAll('.ludo-name').forEach((e) => e.remove());
+  built.plane.querySelectorAll('.ludo-name').forEach((e) => e.remove());
   s.seats.forEach((p, k) => {
     if (!p || !cn.inGame[k]) return;
     const [x, y] = T(rotP([3, 3], k));
@@ -131,7 +136,7 @@ export function render(s, prev, ctx) {
     n.style.left = (x / 15) * 100 + '%'; n.style.top = (y / 15) * 100 + '%';
     n.innerHTML = `<span class="ava">${p.avatar}</span><span class="nm"></span>`;
     n.querySelector('.nm').textContent = p.name + (k === s.mySeat ? ' (bạn)' : '');
-    board.appendChild(n);
+    built.plane.appendChild(n);
   });
   // Ngựa
   const mineTurn = s.state === 'playing' && s.turn === s.mySeat && cn.phase === 'move';
@@ -146,7 +151,7 @@ export function render(s, prev, ctx) {
         el = document.createElement('button');
         el.className = 'horse';
         el.style.setProperty('--c', COLORS[seat]);
-        el.innerHTML = '<span>🐴</span>';
+        el.innerHTML = '<i class="shadow"></i><span class="fig">🐴</span>';
         built.layer.appendChild(el);
         built.pieces[id] = el;
       }
