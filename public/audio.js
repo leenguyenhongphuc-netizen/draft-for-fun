@@ -153,6 +153,22 @@ const SONGS = {
       69, null, 71, 72, null, 76, 74, 72, 71, null, null, null, null, null, null, null],
     hat: false, kick: [0], snare: [],
   },
+  // Cà phê: lofi jazz
+  cafe: {
+    bpm: 82, lead: 'triangle', leadVol: 0.07, padType: 'sine', swing: 0.18,
+    chords: [[62, 65, 69, 72], [55, 59, 62, 65], [60, 64, 67, 71], [57, 60, 64, 67]],
+    melody: [74, null, 72, null, 69, null, null, 67, 69, null, null, null, null, null, null, null,
+      72, null, 71, null, 67, null, 64, 65, 67, null, null, null, null, null, null, null],
+    hat: true, kick: [0, 7, 10], snare: [4, 12],
+  },
+  // Cầu vồng: vui tươi nhảy nhót
+  rainbow: {
+    bpm: 124, lead: 'square', leadVol: 0.045, padType: 'triangle', swing: 0,
+    chords: [[60, 64, 67], [65, 69, 72], [62, 65, 69], [67, 71, 74]],
+    melody: [72, 76, 79, 84, 83, null, 79, null, 77, 81, 84, null, 83, 81, 79, null,
+      76, 79, 81, 79, 76, null, 72, null, 74, 77, 79, 77, 76, 74, 72, null],
+    hat: true, kick: [0, 4, 8, 12], snare: [4, 12],
+  },
 };
 
 function scheduleStep(t, i) {

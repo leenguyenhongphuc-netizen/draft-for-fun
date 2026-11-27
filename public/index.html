@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
-  <title>Tiến Lên Cute</title>
+  <title>Game nhà Pum</title>
   <meta name="theme-color" content="#ffd9e8" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐷</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -18,8 +18,8 @@
   <section id="lobby" class="screen">
     <div class="lobby-card">
       <div class="lobby-sound"><button class="pill music-btn" title="Nhạc nền">🎵</button><button class="pill sfx-btn" title="Âm thanh">🔊</button></div>
-      <h1 class="logo">Tiến Lên <span>Cute</span> <i>🐷</i></h1>
-      <p class="sub">Tiến lên miền Nam · chơi online cùng bạn bè</p>
+      <h1 class="logo">Game nhà <span>Pum</span> <i>🐷</i></h1>
+      <p class="sub">Tết này cả nhà mình cùng chơi nha 🧧</p>
 
       <div class="profile">
         <div class="avatar-big" id="myAvatarBig">🐱</div>
@@ -29,6 +29,9 @@
         </div>
       </div>
       <div class="avatar-grid" id="avatarGrid"></div>
+
+      <div class="section-title">Chọn trò chơi</div>
+      <div class="game-pick" id="gamePick"></div>
 
       <div class="tabs">
         <button class="tab active" data-tab="create">✨ Tạo phòng</button>
@@ -72,7 +75,7 @@
     <header class="topbar">
       <button class="pill" id="leaveBtn" title="Rời phòng">⬅</button>
       <div class="room-info">
-        <div class="room-name" id="roomTitle">Phòng</div>
+        <div class="room-name"><span class="game-chip" id="gameChip"></span> <span id="roomTitle">Phòng</span></div>
         <button class="code-chip" id="copyCode" title="Bấm để sao chép link mời">Mã: <b id="roomCode">----</b> 🔗</button>
       </div>
       <div class="top-actions">
@@ -85,6 +88,9 @@
     </header>
 
     <div id="seats"></div>
+
+    <div id="board" class="ludo hidden"></div>
+    <div id="stageCenter"></div>
 
     <div id="centerPile">
       <div class="pile-label" id="pileLabel"></div>
@@ -109,6 +115,7 @@
       <span class="review-wait" id="reviewWait">Chờ chủ phòng 👑…</span>
     </div>
       <div class="me-row"><div id="meTag"></div><div class="turn-banner" id="turnBanner"></div></div>
+      <div id="stageMine"></div>
       <div class="hand" id="hand"></div>
       <div class="actions" id="actions">
         <button class="btn soft" id="sortBtn"><i>🔀</i> Xếp</button>

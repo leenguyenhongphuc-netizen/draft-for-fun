@@ -1,6 +1,16 @@
-# 🐷 Tiến Lên Cute
+# 🐷 Game nhà Pum
 
-Game **Tiến Lên Miền Nam** chơi online nhiều người, giao diện pastel dễ thương, có **phòng chơi 3D** (Three.js) với bàn tròn, ghế đệm, nhân vật thú bông, bóng bay, đèn nháy, kệ sách, mèo ngủ, cửa sổ có mây/trăng…
+Cổng game chơi online cùng gia đình, bạn bè: **Tiến Lên Miền Nam**, **Xì Dách**, **Bài Cào**, **Cờ Cá Ngựa**, giao diện pastel dễ thương, có **phòng chơi 3D** (Three.js) với bàn tròn, ghế đệm, nhân vật thú bông, bóng bay, đèn nháy, kệ sách, mèo ngủ, cửa sổ có mây/trăng…
+
+## Các trò chơi
+| | Trò chơi | Cách chơi |
+|---|---|---|
+| 🃏 | **Tiến Lên** | Luật miền Nam đầy đủ, chặt heo, tới trắng, luật tuỳ chỉnh (cấm về heo…). |
+| 🂡 | **Xì Dách** | Nhà cái xoay vòng. Xì bàn > xì dách > ngũ linh > điểm; quá 21 là quắc. Người chơi đủ 16, nhà cái đủ 15 mới được dằn. |
+| 🎴 | **Bài Cào** | 3 lá, chạm từng lá để nặn bài. Điểm = hàng đơn vị; ba tây lớn nhất; người cao nhất ăn hết. |
+| 🐴 | **Cờ Cá Ngựa** | Gieo 6 ra quân, ra 6 gieo thêm, đá ngựa đối thủ về chuồng, vào đích phải đúng số. |
+
+Tất cả đều có: phòng 2–4 người, bot, chế độ ghi nợ, chat/emoji, 9 kiểu phòng 3D.
 
 ## Tính năng
 - 🃏 Đủ luật Tiến Lên Miền Nam: rác, đôi, sám, tứ quý, sảnh, đôi thông; **chặt heo** (3 đôi thông / tứ quý / 4 đôi thông); **tới trắng** (tứ quý heo, sảnh rồng, 6 đôi, 5 đôi thông); **cóng**, **thối heo**.
@@ -8,7 +18,7 @@ Game **Tiến Lên Miền Nam** chơi online nhiều người, giao diện paste
 - 📒 Chế độ ghi nợ (chơi cho vui): không trừ xu, ghi lại ai thắng/thua qua các ván, bảng tổng, gợi ý "ai trả ai" ít lần chuyển nhất, lịch sử ván, sao chép sổ để dán vào Zalo/Messenger.
 - 🌐 Chơi online theo phòng 2–4 người: tạo phòng, gửi **link mời**/mã 4 chữ, danh sách phòng công khai.
 - 🤖 Thêm bot lấp chỗ trống; ai mất mạng thì bot đánh thay, vào lại trong 45 giây sẽ ngồi lại đúng chỗ.
-- 🏠 7 kiểu trang trí phòng 3D, mỗi phòng có nhạc riêng: **Kẹo Hồng**, **Vườn Xanh**, **Đêm Sao**, **Tết Sum Vầy**, **Biển Xanh**, **Mùa Đông**, **Anh Đào** (chủ phòng đổi được bất cứ lúc nào).
+- 🏠 9 kiểu trang trí phòng 3D, mỗi phòng có nhạc riêng: **Kẹo Hồng**, **Vườn Xanh**, **Đêm Sao**, **Tết Sum Vầy**, **Biển Xanh**, **Mùa Đông**, **Anh Đào**, **Cà Phê Chill**, **Cầu Vồng** (chủ phòng đổi được bất cứ lúc nào).
 - 🐱 14 avatar (thú cưng, 💕, 🌷) — người chơi khác hiện thành nhân vật 3D ngồi quanh bàn, nhún nhảy khi tới lượt.
 - 🎵 Nhạc nền riêng cho từng kiểu phòng + hiệu ứng âm thanh (tiếng bài, "ụt ịt" khi đánh heo, chặt, tích tắc sắp hết giờ…), tự tổng hợp bằng WebAudio, bật/tắt riêng nhạc và tiếng.
 - 💥 Hiệu ứng: bài bay từ người đánh vào bàn, rung màn hình + nổ hạt 3D khi chặt heo, chữ combo khi đánh sảnh dài/đôi thông/tứ quý, đếm xu khi kết thúc.
@@ -39,7 +49,10 @@ Thử nhiều người trên 1 máy không cần mạng: mở nhiều tab `http:
 ## Cấu trúc
 ```
 public/shared/rules.js  Luật chơi
-public/game/room.js     Diễn biến 1 ván: chia bài, lượt, vòng, chặt, kết quả
+public/game/room.js     Tiến Lên: chia bài, lượt, vòng, chặt, kết quả
+public/game/base.js     Khung chung cho các game mới (ghế, bot, sổ nợ, hẹn giờ)
+public/game/xidach.js, baicao.js, cangua.js   Luật Xì Dách, Bài Cào, Cá Ngựa
+public/ui/              Giao diện riêng từng game mới
 public/game/bot.js      AI bot
 public/net.js           Kết nối online (Supabase Realtime / thử nhiều tab)
 public/app.js           Giao diện, public/scene3d.js phòng 3D, public/vendor/ thư viện

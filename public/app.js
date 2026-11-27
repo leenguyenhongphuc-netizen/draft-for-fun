@@ -6,6 +6,16 @@ import {
 import { createNet } from './net.js';
 import * as audio from './audio.js';
 import * as fx from './fx.js';
+import * as uiXiDach from './ui/xidach.js';
+import * as uiBaiCao from './ui/baicao.js';
+import * as uiCaNgua from './ui/cangua.js';
+
+const GAMES = {
+  tienlen: { icon: '🃏', name: 'Tiến Lên', desc: 'Miền Nam · 2–4 người', ui: null },
+  xidach: { icon: '🂡', name: 'Xì Dách', desc: 'Nhà cái xoay vòng · 2–4 người', ui: uiXiDach },
+  baicao: { icon: '🎴', name: 'Bài Cào', desc: '3 cây · nặn bài · 2–4 người', ui: uiBaiCao },
+  cangua: { icon: '🐴', name: 'Cá Ngựa', desc: 'Gieo xúc xắc · 2–4 người', ui: uiCaNgua },
+};
 
 const $ = (s) => document.querySelector(s);
 const AVATARS = ['🐱', '🐶', '🐰', '🐼', '🦊', '🐸', '🐷', '🐹', '🐨', '🐯', '🐻', '🐧', '💕', '🌷'];
@@ -25,6 +35,7 @@ let myName = store.get('name', '');
 let myAvatar = store.get('avatar', AVATARS[Math.floor(Math.random() * AVATARS.length)]);
 let muted = store.get('muted', false);
 let pickedTheme = 'candy';
+let pickedGame = store.get('game', 'tienlen');
 let sortMode = 'rank';
 
 // ---------- 3D ----------
@@ -104,6 +115,21 @@ function initLobby() {
     socket.emit('profile', { name: myName, avatar: myAvatar });
   });
 
+  const gp = $('#gamePick');
+  Object.entries(GAMES).forEach(([k, g]) => {
+    const b = document.createElement('button');
+    b.className = 'game-card' + (k === pickedGame ? ' sel' : '');
+    b.dataset.game = k;
+    b.innerHTML = `<span class="g-icon">${g.icon}</span><span class="g-name">${g.name}</span><span class="g-desc">${g.desc}</span>`;
+    b.onclick = () => {
+      pickedGame = k; store.set('game', k);
+      gp.querySelectorAll('.game-card').forEach((x) => x.classList.toggle('sel', x === b));
+      $('#createBtn').textContent = `Tạo phòng ${g.name} 🎉`;
+      sfx.pop();
+    };
+    gp.appendChild(b);
+  });
+  $('#createBtn').textContent = `Tạo phòng ${GAMES[pickedGame].name} 🎉`;
   const tp = $('#themePick');
   Object.entries(THEMES).forEach(([k, t]) => {
     const b = document.createElement('button');
@@ -132,7 +158,7 @@ function initLobby() {
   };
   $('#createBtn').onclick = () => {
     ensureName();
-    socket.emit('createRoom', { name: $('#roomName').value, theme: pickedTheme, isPublic: $('#roomPublic').checked, bots: $('#roomBots').checked ? 3 : 0 });
+    socket.emit('createRoom', { game: pickedGame, name: $('#roomName').value, theme: pickedTheme, isPublic: $('#roomPublic').checked, bots: $('#roomBots').checked ? 3 : 0 });
   };
   $('#joinBtn').onclick = () => { ensureName(); socket.emit('joinRoom', { code: $('#codeInput').value }); };
   $('#codeInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#joinBtn').click(); });
@@ -146,8 +172,8 @@ function renderRooms(list) {
   list.forEach((r) => {
     const b = document.createElement('button');
     b.className = 'room-item';
-    const icon = THEMES[r.theme] ? THEMES[r.theme].label.split(' ')[0] : '🃏';
-    b.innerHTML = `<span class="ri-theme">${icon}</span><span class="ri-name"></span><span class="ri-meta">${r.players}/4 người<br>${r.state === 'playing' ? 'đang chơi' : 'đang chờ'}</span>`;
+    const icon = (GAMES[r.game || 'tienlen'] || GAMES.tienlen).icon;
+    b.innerHTML = `<span class="ri-theme">${icon}</span><span class="ri-name"></span><span class="ri-meta">${(GAMES[r.game || 'tienlen'] || GAMES.tienlen).name} · ${r.players}/4<br>${r.state === 'playing' ? 'đang chơi' : 'đang chờ'}</span>`;
     b.querySelector('.ri-name').textContent = r.name;
     b.onclick = () => { myName = $('#nameInput').value.trim() || myName || randomName(); socket.emit('profile', { name: myName, avatar: myAvatar }); socket.emit('joinRoom', { code: r.code }); };
     el.appendChild(b);
@@ -174,6 +200,7 @@ function showGame() {
 
 // ---------- Hiển thị lá bài ----------
 function cardEl(id) {
+  if (id == null || id < 0) { const b = document.createElement('div'); b.className = 'card back'; return b; }
   const r = rankOf(id), s = suitOf(id);
   const d = document.createElement('div');
   d.className = 'card ' + (s >= 2 ? 'red' : 'black') + (r === TWO ? ' two' : '') + (r >= 8 && r <= 10 ? ' face' : '');
@@ -207,10 +234,21 @@ function onState(prev, s) {
   selected = new Set([...selected].filter((c) => set.has(c)));
   if (!prev || prev.state !== 'playing' || (prev.lastPlay && !s.lastPlay)) hintIdx = -1;
 
+  const G = GAMES[s.game || 'tienlen'] || GAMES.tienlen;
+  $('#gameChip').textContent = `${G.icon} ${G.name}`;
+  document.body.dataset.game = s.game || 'tienlen';
   renderSeats();
-  renderHand(prev && prev.state !== 'playing' && s.state === 'playing');
-  renderPile();
-  renderControls();
+  if (G.ui) {
+    $('#hand').innerHTML = '';
+    $('#pileCards').innerHTML = ''; $('#pileCards').dataset.key = ''; $('#pileLabel').textContent = '';
+    renderControls();
+    G.ui.render(s, prev && prev.game === s.game ? prev : null, uiCtx);
+  } else {
+    $('#stageMine').innerHTML = ''; $('#stageCenter').innerHTML = ''; $('#board').classList.add('hidden');
+    renderHand(prev && prev.state !== 'playing' && s.state === 'playing');
+    renderPile();
+    renderControls();
+  }
 
   const mine = s.state === 'playing' && s.turn === s.mySeat;
   if (mine && !lastTurnWasMine) sfx.turn();
@@ -271,8 +309,12 @@ function renderSeats() {
     }
     el.appendChild(tag);
     // Hết ván: lật bài còn lại của đối thủ
-    const row = s.state === 'ended' && s.results && pos !== 0 ? s.results.find((r) => r.seat === seat) : null;
-    if (row && row.cardsLeft.length) {
+    const row = s.state === 'ended' && s.results && pos !== 0 && !p.show ? s.results.find((r) => r.seat === seat) : null;
+    if (p.show && p.show.length && pos !== 0) {
+      const rv = miniCards(p.show, false);
+      rv.classList.add('reveal');
+      el.appendChild(rv);
+    } else if (row && row.cardsLeft.length) {
       const rv = miniCards(row.cardsLeft);
       rv.classList.add('reveal');
       const t = document.createElement('div'); t.className = 'reveal-title'; t.textContent = `Còn ${row.cardsLeft.length} lá`;
@@ -286,6 +328,7 @@ function renderSeats() {
 }
 
 function statusOf(p) {
+  if (p.status) return p.status;
   if (p.bad) return { cls: 'bad', text: '🐷 về heo · bét' };
   if (p.rank) return { cls: 'r' + Math.min(4, p.rank), text: MEDALS[p.rank - 1] + ' ' + RANK_TXT[p.rank - 1] };
   if (!p.connected) return { cls: 'pass', text: '💤 mất mạng' };
@@ -313,6 +356,9 @@ scene3d.onFrame = () => {
   }
   const c = scene3d.tableScreen();
   place($('#centerPile'), c.x, c.y);
+  place($('#stageCenter'), c.x, c.y);
+  const G = GAMES[state.game || 'tienlen'];
+  if (G && G.ui && G.ui.tick) G.ui.tick(state, uiCtx);
   // Thanh thời gian + tiếng tích tắc khi sắp hết giờ
   if (state.state === 'playing' && state.deadline) {
     const left = Math.max(0, state.deadline - (Date.now() + clockOffset));
@@ -429,7 +475,8 @@ function renderControls() {
   const mine = playing && s.turn === s.mySeat;
   const isHost = s.hostId === playerId;
 
-  $('#actions').classList.toggle('hidden', !playing || !inGame || !handOrder.length);
+  const isTL = (s.game || 'tienlen') === 'tienlen';
+  $('#actions').classList.toggle('hidden', !isTL || !playing || !inGame || !handOrder.length);
   const prev = s.lastPlay ? getCombo(s.lastPlay.cards) : null;
   const combo = getCombo([...selected]);
   const rule = mine && combo && canBeat(prev, combo) ? ruleProblem(combo) : null;
@@ -440,10 +487,11 @@ function renderControls() {
   $('#sortBtn').classList.toggle('hidden', selected.size > 0);
   $('#clearSelBtn').classList.toggle('hidden', selected.size === 0);
 
-  $('#handArea').classList.toggle('turn-on', mine);
+  $('#handArea').classList.toggle('turn-on', mine && isTL);
   const banner = $('#turnBanner');
-  banner.classList.toggle('mine', mine);
-  if (!playing) banner.textContent = '';
+  if (isTL) banner.classList.toggle('mine', mine);
+  if (!isTL) { /* banner do giao diện từng game tự đặt */ }
+  else if (!playing) banner.textContent = '';
   else if (!inGame) banner.textContent = '👀 Bạn sẽ vào chơi ở ván sau';
   else if (s.seats[s.mySeat].rank) banner.textContent = `🎉 Bạn về ${RANK_TXT[s.seats[s.mySeat].rank - 1]}! Ngồi xem nha`;
   else if (mine && rule) banner.textContent = rule.forced ? '😱 Hết đường, đành về heo → bị xếp bét' : '🚫 ' + rule.msg;
@@ -581,6 +629,8 @@ function nameOf(seat) { const p = state && state.seats[seat]; return p ? p.avata
 
 function onEvent(ev) {
   if (!state) return;
+  const G = GAMES[state.game || 'tienlen'];
+  if (G && G.ui && G.ui.onEvent) G.ui.onEvent(ev, uiCtx);
   const pos = relPos(ev.seat ?? 0);
   switch (ev.kind) {
     case 'deal':
@@ -703,7 +753,7 @@ function showResults(rows) {
     const d = document.createElement('div');
     d.className = 'rrow';
     d.style.animationDelay = i * 0.1 + 's';
-    d.innerHTML = `<span class="medal">${r.bad ? '🐷' : MEDALS[r.rank - 1]}</span><span class="who"><span class="nmx"></span><span class="note"></span></span><span class="delta ${r.delta >= 0 ? 'plus' : 'minus'}">${r.delta >= 0 ? '+' : ''}${r.delta} 🪙</span>`;
+    d.innerHTML = `<span class="medal">${r.badge || (r.bad ? '🐷' : MEDALS[r.rank - 1])}</span><span class="who"><span class="nmx"></span><span class="note"></span></span><span class="delta ${r.delta >= 0 ? 'plus' : 'minus'}">${r.delta >= 0 ? '+' : ''}${r.delta} 🪙</span>`;
     d.querySelector('.nmx').textContent = p ? `${p.avatar} ${p.name}${r.seat === state.mySeat ? ' (bạn)' : ''}` : 'Người chơi';
     d.querySelector('.note').textContent = r.note || (r.cardsLeft.length ? `còn ${r.cardsLeft.length} lá` : '');
     if (r.cardsLeft.length && r.seat !== state.mySeat) d.querySelector('.who').appendChild(miniCards(r.cardsLeft));
@@ -738,6 +788,11 @@ function ruleProblem(combo) {
   return { msg: v, forced };
 }
 
+const GAME_RULE_TEXT = {
+  xidach: 'Xì bàn > Xì dách > Ngũ linh > điểm. Quá 21 là quắc. Người chơi đủ 16, nhà cái đủ 15 mới được dằn. Thắng thường +1 phần, thắng bằng xì bàn / xì dách / ngũ linh +2 phần. Nhà cái xoay vòng mỗi ván.',
+  baicao: 'Mỗi người 3 lá, điểm = hàng đơn vị của tổng (10/J/Q/K = 0). Ba tây (3 lá J/Q/K) lớn nhất. Ai cao nhất ăn: mỗi người thua trả 1 phần.',
+  cangua: 'Gieo 6 mới ra quân, ra 6 được gieo thêm. Đi trúng ngựa đối thủ thì đá về chuồng. Vào đích phải đúng số. Ai về đủ 4 ngựa trước thắng.',
+};
 const RULES = [
   { key: 'noTwoLast', name: '🐷 Cấm về heo chót', desc: 'Lá cuối cùng không được là heo (2). Hết đường mà phải về heo thì bị xếp bét.' },
   { key: 'noBombLast', name: '💣 Cấm về bằng hàng', desc: 'Không được về bằng tứ quý hoặc đôi thông.' },
@@ -792,7 +847,8 @@ function renderRules() {
     row('Mỗi phần =', 'Nhất +3 phần, nhì +1, ba −1, bét −3 (4 người).', seg(UNIT_CHOICES, st.unit, (v) => v, (v) => setRule({ unit: v })));
     row('Đơn vị', '"k" = nghìn đồng, hoặc chỉ tính điểm.', seg(UNIT_LABELS, st.unitLabel, (v) => v, (v) => setRule({ unitLabel: v })));
   }
-  RULES.forEach((r) => row(r.name, r.desc, sw(r.key, st[r.key])));
+  if ((state.game || 'tienlen') === 'tienlen') RULES.forEach((r) => row(r.name, r.desc, sw(r.key, st[r.key])));
+  else row(`${GAMES[state.game].icon} Luật ${GAMES[state.game].name}`, GAME_RULE_TEXT[state.game], document.createElement('span'));
   const themeKeys = Object.keys(THEMES);
   const th = seg(themeKeys, state.theme, (k) => THEMES[k].label.split(' ')[0], (k) => { socket.emit('setTheme', { theme: k }); sfx.pop(); });
   th.querySelectorAll('button').forEach((b) => { b.disabled = state.hostId !== playerId; });
@@ -868,10 +924,10 @@ $('#copyLedger').onclick = async () => {
 };
 document.querySelectorAll('.modal').forEach((m) => m.addEventListener('pointerdown', (e) => { if (e.target === m && m.id !== 'resultModal') m.classList.add('hidden'); }));
 
-function miniCards(ids) {
+function miniCards(ids, sort = true) {
   const d = document.createElement('div');
   d.className = 'mini-cards';
-  [...ids].sort((a, b) => a - b).forEach((id) => d.appendChild(cardEl(id)));
+  (sort ? [...ids].sort((a, b) => a - b) : ids).forEach((id) => d.appendChild(cardEl(id)));
   return d;
 }
 
@@ -885,6 +941,18 @@ function floatAmt(seat, text, plus) {
   $('#fx').appendChild(d);
   setTimeout(() => d.remove(), 1700);
 }
+
+// ---------- Ngữ cảnh cho giao diện từng game ----------
+const uiCtx = {
+  $, cardEl, sfx, fx, scene3d, toast, bigText: (t, g) => bigText(t, g), confetti: () => confetti(), shake: () => shake(),
+  sysChat: (t) => sysChat(t), bubble: (s, t) => bubble(s, t),
+  get socket() { return socket; },
+  nameOf: (seat) => nameOf(seat),
+  mySeat: () => (state ? state.mySeat : -1),
+  hopSeat: (seat, p) => { if (state) scene3d.hop(relPos(seat), p); },
+  now: () => Date.now() + clockOffset,
+  banner(text, mine) { const b = $('#turnBanner'); b.textContent = text; b.classList.toggle('mine', !!mine); },
+};
 
 // ---------- Hiệu ứng ----------
 function bigText(text, gold = false) {

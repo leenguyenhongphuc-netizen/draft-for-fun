@@ -5,9 +5,14 @@
 // Giao diện giống socket.io (on / emit) để app.js không phải đổi nhiều.
 
 import { Room } from './game/room.js';
+import { XiDachRoom } from './game/xidach.js';
+import { BaiCaoRoom } from './game/baicao.js';
+import { CaNguaRoom } from './game/cangua.js';
+
+const GAME_CLASSES = { tienlen: Room, xidach: XiDachRoom, baicao: BaiCaoRoom, cangua: CaNguaRoom };
 import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
 
-const THEMES = ['candy', 'garden', 'night', 'tet', 'ocean', 'winter', 'sakura'];
+const THEMES = ['candy', 'garden', 'night', 'tet', 'ocean', 'winter', 'sakura', 'cafe', 'rainbow'];
 const AVATARS = ['🐱', '🐶', '🐰', '🐼', '🦊', '🐸', '🐷', '🐹', '🐨', '🐯', '🐻', '🐧', '💕', '🌷'];
 const PREFIX = 'tlc-v1';
 const clean = (s, max) => String(s ?? '').replace(/[<>]/g, '').trim().slice(0, max);
@@ -207,8 +212,9 @@ export function createNet(playerId) {
       case 'start': if (hostOnly()) reply(room.start()); return;
       case 'setSettings': if (hostOnly()) { reply(room.setSettings(p.settings || {})); hostHooks.emitState(room); } return;
       case 'clearLedger': if (hostOnly()) { room.clearLedger(); hostHooks.emitState(room); hostHooks.emitEvent(room, { kind: 'chat', seat: seat, name: '📒', text: 'Chủ phòng đã xoá sổ nợ' }); } return;
-      case 'play': reply(room.play(seat, Array.isArray(p.cards) ? p.cards.map(Number) : [])); return;
-      case 'pass': reply(room.pass(seat)); return;
+      case 'play': if (room.play) reply(room.play(seat, Array.isArray(p.cards) ? p.cards.map(Number) : [])); return;
+      case 'act': if (room.action && seat >= 0) reply(room.action(seat, p || {})); return;
+      case 'pass': if (room.pass) reply(room.pass(seat)); return;
       case 'chat': {
         const t = clean(p.text, 120);
         if (t && seat >= 0) hostHooks.emitEvent(room, { kind: 'chat', seat, name: room.seats[seat].name, text: t });
@@ -264,11 +270,12 @@ export function createNet(playerId) {
     store.set('lastRoom', room.code);
   }
 
-  async function createRoom({ name, theme, isPublic = true, bots = 0 } = {}) {
+  async function createRoom({ name, theme, isPublic = true, bots = 0, game = 'tienlen' } = {}) {
+    const RoomClass = GAME_CLASSES[game] || Room;
     const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
     const code = Array.from({ length: 4 }, () => A[Math.floor(Math.random() * A.length)]).join('');
     try { await openRoomChannel(code); } catch { return toast('Không kết nối được máy chủ 🥲 Thử lại nha'); }
-    const room = new Room({
+    const room = new RoomClass({
       code, name: clean(name, 24) || `Phòng của ${profile.name}`,
       theme: THEMES.includes(theme) ? theme : 'candy', isPublic: !!isPublic, hooks: hostHooks,
     });
@@ -280,7 +287,7 @@ export function createNet(playerId) {
 
   async function restoreHost(snap) {
     try { await openRoomChannel(snap.code); } catch { return toast('Không kết nối được máy chủ 🥲'); }
-    const room = Room.restore(snap.room, hostHooks);
+    const room = (GAME_CLASSES[snap.room.game] || Room).restore(snap.room, hostHooks);
     becomeHost(room, snap.members);
     room.join({ id: playerId, name: profile.name, avatar: profile.avatar });
     hostHooks.emitState(room);

@@ -431,7 +431,7 @@ export class Room {
   // ---------- Dữ liệu gửi xuống client ----------
   summary() {
     return {
-      code: this.code, name: this.name, theme: this.theme,
+      code: this.code, name: this.name, theme: this.theme, game: 'tienlen',
       players: this.playerCount(), humans: this.humans().length, state: this.state,
     };
   }
@@ -441,7 +441,7 @@ export class Room {
     const g = this.game;
     const playing = this.state === 'playing';
     return {
-      code: this.code, name: this.name, theme: this.theme, isPublic: this.isPublic,
+      game: 'tienlen', code: this.code, name: this.name, theme: this.theme, isPublic: this.isPublic,
       hostId: this.hostId, state: this.state, mySeat,
       seats: this.seats.map((p, s) => p && {
         id: p.id, name: p.name, avatar: p.avatar, isBot: p.isBot, connected: p.connected,
@@ -477,7 +477,7 @@ export class Room {
   serialize() {
     const g = this.game;
     return {
-      code: this.code, name: this.name, theme: this.theme, isPublic: this.isPublic, hostId: this.hostId,
+      game: 'tienlen', code: this.code, name: this.name, theme: this.theme, isPublic: this.isPublic, hostId: this.hostId,
       seats: this.seats, state: this.state, results: this.results, lastWinnerId: this.lastWinnerId, createdAt: this.createdAt,
       settings: this.settings, ledger: this.ledger,
       game: g && { ...g, passed: [...g.passed] },

@@ -65,6 +65,24 @@ export const THEMES = {
     posters: ['🍡', '🎐', '🐰'], bulbs: [0xf8bbd0, 0xe1bee7, 0xfff9c4],
     win: 'day', logo: '🌸', toy: '🐰', sleeper: '🐱', flower: '🌸', pot: 0xffffff, leaf: 0x81c784, lampI: 14, extra: 'sakura',
   },
+  cafe: {
+    label: '☕ Cà Phê Chill',
+    wall: 0xe9d5bf, wall2: 0xf3e4d2, floor: 0x8d6748, rug: 0xf6eadb, rug2: 0x8d5a3b,
+    felt: 0x6d8b74, rim: 0xf5e6d0, wood: 0x6b4430, sky: 0xffcc99, skyGlow: 0xfff3c4,
+    ambient: 0xfff2e0, ambientI: 0.7, sunI: 0.85, bg: 0xe8d3bb,
+    particles: ['☕', '🍪', '🥐', '✨', '🧁'], balloons: [0xc8a27a, 0xf3c6a5, 0x9ccc9c, 0xf7e08a],
+    posters: ['☕', '🥐', '🐻'], bulbs: [0xffe0a3, 0xffc98a, 0xfff3c4],
+    win: 'day', logo: '☕', toy: '🐻', sleeper: '🐱', flower: null, pot: 0xf5f5f5, leaf: 0x6aa86a, lampI: 22, extra: 'cafe',
+  },
+  rainbow: {
+    label: '🌈 Cầu Vồng',
+    wall: 0xe8f4ff, wall2: 0xf5f0ff, floor: 0xffe9c7, rug: 0xffffff, rug2: 0xb39ddb,
+    felt: 0xffb3c7, rim: 0xffffff, wood: 0xf6c59a, sky: 0xaee3ff, skyGlow: 0xffffff,
+    ambient: 0xffffff, ambientI: 0.85, sunI: 1.0, bg: 0xeaf2ff,
+    particles: ['🌈', '☁️', '🦄', '⭐', '💖'], balloons: [0xff8a80, 0xffd180, 0xccff90, 0x80d8ff, 0xb388ff],
+    posters: ['🦄', '🌈', '🍭'], bulbs: [0xff8a80, 0xffe57f, 0x80d8ff, 0xb9f6ca],
+    win: 'day', logo: '🌈', toy: '🐰', sleeper: '🐶', flower: '🌼', pot: 0xffffff, leaf: 0x7ccf86, lampI: 14, extra: 'rainbow',
+  },
 };
 
 // Hình dáng nhân vật theo avatar
@@ -647,6 +665,41 @@ export function createScene(canvas) {
       xt.position.set(5.3, 0, -3.6); room.add(xt);
       sprite('⭐', 5.3, 2.85, -3.6, 0.5);
       sprite('🎁', 4.5, 0.3, -2.6, 0.55); sprite('🎁', 6.0, 0.3, -2.8, 0.45);
+    }
+    if (T.extra === 'cafe') {
+      const sign = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 0.8), new THREE.MeshBasicMaterial({ map: textTexture('☕ Pum Coffee ☕', '#fff3e0', '#4e342e') }));
+      sign.position.set(0, 6.45, -6.9); room.add(sign);
+      // Quầy bar + ly cà phê
+      const bar = roundedBox(4.2, 1.1, 0.9, 0.1, 0x6b4430); bar.position.set(-6.2, 0.55, 2.2); bar.rotation.y = Math.PI / 2; room.add(bar);
+      ['☕', '🧋', '🥤', '☕'].forEach((e, i) => sprite(e, -6.1, 1.35, 0.8 + i * 0.9, 0.42));
+      // Đèn dây tròn ấm
+      [[-3, -2.5], [3, -2.5], [0, 3]].forEach(([x, z], i) => {
+        const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 10), new THREE.MeshStandardMaterial({ color: 0xffe0a3, emissive: 0xffb74d, emissiveIntensity: 0.9 }));
+        bulb.position.set(x, 5.4, z); room.add(bulb);
+        const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 2.4, 4), mat(0x3e2723)); cord.position.set(x, 6.7, z); room.add(cord);
+        animated.push({ obj: bulb, fn: (t) => { bulb.material.emissiveIntensity = 0.7 + Math.sin(t * 2 + i) * 0.15; } });
+      });
+      // Khói cà phê bốc lên
+      for (let i = 0; i < 3; i++) {
+        const st = sprite('💨', -6.1, 1.6, 0.8 + i * 1.8, 0.3);
+        animated.push({ obj: st, fn: (t) => { const k = (t * 0.5 + i * 0.33) % 1; st.position.y = 1.6 + k * 0.9; st.material.opacity = 1 - k; } });
+      }
+    }
+    if (T.extra === 'rainbow') {
+      // Cầu vồng trên tường sau
+      const cols = [0xff8a80, 0xffd180, 0xffff8d, 0xccff90, 0x80d8ff, 0xb388ff];
+      cols.forEach((c, i) => {
+        const arc = new THREE.Mesh(new THREE.TorusGeometry(2.6 - i * 0.22, 0.11, 8, 40, Math.PI), new THREE.MeshBasicMaterial({ color: c }));
+        arc.position.set(-4.6, 3.4, -6.92); arc.scale.setScalar(0.55); room.add(arc);
+        const arc2 = arc.clone(); arc2.position.x = 4.6; room.add(arc2);
+      });
+      // Mây bông trôi
+      for (let i = 0; i < 4; i++) {
+        const cl = sprite('☁️', -5 + i * 3.3, 6.2 - (i % 2) * 0.5, -5.5 + (i % 2), 1.0);
+        animated.push({ obj: cl, fn: (t) => { cl.position.x = -5 + i * 3.3 + Math.sin(t * 0.3 + i) * 0.6; } });
+      }
+      sprite('🦄', 5.2, 0.7, 2.4, 1.0);
+      sprite('🍭', -5.0, 0.6, 2.8, 0.7);
     }
     if (T.extra === 'sakura') {
       tree(5.3, -4.0, 0x6d4c41, 0xf8bbd0, ['🌸', '🌸', '💮'], 1.15);
