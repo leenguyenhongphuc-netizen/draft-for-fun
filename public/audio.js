@@ -25,11 +25,51 @@ function ensure() {
   return ctx;
 }
 
+// ---------- Mở khoá âm thanh trên iPhone ----------
+// 1) iPhone gạt "im lặng" thì WebAudio bị tắt tiếng. Phát kèm một thẻ <audio> im lặng (lặp lại)
+//    để Safari chuyển sang chế độ "phát nhạc" -> vẫn nghe được dù đang bật im lặng.
+// 2) Safari chỉ mở khoá khi nhấc tay (touchend / click), nên gọi unlock() ở các sự kiện đó.
+let keepAlive = null;
+function silentWavUrl() {
+  const sr = 8000, n = sr / 2;
+  const buf = new ArrayBuffer(44 + n * 2);
+  const v = new DataView(buf);
+  const w = (o, str) => [...str].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt ');
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  w(36, 'data'); v.setUint32(40, n * 2, true);
+  return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+}
+function startKeepAlive() {
+  try {
+    if (navigator.audioSession) navigator.audioSession.type = 'playback'; // iOS 17+
+  } catch { /* bỏ qua */ }
+  if (!keepAlive) {
+    keepAlive = document.createElement('audio');
+    keepAlive.setAttribute('playsinline', '');
+    keepAlive.setAttribute('x-webkit-airplay', 'deny');
+    keepAlive.loop = true;
+    keepAlive.preload = 'auto';
+    keepAlive.src = silentWavUrl();
+  }
+  if (keepAlive.paused && (musicOn || sfxOn)) keepAlive.play().catch(() => {});
+}
+
 export function unlock() {
   if (!ensure()) return;
-  if (ctx.state === 'suspended') ctx.resume();
+  startKeepAlive();
+  if (ctx.state !== 'running') ctx.resume().catch(() => {});
+  // Phát 1 mẫu âm im lặng ngay trong thao tác chạm: cách mở khoá chắc ăn nhất trên Safari cũ
+  try {
+    const b = ctx.createBufferSource();
+    b.buffer = ctx.createBuffer(1, 1, 22050);
+    b.connect(ctx.destination);
+    b.start(0);
+  } catch { /* bỏ qua */ }
   if (musicOn && !playing) startMusic();
 }
+export const isRunning = () => !!ctx && ctx.state === 'running';
 
 // ---------- Nhạc cụ nhỏ ----------
 function tone(bus, freq, t, dur, { type = 'sine', vol = 0.2, attack = 0.005, release = null, glide = 0, cutoff = 0 } = {}) {
@@ -144,12 +184,13 @@ export function setMusic(on) {
   if (on && !playing) startMusic();
   if (!on) setTimeout(() => { if (!musicOn) stopMusic(); }, 400);
 }
-export function setSfx(on) { sfxOn = on; if (ctx) sfxBus.gain.setTargetAtTime(on ? 0.8 : 0, ctx.currentTime, 0.05); }
+export function setSfx(on) { sfxOn = on; if (ctx) sfxBus.gain.setTargetAtTime(on ? 0.8 : 0, ctx.currentTime, 0.05); if (keepAlive && !musicOn && !sfxOn) keepAlive.pause(); }
 
 // Nhạc nhỏ lại khi tab bị ẩn (đỡ tốn pin), lên lại khi quay về
 document.addEventListener('visibilitychange', () => {
   if (!ctx) return;
-  if (document.hidden) ctx.suspend(); else ctx.resume();
+  if (document.hidden) { ctx.suspend(); if (keepAlive) keepAlive.pause(); }
+  else { ctx.resume().catch(() => {}); if (keepAlive && (musicOn || sfxOn)) keepAlive.play().catch(() => {}); }
 });
 
 // ---------- Hiệu ứng ----------

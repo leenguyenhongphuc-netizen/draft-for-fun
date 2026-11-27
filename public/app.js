@@ -34,7 +34,13 @@ let musicOn = store.get('music', true);
 audio.setSfx(!muted);
 audio.setMusic(musicOn);
 // iPhone chỉ cho phát tiếng sau lần chạm đầu tiên
-['pointerdown', 'keydown'].forEach((ev) => window.addEventListener(ev, () => audio.unlock(), { passive: true }));
+// iPhone chỉ mở khoá âm thanh khi nhấc tay (touchend / click) -> nghe ở nhiều sự kiện cho chắc
+['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'].forEach((ev) => window.addEventListener(ev, () => audio.unlock(), { passive: true, capture: true }));
+// Nếu âm thanh vẫn bị khoá (vd quay lại từ app khác) thì nhắc chạm màn hình
+setInterval(() => {
+  const want = musicOn || !muted;
+  $('#soundHint').classList.toggle('hidden', !want || audio.isRunning() || document.hidden);
+}, 1500);
 const sfx = audio.sfx;
 
 // ---------- Socket ----------
