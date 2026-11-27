@@ -103,10 +103,16 @@
     </div>
 
     <div id="handArea">
+      <div class="review-bar hidden" id="reviewBar">
+      <button class="btn soft" id="reopenResult">📋 Kết quả</button>
+      <button class="btn big pink" id="reviewAgain">Ván mới 🔁</button>
+      <span class="review-wait" id="reviewWait">Chờ chủ phòng 👑…</span>
+    </div>
       <div class="me-row"><div id="meTag"></div><div class="turn-banner" id="turnBanner"></div></div>
       <div class="hand" id="hand"></div>
       <div class="actions" id="actions">
         <button class="btn soft" id="sortBtn"><i>🔀</i> Xếp</button>
+        <button class="btn soft hidden" id="clearSelBtn"><i>↩️</i> Bỏ chọn</button>
         <button class="btn soft" id="hintBtn"><i>💡</i> Gợi ý</button>
         <button class="btn grey" id="passBtn"><i>🙅</i> Bỏ lượt</button>
         <button class="btn big pink" id="playBtn">Đánh! <i>✨</i></button>
@@ -129,7 +135,7 @@
         <div class="result-rows" id="resultRows"></div>
         <div class="debt-note hidden" id="debtNote">📒 Đã ghi vào sổ nợ · <button class="link" id="openLedgerFromResult">xem sổ</button></div>
         <div class="modal-actions">
-          <button class="btn soft" id="closeResult">Xem bàn</button>
+          <button class="btn soft" id="closeResult">👀 Xem bài</button>
           <button class="btn big pink" id="againBtn">Ván mới 🔁</button>
         </div>
       </div>

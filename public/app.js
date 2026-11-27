@@ -52,6 +52,7 @@ let handOrder = [];
 let hintIdx = -1;
 let lastTurnWasMine = false;
 let resultShownFor = null;
+let reviewing = false; // đang xem lại bàn sau ván
 const urlRoom = new URLSearchParams(location.search).get('room');
 const LOCAL = new URLSearchParams(location.search).has('local');
 const pageUrl = (code) => location.pathname + (code || LOCAL ? '?' : '') + (code ? 'room=' + code : '') + (code && LOCAL ? '&' : '') + (LOCAL ? 'local=1' : '');
@@ -264,6 +265,15 @@ function renderSeats() {
       tag.appendChild(k);
     }
     el.appendChild(tag);
+    // Hết ván: lật bài còn lại của đối thủ
+    const row = s.state === 'ended' && s.results && pos !== 0 ? s.results.find((r) => r.seat === seat) : null;
+    if (row && row.cardsLeft.length) {
+      const rv = miniCards(row.cardsLeft);
+      rv.classList.add('reveal');
+      const t = document.createElement('div'); t.className = 'reveal-title'; t.textContent = `Còn ${row.cardsLeft.length} lá`;
+      rv.prepend(t);
+      el.appendChild(rv);
+    }
     (pos === 0 ? $('#meTag') : wrap).appendChild(el);
     scenePlayers[pos] = { avatar: p.avatar, active, passed: p.passed, rank: p.rank };
   });
@@ -332,7 +342,10 @@ function renderHand(deal) {
     row.forEach((id, i) => {
       const c = cardEl(id);
       if (selected.has(id)) c.classList.add('sel');
-      if (deal) { c.classList.add('deal'); c.style.animationDelay = (k++) * 0.035 + 's'; }
+      if (deal) {
+        c.classList.add('deal'); c.style.animationDelay = (k++) * 0.035 + 's';
+        c.addEventListener('animationend', () => { c.classList.remove('deal'); c.style.animationDelay = ''; }, { once: true });
+      }
       if (i > 0) c.style.marginLeft = -overlap + 'px';
       r.appendChild(c);
     });
@@ -418,6 +431,9 @@ function renderControls() {
   $('#playBtn').disabled = !mine || !combo || !canBeat(prev, combo) || (rule && !rule.forced);
   $('#passBtn').disabled = !mine || !s.lastPlay;
   $('#hintBtn').disabled = !mine;
+  // Đã chọn bài thì nút "Xếp" đổi thành "Bỏ chọn"
+  $('#sortBtn').classList.toggle('hidden', selected.size > 0);
+  $('#clearSelBtn').classList.toggle('hidden', selected.size === 0);
 
   $('#handArea').classList.toggle('turn-on', mine);
   const banner = $('#turnBanner');
@@ -435,7 +451,14 @@ function renderControls() {
   $('#ledgerBtn').classList.toggle('hidden', !s.ledger);
   if (!$('#rulesModal').classList.contains('hidden')) renderRules();
   if (!$('#ledgerModal').classList.contains('hidden')) renderLedger();
-  const waiting = s.state === 'waiting' || (s.state === 'ended' && $('#resultModal').classList.contains('hidden'));
+  if (s.state !== 'ended') reviewing = false;
+  const showReview = s.state === 'ended' && reviewing && $('#resultModal').classList.contains('hidden');
+  $('#reviewBar').classList.toggle('hidden', !showReview);
+  if (showReview) {
+    $('#reviewAgain').classList.toggle('hidden', !isHost);
+    $('#reviewWait').classList.toggle('hidden', isHost);
+  }
+  const waiting = s.state === 'waiting' || (s.state === 'ended' && !reviewing && $('#resultModal').classList.contains('hidden'));
   $('#waitPanel').classList.toggle('hidden', !waiting);
   if (waiting) {
     const count = s.seats.filter(Boolean).length;
@@ -457,6 +480,11 @@ $('#playBtn').onclick = () => {
   hintIdx = -1;
 };
 $('#passBtn').onclick = () => { socket.emit('pass'); selected.clear(); renderHand(); renderControls(); };
+$('#clearSelBtn').onclick = () => {
+  selected.clear(); hintIdx = -1;
+  document.querySelectorAll('#hand .card.sel').forEach((c) => c.classList.remove('sel'));
+  sfx.deselect(); renderControls();
+};
 $('#sortBtn').onclick = () => {
   sortMode = sortMode === 'rank' ? 'suit' : 'rank';
   handOrder = sortHand(handOrder, sortMode);
@@ -488,8 +516,10 @@ $('#actions').addEventListener('pointerdown', (e) => {
   if (why) { toast(why); sfx.error(); }
 });
 $('#startBtn').onclick = () => socket.emit('start');
-$('#againBtn').onclick = () => { $('#resultModal').classList.add('hidden'); if (state.hostId === playerId) socket.emit('start'); else renderControls(); };
-$('#closeResult').onclick = () => { $('#resultModal').classList.add('hidden'); renderControls(); };
+$('#againBtn').onclick = () => { reviewing = false; $('#resultModal').classList.add('hidden'); if (state.hostId === playerId) socket.emit('start'); else renderControls(); };
+$('#closeResult').onclick = () => { reviewing = true; $('#resultModal').classList.add('hidden'); renderControls(); };
+$('#reopenResult').onclick = () => { $('#resultModal').classList.remove('hidden'); renderControls(); };
+$('#reviewAgain').onclick = () => { reviewing = false; socket.emit('start'); };
 $('#addBotBtn').onclick = () => socket.emit('addBot', {});
 $('#leaveBtn').onclick = () => {
   if (state && state.state === 'playing' && state.seats[state.mySeat]?.inGame && !confirm('Đang chơi dở, rời phòng thì bot sẽ đánh thay bạn. Rời nhé?')) return;
@@ -639,6 +669,7 @@ function showResults(rows) {
     d.innerHTML = `<span class="medal">${r.bad ? '🐷' : MEDALS[r.rank - 1]}</span><span class="who"><span class="nmx"></span><span class="note"></span></span><span class="delta ${r.delta >= 0 ? 'plus' : 'minus'}">${r.delta >= 0 ? '+' : ''}${r.delta} 🪙</span>`;
     d.querySelector('.nmx').textContent = p ? `${p.avatar} ${p.name}${r.seat === state.mySeat ? ' (bạn)' : ''}` : 'Người chơi';
     d.querySelector('.note').textContent = r.note || (r.cardsLeft.length ? `còn ${r.cardsLeft.length} lá` : '');
+    if (r.cardsLeft.length && r.seat !== state.mySeat) d.querySelector('.who').appendChild(miniCards(r.cardsLeft));
     box.appendChild(d);
     countUp(d.querySelector('.delta'), r.delta, 300 + i * 120, unitLabel());
   });
@@ -799,6 +830,13 @@ $('#copyLedger').onclick = async () => {
   try { await navigator.clipboard.writeText(t); toast('Đã sao chép sổ nợ 📋 dán vào Zalo/Messenger nha'); } catch { prompt('Sao chép sổ nợ:', t); }
 };
 document.querySelectorAll('.modal').forEach((m) => m.addEventListener('pointerdown', (e) => { if (e.target === m && m.id !== 'resultModal') m.classList.add('hidden'); }));
+
+function miniCards(ids) {
+  const d = document.createElement('div');
+  d.className = 'mini-cards';
+  [...ids].sort((a, b) => a - b).forEach((id) => d.appendChild(cardEl(id)));
+  return d;
+}
 
 function floatAmt(seat, text, plus) {
   const pos = relPos(seat);

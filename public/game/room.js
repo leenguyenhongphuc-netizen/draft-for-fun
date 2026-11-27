@@ -446,7 +446,9 @@ export class Room {
         coins: p.isBot ? p.botCoins : this.hooks.getCoins(p.id),
         cardCount: g && g.inGame[s] && this.state !== 'waiting' ? g.hands[s].length : null,
         passed: playing ? g.passed.has(s) : false,
-        rank: g && this.state !== 'waiting' && g.finished.includes(s) && !(g.bad || []).includes(s) ? g.finished.indexOf(s) + 1 : null,
+        rank: this.state === 'ended' && this.results
+          ? ((this.results.find((r) => r.seat === s) || {}).rank ?? null)
+          : g && this.state !== 'waiting' && g.finished.includes(s) && !(g.bad || []).includes(s) ? g.finished.indexOf(s) + 1 : null,
         bad: !!(g && this.state !== 'waiting' && (g.bad || []).includes(s)),
         debt: this.ledger.players[p.id] ? this.ledger.players[p.id].total : 0,
         inGame: g ? !!g.inGame[s] && this.state !== 'waiting' : false,
