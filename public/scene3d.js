@@ -143,8 +143,10 @@ function makeCharacter(emoji) {
 }
 
 export function createScene(canvas) {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // Điện thoại: giảm độ phân giải, bóng đổ và chạy 30 khung/giây cho mượt, đỡ nóng máy
+  const MOBILE = matchMedia('(pointer: coarse)').matches || window.innerWidth < 700;
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !MOBILE, alpha: false, powerPreference: MOBILE ? 'low-power' : 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, MOBILE ? 1.5 : 2));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -168,7 +170,7 @@ export function createScene(canvas) {
   const sun = new THREE.DirectionalLight(0xffffff, 1);
   sun.position.set(4, 10, 6);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(1024, 1024);
+  sun.shadow.mapSize.set(MOBILE ? 512 : 1024, MOBILE ? 512 : 1024);
   Object.assign(sun.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8, near: 1, far: 30 });
   sun.shadow.bias = -0.0005;
   scene.add(sun);
@@ -549,12 +551,43 @@ export function createScene(canvas) {
     mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
   });
 
+  // ---------- Hạt bay tung toé (chặt heo, sảnh dài, thắng…) ----------
+  const bursts = [];
+  function burst(emojis, count = 14, power = 1) {
+    for (let i = 0; i < count; i++) {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: emojiTexture(emojis[i % emojis.length]), transparent: true, depthWrite: false }));
+      const a = Math.random() * Math.PI * 2;
+      const r = (1.2 + Math.random() * 2.2) * power;
+      sp.position.set(0, 1.4, 0);
+      sp.userData = { v: new THREE.Vector3(Math.cos(a) * r, (3.5 + Math.random() * 3) * power, Math.sin(a) * r), life: 1.4 + Math.random() * 0.6, spin: (Math.random() - 0.5) * 6 };
+      sp.scale.setScalar(0.45 + Math.random() * 0.3);
+      scene.add(sp);
+      bursts.push(sp);
+    }
+  }
+  let lastT = 0, frameNo = 0;
+
   const camTarget = new THREE.Vector3();
   const camPos = new THREE.Vector3();
   let onFrame = null;
 
   function frame() {
+    requestAnimationFrame(frame);
+    frameNo++;
+    if (MOBILE && frameNo % 2) return;
+    if (document.hidden) return;
     const t = clock.getElapsedTime();
+    const dt = Math.min(0.1, t - lastT); lastT = t;
+    for (let i = bursts.length - 1; i >= 0; i--) {
+      const sp = bursts[i], u = sp.userData;
+      u.v.y -= 7 * dt;
+      sp.position.addScaledVector(u.v, dt);
+      if (sp.position.y < 1.15 && u.v.y < 0) { sp.position.y = 1.15; u.v.y *= -0.4; u.v.x *= 0.7; u.v.z *= 0.7; }
+      sp.material.rotation += u.spin * dt;
+      u.life -= dt;
+      sp.material.opacity = Math.min(1, u.life * 2);
+      if (u.life <= 0) { scene.remove(sp); sp.material.dispose(); bursts.splice(i, 1); }
+    }
     const aspect = camera.aspect;
     if (mode === 'lobby') {
       const a = t * 0.08;
@@ -589,7 +622,6 @@ export function createScene(canvas) {
     }
     renderer.render(scene, camera);
     if (onFrame) onFrame();
-    requestAnimationFrame(frame);
   }
 
   resize();
@@ -599,7 +631,7 @@ export function createScene(canvas) {
   return {
     setTheme(k) { if (THEMES[k] && k !== themeKey) { themeKey = k; build(); } },
     setMode(m) { mode = m; if (m === 'lobby') setSeats([null, null, null, null]); },
-    setSeats, hop, seatScreen, tableScreen,
+    setSeats, hop, seatScreen, tableScreen, burst,
     set onFrame(fn) { onFrame = fn; },
   };
 }

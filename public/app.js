@@ -1,6 +1,7 @@
 import { createScene, THEMES } from './scene3d.js';
 import { RANKS, SUITS, rankOf, suitOf, getCombo, canBeat, allPlays, sortHand, TWO } from './shared/rules.js';
 import { createNet } from './net.js';
+import * as audio from './audio.js';
 
 const $ = (s) => document.querySelector(s);
 const AVATARS = ['🐱', '🐶', '🐰', '🐼', '🦊', '🐸', '🐷', '🐹', '🐨', '🐯', '🐻', '🐧'];
@@ -25,33 +26,13 @@ let sortMode = 'rank';
 // ---------- 3D ----------
 const scene3d = createScene($('#bg3d'));
 
-// ---------- Âm thanh nhỏ xinh ----------
-let actx = null;
-function beep(notes, type = 'sine', dur = 0.09, vol = 0.12) {
-  if (muted) return;
-  try {
-    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
-    let t = actx.currentTime;
-    for (const f of notes) {
-      const o = actx.createOscillator(), g = actx.createGain();
-      o.type = type; o.frequency.value = f;
-      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur * 1.8);
-      o.connect(g).connect(actx.destination);
-      o.start(t); o.stop(t + dur * 2);
-      t += dur;
-    }
-  } catch { /* không có âm thanh */ }
-}
-const sfx = {
-  play: () => beep([660, 880], 'triangle', 0.06),
-  pass: () => beep([330, 260], 'sine', 0.08, 0.08),
-  turn: () => beep([784, 988, 1175], 'sine', 0.07, 0.1),
-  chop: () => beep([200, 150, 900, 1200], 'square', 0.07, 0.07),
-  win: () => beep([523, 659, 784, 1046, 1318], 'triangle', 0.1),
-  lose: () => beep([392, 330, 262], 'sine', 0.14),
-  pop: () => beep([1200], 'sine', 0.04, 0.06),
-  deal: () => beep([500, 600, 700, 800], 'triangle', 0.04, 0.05),
-};
+// ---------- Âm thanh ----------
+let musicOn = store.get('music', true);
+audio.setSfx(!muted);
+audio.setMusic(musicOn);
+// iPhone chỉ cho phát tiếng sau lần chạm đầu tiên
+['pointerdown', 'keydown'].forEach((ev) => window.addEventListener(ev, () => audio.unlock(), { passive: true }));
+const sfx = audio.sfx;
 
 // ---------- Socket ----------
 const socket = createNet(playerId);
@@ -116,11 +97,11 @@ function initLobby() {
     const b = document.createElement('button');
     b.className = 't-' + k + (k === pickedTheme ? ' sel' : '');
     b.textContent = t.label;
-    b.onclick = () => { pickedTheme = k; tp.querySelectorAll('button').forEach((x) => x.classList.remove('sel')); b.classList.add('sel'); scene3d.setTheme(k); sfx.pop(); };
+    b.onclick = () => { pickedTheme = k; tp.querySelectorAll('button').forEach((x) => x.classList.remove('sel')); b.classList.add('sel'); scene3d.setTheme(k); audio.setTheme(k); sfx.pop(); };
     tp.appendChild(b);
   });
   const ts = $('#themeSelect');
-  Object.entries(THEMES).forEach(([k, t]) => { const o = document.createElement('option'); o.value = k; o.textContent = t.label; ts.appendChild(o); });
+  Object.entries(THEMES).forEach(([k, t]) => { const o = document.createElement('option'); o.value = k; o.textContent = window.innerWidth < 560 ? t.label.split(' ')[0] : t.label; ts.appendChild(o); });
   ts.onchange = () => socket.emit('setTheme', { theme: ts.value });
 
   document.querySelectorAll('.tab').forEach((t) => (t.onclick = () => {
@@ -164,6 +145,7 @@ function showLobby() {
   $('#resultModal').classList.add('hidden');
   scene3d.setMode('lobby');
   scene3d.setTheme(pickedTheme);
+  audio.setTheme(pickedTheme);
   socket.emit('listRooms');
 }
 
@@ -195,6 +177,7 @@ function onState(prev, s) {
   $('#themeSelect').value = s.theme;
   $('#themeSelect').disabled = s.hostId !== playerId;
   scene3d.setTheme(s.theme);
+  audio.setTheme(s.theme);
   if (new URLSearchParams(location.search).get('room') !== s.code) history.replaceState(null, '', pageUrl(s.code));
 
   const me = s.seats[s.mySeat];
@@ -285,57 +268,97 @@ function statusOf(p) {
 }
 
 // Đặt nhãn người chơi theo vị trí nhân vật 3D
+const placeCache = new WeakMap();
+function place(el, x, y) {
+  const prev = placeCache.get(el);
+  if (prev && Math.abs(prev[0] - x) < 0.5 && Math.abs(prev[1] - y) < 0.5) return;
+  placeCache.set(el, [x, y]);
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+}
+let lastTick = 0;
 scene3d.onFrame = () => {
   if (!state) return;
-  document.querySelectorAll('#seats .seat').forEach((el) => {
-    const pos = +el.dataset.pos;
-    const p = scene3d.seatScreen(pos);
-    const margin = 60;
-    el.style.left = Math.max(margin, Math.min(window.innerWidth - margin, p.x)) + 'px';
-    el.style.top = Math.max(80, Math.min(window.innerHeight - 200, p.y)) + 'px';
-  });
+  const seats = $('#seats').children;
+  for (const el of seats) {
+    const p = scene3d.seatScreen(+el.dataset.pos);
+    place(el, Math.max(60, Math.min(window.innerWidth - 60, p.x)), Math.max(84, Math.min(window.innerHeight - 220, p.y)));
+  }
   const c = scene3d.tableScreen();
-  const pile = $('#centerPile');
-  pile.style.left = c.x + 'px';
-  pile.style.top = c.y + 'px';
-  // Thanh thời gian
+  place($('#centerPile'), c.x, c.y);
+  // Thanh thời gian + tiếng tích tắc khi sắp hết giờ
   if (state.state === 'playing' && state.deadline) {
     const left = Math.max(0, state.deadline - (Date.now() + clockOffset));
-    const pct = (left / 25000) * 100;
-    document.querySelectorAll('.seat.active .timer').forEach((t) => (t.style.width = pct + '%'));
-  }
+    const t = document.querySelector('.seat.active .timer');
+    if (t) t.style.transform = `scaleX(${left / 25000})`;
+    const mine = state.turn === state.mySeat;
+    const sec = Math.ceil(left / 1000);
+    document.body.classList.toggle('hurry', mine && sec <= 6 && left > 0);
+    if (mine && sec <= 5 && sec > 0 && sec !== lastTick) { lastTick = sec; sfx.tick(); }
+  } else document.body.classList.remove('hurry');
 };
 
-let dragSel = null;
+// Bài trên tay. Điện thoại dọc: xếp 2 hàng để lá bài to, dễ chạm.
 function renderHand(deal) {
   const el = $('#hand');
   el.innerHTML = '';
   const n = handOrder.length;
-  // Co bài lại cho vừa màn hình điện thoại
-  const cw = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--cw')) || 60;
-  const avail = Math.min(window.innerWidth - 24, 900);
-  const overlap = n > 1 ? Math.min(cw * 0.42, Math.max(cw * 0.15, cw - (avail - cw) / (n - 1))) : 0;
-  handOrder.forEach((id, i) => {
-    const c = cardEl(id);
-    if (selected.has(id)) c.classList.add('sel');
-    if (deal) { c.classList.add('deal'); c.style.animationDelay = i * 0.04 + 's'; }
-    if (i > 0) c.style.marginLeft = -overlap + 'px';
-    c.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      const on = !selected.has(id);
-      dragSel = on;
-      toggle(id, on, c);
+  const W = Math.min(window.innerWidth - 16, 980);
+  const twoRows = n > 7 && window.innerWidth < 640;
+  const perRow = twoRows ? Math.ceil(n / 2) : n;
+  // Lá bài to nhất có thể mà vẫn vừa
+  const cw = Math.max(40, Math.min(twoRows ? 64 : 76, W / (twoRows ? Math.max(4, perRow * 0.72) : Math.max(5, n * 0.58))));
+  el.style.setProperty('--hcw', cw + 'px');
+  el.classList.toggle('two-rows', twoRows);
+  const rows = twoRows ? [handOrder.slice(0, perRow), handOrder.slice(perRow)] : [handOrder];
+  let k = 0;
+  rows.forEach((row) => {
+    const r = document.createElement('div');
+    r.className = 'hand-row';
+    const m = row.length;
+    const overlap = m > 1 ? Math.max(0, Math.min(cw * 0.45, cw - (W - cw) / (m - 1))) : 0;
+    row.forEach((id, i) => {
+      const c = cardEl(id);
+      if (selected.has(id)) c.classList.add('sel');
+      if (deal) { c.classList.add('deal'); c.style.animationDelay = (k++) * 0.035 + 's'; }
+      if (i > 0) c.style.marginLeft = -overlap + 'px';
+      r.appendChild(c);
     });
-    c.addEventListener('pointerenter', () => { if (dragSel != null) toggle(id, dragSel, c); });
-    el.appendChild(c);
+    el.appendChild(r);
   });
 }
-window.addEventListener('pointerup', () => (dragSel = null));
+
+// Chạm / kéo để chọn bài: một bộ xử lý cho cả tay bài (không giật, không cuộn trang)
+let drag = null;
+const cardAt = (x, y) => { const t = document.elementFromPoint(x, y); return t && t.closest('#hand .card'); };
+$('#hand').addEventListener('pointerdown', (e) => {
+  const c = e.target.closest('.card');
+  if (!c) return;
+  e.preventDefault();
+  const id = +c.dataset.id;
+  const on = !selected.has(id);
+  drag = { on, seen: new Set([id]), id: e.pointerId };
+  toggle(id, on, c);
+});
+$('#hand').addEventListener('pointermove', (e) => {
+  if (!drag || drag.id !== e.pointerId) return;
+  const c = cardAt(e.clientX, e.clientY);
+  if (!c) return;
+  const id = +c.dataset.id;
+  if (drag.seen.has(id)) return;
+  drag.seen.add(id);
+  toggle(id, drag.on, c);
+});
+['pointerup', 'pointercancel'].forEach((ev) => window.addEventListener(ev, () => (drag = null)));
+$('#hand').addEventListener('contextmenu', (e) => e.preventDefault());
+
+let controlsQueued = false;
 function toggle(id, on, el) {
   if (on) selected.add(id); else selected.delete(id);
   el.classList.toggle('sel', on);
-  sfx.pop();
-  renderControls();
+  (on ? sfx.select : sfx.deselect)();
+  if (navigator.vibrate) navigator.vibrate(8);
+  if (!controlsQueued) { controlsQueued = true; requestAnimationFrame(() => { controlsQueued = false; renderControls(); }); }
 }
 
 function renderPile() {
@@ -349,11 +372,22 @@ function renderPile() {
   if (!s.lastPlay) return;
   const who = s.seats[s.lastPlay.seat];
   $('#pileLabel').textContent = `${who ? who.avatar + ' ' + who.name : ''} · ${s.lastPlay.name}`;
+  // Bay từ chỗ người đánh vào giữa bàn
+  const pos = relPos(s.lastPlay.seat);
+  const from = pos === 0 ? { x: window.innerWidth / 2, y: window.innerHeight - 120 } : scene3d.seatScreen(pos);
+  const to = scene3d.tableScreen();
   s.lastPlay.cards.forEach((id, i) => {
     const c = cardEl(id);
-    c.style.animationDelay = i * 0.03 + 's';
-    c.style.rotate = ((i - (s.lastPlay.cards.length - 1) / 2) * 4) + 'deg';
+    const rot = (i - (s.lastPlay.cards.length - 1) / 2) * 4;
     pile.appendChild(c);
+    if (c.animate) {
+      c.animate([
+        { transform: `translate(${from.x - to.x}px, ${from.y - to.y}px) scale(0.5) rotate(${rot - 90}deg)`, opacity: 0.3 },
+        { transform: `translate(0, -14px) scale(1.12) rotate(${rot}deg)`, opacity: 1, offset: 0.75 },
+        { transform: `rotate(${rot}deg)`, opacity: 1 },
+      ], { duration: 380, delay: i * 35, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'backwards' });
+    }
+    c.style.transform = `rotate(${rot}deg)`;
   });
 }
 
@@ -372,6 +406,7 @@ function renderControls() {
   $('#passBtn').disabled = !mine || !s.lastPlay;
   $('#hintBtn').disabled = !mine;
 
+  $('#handArea').classList.toggle('turn-on', mine);
   const banner = $('#turnBanner');
   banner.classList.toggle('mine', mine);
   if (!playing) banner.textContent = '';
@@ -398,6 +433,7 @@ function renderControls() {
 // ---------- Hành động ----------
 $('#playBtn').onclick = () => {
   if (!selected.size) return;
+  sfx.pop();
   socket.emit('play', { cards: [...selected] });
   selected.clear();
   hintIdx = -1;
@@ -417,6 +453,20 @@ $('#hintBtn').onclick = () => {
   selected = new Set(plays[hintIdx].cards);
   renderHand(); renderControls();
 };
+// Bấm vào nút đang mờ thì giải thích lý do (đỡ bối rối)
+$('#actions').addEventListener('pointerdown', (e) => {
+  // nút bị tắt không nhận chạm (pointer-events: none) nên tự tìm nút dưới ngón tay
+  const b = [...$('#actions').querySelectorAll('button')].find((x) => { const r = x.getBoundingClientRect(); return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom; });
+  if (!b || !b.disabled || !state) return;
+  const mine = state.turn === state.mySeat;
+  let why = '';
+  if (!mine) why = 'Chưa tới lượt bạn nha ⏳';
+  else if (b.id === 'playBtn') {
+    const combo = getCombo([...selected]);
+    why = !selected.size ? 'Chạm vào lá bài để chọn trước nha 👆' : !combo ? 'Bộ bài này không hợp lệ 🤔' : 'Bộ này chưa đè được 😅';
+  } else if (b.id === 'passBtn') why = 'Bạn đang được đánh tự do, phải đánh 1 bộ nha';
+  if (why) { toast(why); sfx.error(); }
+});
 $('#startBtn').onclick = () => socket.emit('start');
 $('#againBtn').onclick = () => { $('#resultModal').classList.add('hidden'); if (state.hostId === playerId) socket.emit('start'); else renderControls(); };
 $('#closeResult').onclick = () => { $('#resultModal').classList.add('hidden'); renderControls(); };
@@ -430,8 +480,13 @@ $('#copyCode').onclick = async () => {
   try { await navigator.clipboard.writeText(link); toast('Đã sao chép link mời 💌'); }
   catch { prompt('Gửi link này cho bạn bè:', link); }
 };
-$('#muteBtn').onclick = () => { muted = !muted; store.set('muted', muted); $('#muteBtn').textContent = muted ? '🔇' : '🔊'; };
-$('#muteBtn').textContent = muted ? '🔇' : '🔊';
+function syncSoundBtns() {
+  document.querySelectorAll('.music-btn').forEach((b) => { b.classList.toggle('off', !musicOn); b.title = musicOn ? 'Tắt nhạc' : 'Bật nhạc'; });
+  document.querySelectorAll('.sfx-btn').forEach((b) => { b.textContent = muted ? '🔇' : '🔊'; b.title = muted ? 'Bật tiếng' : 'Tắt tiếng'; });
+}
+document.querySelectorAll('.music-btn').forEach((b) => (b.onclick = () => { musicOn = !musicOn; store.set('music', musicOn); audio.unlock(); audio.setMusic(musicOn); syncSoundBtns(); toast(musicOn ? 'Bật nhạc 🎵' : 'Tắt nhạc'); }));
+document.querySelectorAll('.sfx-btn').forEach((b) => (b.onclick = () => { muted = !muted; store.set('muted', muted); audio.setSfx(!muted); syncSoundBtns(); sfx.pop(); }));
+syncSoundBtns();
 $('#chatToggle').onclick = () => { $('#chatBox').classList.toggle('hidden'); if (!$('#chatBox').classList.contains('hidden')) $('#chatInput').focus(); };
 $('#chatForm').onsubmit = (e) => {
   e.preventDefault();
@@ -451,7 +506,8 @@ document.addEventListener('keydown', (e) => {
   if (e.key === ' ' && !$('#passBtn').disabled) { e.preventDefault(); $('#passBtn').click(); }
   if (e.key === 'h') $('#hintBtn').click();
 });
-window.addEventListener('resize', () => state && renderHand());
+let resizeT = null;
+window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => state && renderHand(), 150); });
 
 // ---------- Sự kiện ----------
 function seatEl(seat) {
@@ -475,29 +531,44 @@ function onEvent(ev) {
     case 'deal':
       sfx.deal(); handOrder = []; selected.clear();
       bigText('Chia bài! 🃏');
+      scene3d.burst(['🃏', '✨'], 10, 0.7);
       break;
-    case 'play':
+    case 'play': {
+      const n = ev.cards.length;
+      const isPig = ev.name === 'Heo' || ev.name === 'Đôi heo';
+      const big = /Sảnh ([6-9]|1\d)|đôi thông|Tứ quý/.test(ev.name) || (ev.name.startsWith('Sảnh') && n >= 6);
       if (ev.chop) {
         sfx.chop();
+        setTimeout(() => sfx.pig(), 350);
         bigText(`CHẶT! ${ev.name} 🔪`, true);
+        shake(); flash();
+        scene3d.burst(['🐷', '💥', '⭐', '🔪'], 22, 1.3);
         sysChat(`${nameOf(ev.seat)} chặt ${nameOf(ev.victim)} bằng ${ev.name} 🔪`);
-      } else sfx.play();
-      if (ev.name === 'Heo' || ev.name === 'Đôi heo') bubble(ev.seat, ev.name + '! 🐷');
+        bubble(ev.victim, '😱');
+      } else {
+        sfx.play(n);
+        if (isPig) { setTimeout(() => sfx.pig(), 120); bubble(ev.seat, ev.name + '! 🐷'); scene3d.burst(['🐷', '💗'], 10, 0.9); }
+        else if (big) { sfx.bigCombo(); comboText(ev.name); scene3d.burst(['✨', '⭐', '🌟'], 16, 1); }
+      }
       scene3d.hop(pos, 1);
       break;
+    }
     case 'pass':
       sfx.pass(); bubble(ev.seat, 'Bỏ lượt 🙅');
       break;
     case 'newRound':
+      sfx.newRound();
       if (ev.seat === state.mySeat) toast('Vòng mới — bạn được đánh tự do ✨');
       break;
     case 'out':
       sysChat(`${nameOf(ev.seat)} về ${RANK_TXT[ev.rank - 1]} ${MEDALS[ev.rank - 1]}`);
       if (ev.seat === state.mySeat) { sfx.win(); bigText(`Về ${RANK_TXT[ev.rank - 1]}! ${MEDALS[ev.rank - 1]}`, true); if (ev.rank === 1) confetti(); }
+      if (ev.rank === 1) scene3d.burst(['🏆', '⭐', '🎉', '💖'], 20, 1.1);
       scene3d.hop(pos, 1.4);
       break;
     case 'instant':
       bigText(`TỚI TRẮNG! ${ev.label} 🎆`, true);
+      sfx.win(); shake(); scene3d.burst(['🎆', '🌟', '💰', '🎉'], 30, 1.4);
       sysChat(`${nameOf(ev.seat)} tới trắng với ${ev.label}!`);
       confetti();
       break;
@@ -519,6 +590,7 @@ function onEvent(ev) {
     }
     case 'emote':
       bubble(ev.seat, ev.emoji, true);
+      sfx.pop();
       scene3d.hop(pos, 0.6);
       break;
   }
@@ -538,6 +610,7 @@ function showResults(rows) {
     d.querySelector('.nmx').textContent = p ? `${p.avatar} ${p.name}${r.seat === state.mySeat ? ' (bạn)' : ''}` : 'Người chơi';
     d.querySelector('.note').textContent = r.note || (r.cardsLeft.length ? `còn ${r.cardsLeft.length} lá` : '');
     box.appendChild(d);
+    countUp(d.querySelector('.delta'), r.delta, 300 + i * 120);
   });
   $('#againBtn').textContent = state.hostId === playerId ? 'Ván mới 🔁' : 'Đóng';
   $('#resultModal').classList.remove('hidden');
@@ -552,6 +625,37 @@ function bigText(text, gold = false) {
   d.textContent = text;
   $('#fx').appendChild(d);
   setTimeout(() => d.remove(), 1700);
+}
+function comboText(name) {
+  const d = document.createElement('div');
+  d.className = 'combo-text';
+  d.textContent = name + '! ✨';
+  $('#fx').appendChild(d);
+  setTimeout(() => d.remove(), 1300);
+}
+function shake() {
+  const g = $('#game');
+  g.classList.remove('shake'); void g.offsetWidth; g.classList.add('shake');
+  if (navigator.vibrate) navigator.vibrate([30, 40, 60]);
+}
+function flash() {
+  const d = document.createElement('div');
+  d.className = 'flash';
+  $('#fx').appendChild(d);
+  setTimeout(() => d.remove(), 500);
+}
+function countUp(el, target, delay) {
+  const sign = target >= 0 ? '+' : '';
+  el.textContent = sign + '0 🪙';
+  setTimeout(() => {
+    const t0 = performance.now(), dur = 600;
+    const stepFn = (t) => {
+      const k = Math.min(1, (t - t0) / dur);
+      el.textContent = sign + Math.round(target * k) + ' 🪙';
+      if (k < 1) requestAnimationFrame(stepFn); else if (target > 0) sfx.coin();
+    };
+    requestAnimationFrame(stepFn);
+  }, delay);
 }
 function confetti() {
   const pieces = ['🎉', '🎊', '💖', '⭐', '🌸', '🍬', '🐷'];
