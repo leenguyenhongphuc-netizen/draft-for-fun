@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <title>Tiến Lên Cute</title>
+  <meta name="theme-color" content="#ffd9e8" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐷</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <script type="importmap">{ "imports": { "three": "/vendor/three/three.module.min.js" } }</script>
+</head>
+<body>
+  <canvas id="bg3d"></canvas>
+
+  <!-- ============ SẢNH ============ -->
+  <section id="lobby" class="screen">
+    <div class="lobby-card">
+      <h1 class="logo">Tiến Lên <span>Cute</span> <i>🐷</i></h1>
+      <p class="sub">Tiến lên miền Nam · chơi online cùng bạn bè</p>
+
+      <div class="profile">
+        <div class="avatar-big" id="myAvatarBig">🐱</div>
+        <div class="profile-fields">
+          <input id="nameInput" maxlength="16" placeholder="Tên của bạn" autocomplete="off" />
+          <div class="coins">🪙 <b id="myCoins">1000</b> xu</div>
+        </div>
+      </div>
+      <div class="avatar-grid" id="avatarGrid"></div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="create">✨ Tạo phòng</button>
+        <button class="tab" data-tab="join">🚪 Vào phòng</button>
+      </div>
+
+      <div class="tab-body" id="tab-create">
+        <input id="roomName" maxlength="24" placeholder="Tên phòng (tuỳ chọn)" autocomplete="off" />
+        <div class="theme-pick" id="themePick"></div>
+        <label class="row-check"><input type="checkbox" id="roomPublic" checked /> Hiện phòng trong danh sách</label>
+        <label class="row-check"><input type="checkbox" id="roomBots" /> Thêm sẵn 3 bot để chơi ngay</label>
+        <button class="btn big pink" id="createBtn">Tạo phòng mới 🎉</button>
+      </div>
+
+      <div class="tab-body hidden" id="tab-join">
+        <div class="join-row">
+          <input id="codeInput" maxlength="4" placeholder="MÃ PHÒNG" autocomplete="off" />
+          <button class="btn mint" id="joinBtn">Vào</button>
+        </div>
+        <div class="room-list-head">Phòng đang mở <button class="mini" id="refreshRooms">↻</button></div>
+        <div class="room-list" id="roomList"></div>
+      </div>
+
+      <details class="howto">
+        <summary>📖 Luật chơi tóm tắt</summary>
+        <ul>
+          <li>Bài từ nhỏ đến lớn: <b>3 → 4 → … → K → A → 2</b>. Chất: ♠ &lt; ♣ &lt; ♦ &lt; ♥.</li>
+          <li>Bộ hợp lệ: rác, đôi, sám cô, tứ quý, sảnh (≥ 3 lá liên tiếp, không có 2), đôi thông (≥ 3 đôi liên tiếp).</li>
+          <li>Phải đánh cùng loại, cùng số lá và lớn hơn. Bỏ lượt thì phải chờ vòng mới.</li>
+          <li><b>Chặt heo:</b> 3 đôi thông hoặc tứ quý chặt 1 heo; 4 đôi thông chặt đôi heo, tứ quý và 3 đôi thông.</li>
+          <li><b>Tới trắng:</b> tứ quý heo, sảnh rồng, 6 đôi, 5 đôi thông.</li>
+          <li>Ván đầu: ai cầm lá nhỏ nhất (3♠) đi trước. Ván sau: người thắng đi trước.</li>
+          <li>Về chót còn nguyên 13 lá là <b>cóng</b> (thua gấp đôi); còn heo trong tay bị <b>thối heo</b>.</li>
+        </ul>
+      </details>
+    </div>
+  </section>
+
+  <!-- ============ PHÒNG CHƠI ============ -->
+  <section id="game" class="screen hidden">
+    <header class="topbar">
+      <button class="pill" id="leaveBtn" title="Rời phòng">⬅</button>
+      <div class="room-info">
+        <div class="room-name" id="roomTitle">Phòng</div>
+        <button class="code-chip" id="copyCode" title="Bấm để sao chép link mời">Mã: <b id="roomCode">----</b> 🔗</button>
+      </div>
+      <div class="top-actions">
+        <select id="themeSelect" class="pill" title="Đổi trang trí phòng"></select>
+        <button class="pill" id="muteBtn" title="Âm thanh">🔊</button>
+        <button class="pill" id="chatToggle" title="Trò chuyện">💬</button>
+      </div>
+    </header>
+
+    <div id="seats"></div>
+
+    <div id="centerPile">
+      <div class="pile-label" id="pileLabel"></div>
+      <div class="pile-cards" id="pileCards"></div>
+    </div>
+
+    <div id="waitPanel" class="wait-panel hidden">
+      <div class="wait-title" id="waitTitle">Đang chờ người chơi…</div>
+      <div class="wait-sub" id="waitSub">Gửi mã phòng cho bạn bè nhé!</div>
+      <div class="wait-actions">
+        <button class="btn mint" id="addBotBtn">🤖 Thêm bot</button>
+        <button class="btn big pink" id="startBtn">Bắt đầu 🃏</button>
+      </div>
+    </div>
+
+    <div id="handArea">
+      <div class="me-row"><div id="meTag"></div><div class="turn-banner" id="turnBanner"></div></div>
+      <div class="hand" id="hand"></div>
+      <div class="actions" id="actions">
+        <button class="btn soft" id="sortBtn">🔀 Xếp</button>
+        <button class="btn soft" id="hintBtn">💡 Gợi ý</button>
+        <button class="btn grey" id="passBtn">🙅 Bỏ lượt</button>
+        <button class="btn big pink" id="playBtn">Đánh! ✨</button>
+      </div>
+    </div>
+
+    <div class="emote-bar" id="emoteBar"></div>
+
+    <aside class="chat hidden" id="chatBox">
+      <div class="chat-log" id="chatLog"></div>
+      <form class="chat-form" id="chatForm">
+        <input id="chatInput" maxlength="120" placeholder="Nhắn gì đó dễ thương…" autocomplete="off" />
+        <button class="btn mint">Gửi</button>
+      </form>
+    </aside>
+
+    <div class="modal hidden" id="resultModal">
+      <div class="modal-card">
+        <div class="modal-title" id="resultTitle">Kết thúc ván!</div>
+        <div class="result-rows" id="resultRows"></div>
+        <div class="modal-actions">
+          <button class="btn soft" id="closeResult">Xem bàn</button>
+          <button class="btn big pink" id="againBtn">Ván mới 🔁</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="fx"></div>
+  <div id="toast"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
