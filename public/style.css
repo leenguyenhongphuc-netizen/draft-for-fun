@@ -323,12 +323,16 @@ body.hurry .turn-banner.mine { background: #ff8f8f; color: #fff; animation: puls
 
 @media (max-width: 420px) {
   #themeSelect { display: none; }
-  /* 3 nút nhỏ: biểu tượng ở trên, chữ nhỏ ở dưới -> không bao giờ tràn */
-  .actions .btn:not(.big) { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 12.5px; line-height: 1.1; padding: 4px 2px; white-space: nowrap; overflow: hidden; }
-  .actions .btn:not(.big) i { display: block; font-size: 19px; line-height: 1; }
+}
+/* Mọi điện thoại (kể cả iPhone Pro Max ~440px): 3 nút nhỏ xếp biểu tượng trên, chữ dưới */
+@media (max-width: 640px) {
+  .actions .btn:not(.big) { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 13px; line-height: 1.1; padding: 4px 2px; white-space: nowrap; }
+  .actions .btn:not(.big) i { display: block; font-size: 20px; line-height: 1; }
   .actions .btn.big i { display: none; }
   .actions .btn.big { font-size: 19px; }
 }
+/* Chốt chặn: chữ không bao giờ tràn khỏi nút */
+.actions .btn { min-width: 0; overflow: hidden; text-overflow: clip; }
 
 @media (max-height: 760px) and (max-width: 560px) {
   #meTag .tag { padding: 2px 10px; }
