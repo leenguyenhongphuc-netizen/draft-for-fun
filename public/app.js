@@ -5,6 +5,7 @@ import {
 } from './shared/rules.js';
 import { createNet } from './net.js';
 import * as audio from './audio.js';
+import * as fx from './fx.js';
 
 const $ = (s) => document.querySelector(s);
 const AVATARS = ['🐱', '🐶', '🐰', '🐼', '🦊', '🐸', '🐷', '🐹', '🐨', '🐯', '🐻', '🐧'];
@@ -71,7 +72,8 @@ socket.on('state', (s) => {
   if (!prev) showGame();
   onState(prev, s);
 });
-socket.on('event', onEvent);
+socket.on("event", onEvent);
+window.__tlcEvent = (ev) => onEvent(ev); // dùng để thử hiệu ứng
 
 function randomName() {
   const n = ['Mochi', 'Bánh Bao', 'Kẹo Dẻo', 'Trà Sữa', 'Bông Gòn', 'Su Kem', 'Bắp Rang'][Math.floor(Math.random() * 7)];
@@ -586,23 +588,55 @@ function onEvent(ev) {
     case 'play': {
       const n = ev.cards.length;
       const isPig = ev.name === 'Heo' || ev.name === 'Đôi heo';
-      const big = /Sảnh ([6-9]|1\d)|đôi thông|Tứ quý/.test(ev.name) || (ev.name.startsWith('Sảnh') && n >= 6);
+      const prevPig = ev.prev === 'Heo' || ev.prev === 'Đôi heo';
+      const isSeq = ev.type === 'pairseq';
+      const isQuad = ev.type === 'quad';
+      const bigStraight = ev.type === 'straight' && ev.len >= 6;
+      const table = scene3d.tableScreen();
       if (ev.chop) {
-        sfx.chop();
-        setTimeout(() => sfx.pig(), 350);
-        bigText(`CHẶT! ${ev.name} 🔪`, true);
-        shake(); flash();
-        scene3d.burst(['🐷', '💥', '⭐', '🔪'], 22, 1.3);
-        sysChat(`${nameOf(ev.seat)} chặt ${nameOf(ev.victim)} bằng ${ev.name} 🔪` + (ev.chopParts ? ` (+${fmtAmt(ev.chopParts * ev.unit.mult, ev.unit.label, false)})` : ''));
+        // ⚡ Chặt: trời tối, sét đánh vào người bị chặt, heo quay
+        const vpos = relPos(ev.victim);
+        const target = vpos === 0 ? { x: window.innerWidth / 2, y: window.innerHeight - 260 } : scene3d.seatScreen(vpos);
+        const chain = ev.chain || 1;
+        if (isQuad) fx.quadSlam(table, ev.cards.map(cardEl));
+        else if (isSeq) fx.train(ev.len);
+        setTimeout(() => {
+          fx.lightning(target, 1 + chain);
+          sfx.thunder(Math.min(1.5, 0.8 + chain * 0.3));
+          scene3d.flashLights(0xfff3a0, 0.8);
+          scene3d.zap(vpos);
+          shake();
+          if (prevPig) { setTimeout(() => sfx.pig(), 300); fx.roastPig(target); }
+          if (chain >= 2) { fx.chainText(chain); scene3d.burst(['🔥', '💥', '⚡'], 26, 1.5); }
+          else scene3d.burst(['⚡', '💥', '⭐', '🐷'], 22, 1.3);
+        }, isQuad ? 650 : isSeq ? 500 : 0);
+        sysChat(`${nameOf(ev.seat)} chặt ${nameOf(ev.victim)} bằng ${ev.name} 🔪` + (chain >= 2 ? ` (chặt chồng ×${chain}!)` : '') + (ev.chopParts ? ` (+${fmtAmt(ev.chopParts * ev.unit.mult, ev.unit.label, false)})` : ''));
         bubble(ev.victim, '😱');
         if (ev.chopParts) {
           const amt = ev.chopParts * ev.unit.mult;
-          setTimeout(() => { floatAmt(ev.seat, '+' + fmtAmt(amt, ev.unit.label, false), true); floatAmt(ev.victim, '−' + fmtAmt(amt, ev.unit.label, false), false); sfx.coin(); }, 500);
+          setTimeout(() => { floatAmt(ev.seat, '+' + fmtAmt(amt, ev.unit.label, false), true); floatAmt(ev.victim, '−' + fmtAmt(amt, ev.unit.label, false), false); sfx.coin(); }, 1300);
         }
+      } else if (isPig && prevPig) {
+        // 🐷💥🐷 Đè heo lên heo
+        sfx.play(n); fx.pigBump(table); sfx.pigRun(2); setTimeout(() => sfx.bump(), 480);
+        setTimeout(() => shake(), 480);
+        bubble(ev.seat, 'Đè heo! 🐷');
+      } else if (isPig) {
+        // 🐷 Heo chạy ngang màn hình
+        sfx.play(n); fx.pigRun(n, table.y - 40); sfx.pigRun(n);
+        bubble(ev.seat, ev.name + '! 🐷');
+        scene3d.burst(['🐷', '💗'], 10, 0.9);
+      } else if (isQuad) {
+        // 💣 Tứ quý: 4 lá đập xuống + con dấu
+        fx.quadSlam(table, ev.cards.map(cardEl)); sfx.stamp();
+        setTimeout(() => { shake(); scene3d.flashLights(0xffd45e, 0.5); scene3d.burst(['💥', '⭐', '🌟'], 20, 1.2); }, 560);
+      } else if (isSeq) {
+        // 🚂 Đôi thông: đoàn tàu chở bài
+        sfx.play(n); fx.train(ev.len); sfx.train();
+        scene3d.burst(['🃏', '✨'], 14, 1);
       } else {
         sfx.play(n);
-        if (isPig) { setTimeout(() => sfx.pig(), 120); bubble(ev.seat, ev.name + '! 🐷'); scene3d.burst(['🐷', '💗'], 10, 0.9); }
-        else if (big) { sfx.bigCombo(); comboText(ev.name); scene3d.burst(['✨', '⭐', '🌟'], 16, 1); }
+        if (bigStraight) { sfx.bigCombo(); comboText(ev.name); scene3d.burst(['✨', '⭐', '🌟'], 16, 1); }
       }
       scene3d.hop(pos, 1);
       break;

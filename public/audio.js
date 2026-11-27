@@ -246,6 +246,44 @@ export const sfx = {
     [48, 55, 60].forEach((n) => tone(sfxBus, midi(n), t + 0.4, 0.9, { type: 'triangle', vol: 0.12, release: 1.2 }));
   },
   lose() { if (!ok()) return; const t = now(); [67, 66, 65, 64].forEach((n, i) => tone(sfxBus, midi(n), t + i * 0.22, 0.25, { type: 'triangle', vol: 0.09, glide: i === 3 ? 0.9 : 0, release: i === 3 ? 0.8 : 0.3 })); },
+  thunder(power = 1) {
+    if (!ok()) return;
+    const t = now();
+    noise(sfxBus, t, 0.12, { vol: 0.5 * power, freq: 6000, type: 'highpass' });           // tiếng nổ "tạch"
+    noise(sfxBus, t + 0.05, 1.6, { vol: 0.45 * power, freq: 900, type: 'lowpass', sweep: 80 }); // sấm rền
+    tone(sfxBus, 55, t + 0.05, 1.2, { type: 'sine', vol: 0.35 * power, glide: 0.6 });
+  },
+  pigRun(n = 1) {
+    if (!ok()) return;
+    const t = now();
+    for (let i = 0; i < 8; i++) noise(sfxBus, t + i * 0.13, 0.05, { vol: 0.12, freq: 600, type: 'bandpass', q: 3 }); // lộc cộc
+    for (let k = 0; k < n; k++) {
+      tone(sfxBus, 460 + k * 60, t + 0.15 + k * 0.25, 0.14, { type: 'sawtooth', vol: 0.07, glide: 1.6, cutoff: 1800 });
+      tone(sfxBus, 560 + k * 60, t + 0.32 + k * 0.25, 0.16, { type: 'sawtooth', vol: 0.07, glide: 1.7, cutoff: 1900 });
+    }
+  },
+  bump() {
+    if (!ok()) return;
+    const t = now();
+    tone(sfxBus, 160, t, 0.25, { type: 'sine', vol: 0.4, glide: 0.4 });
+    noise(sfxBus, t, 0.18, { vol: 0.3, freq: 1200, type: 'bandpass' });
+    tone(sfxBus, 900, t + 0.05, 0.3, { type: 'square', vol: 0.04, glide: 0.5, cutoff: 2000 });
+  },
+  train() {
+    if (!ok()) return;
+    const t = now();
+    // còi "tu tu"
+    [0, 0.35].forEach((d) => { tone(sfxBus, 587, t + d, 0.28, { type: 'square', vol: 0.05, cutoff: 1800 }); tone(sfxBus, 740, t + d, 0.28, { type: 'square', vol: 0.04, cutoff: 1800 }); });
+    for (let i = 0; i < 10; i++) noise(sfxBus, t + 0.2 + i * 0.12, 0.08, { vol: 0.12 + (i % 2) * 0.06, freq: 500, type: 'bandpass', q: 1.5 }); // xình xịch
+  },
+  stamp() {
+    if (!ok()) return;
+    const t = now();
+    [0, 0.12, 0.24, 0.36].forEach((d) => { tone(sfxBus, 110, t + d, 0.15, { type: 'sine', vol: 0.3, glide: 0.5 }); noise(sfxBus, t + d, 0.08, { vol: 0.2, freq: 1500, type: 'bandpass' }); });
+    tone(sfxBus, 70, t + 0.55, 0.9, { type: 'sine', vol: 0.5, glide: 0.5 });
+    noise(sfxBus, t + 0.55, 0.6, { vol: 0.3, freq: 400, type: 'lowpass', sweep: 60 });
+    [72, 76, 79, 84].forEach((n, i) => tone(sfxBus, midi(n), t + 0.75 + i * 0.07, 0.2, { type: 'triangle', vol: 0.07, release: 0.35 }));
+  },
   pop() { if (!ok()) return; tone(sfxBus, 700, now(), 0.08, { vol: 0.08, glide: 2.2 }); },
   coin() { if (!ok()) return; const t = now(); tone(sfxBus, midi(83), t, 0.06, { type: 'square', vol: 0.04, cutoff: 4000 }); tone(sfxBus, midi(88), t + 0.07, 0.2, { type: 'square', vol: 0.04, cutoff: 4000, release: 0.3 }); },
   error() { if (!ok()) return; const t = now(); tone(sfxBus, 220, t, 0.1, { type: 'square', vol: 0.04, cutoff: 1200 }); tone(sfxBus, 180, t + 0.1, 0.15, { type: 'square', vol: 0.04, cutoff: 1200 }); },

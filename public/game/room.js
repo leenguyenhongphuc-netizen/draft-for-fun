@@ -261,10 +261,12 @@ export class Room {
     }
     g.hands[seat] = hand.filter((c) => !cards.includes(c));
     const victim = chop ? g.lastPlay.seat : null;
-    g.lastPlay = { seat, combo, victim, chopParts };
+    const chain = chop ? (g.lastPlay.chain || 0) + 1 : 0; // chặt chồng: 2, 3…
+    const prevName = prev ? comboName(prev) : null;
+    g.lastPlay = { seat, combo, victim, chopParts, chain };
     g.startCard = null; // chỉ nước đầu tiên của ván đầu mới bị ràng buộc
     this.hooks.emitEvent(this, {
-      kind: 'play', seat, cards: combo.cards, name: comboName(combo), chop, victim, auto,
+      kind: 'play', seat, cards: combo.cards, name: comboName(combo), type: combo.type, len: combo.len, prev: prevName, chain, chop, victim, auto,
       chopParts: chop && this.settings.chopPay ? chopParts : 0, unit: this.unitInfo(),
     });
 

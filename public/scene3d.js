@@ -197,7 +197,7 @@ export function createScene(canvas) {
     scene.fog = new THREE.Fog(T.bg, 16, 30);
     ambient.color.set(T.ambient); ambient.intensity = T.ambientI;
     sun.intensity = T.sunI;
-    lamp.intensity = themeKey === 'night' ? 26 : 14;
+    lamp.intensity = baseLamp = themeKey === 'night' ? 26 : 14;
 
     // Sàn + tường
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(16, 16), mat(T.floor));
@@ -525,6 +525,16 @@ export function createScene(canvas) {
   function hop(pos, power = 1) {
     if (charState[pos]) charState[pos].hop = power;
   }
+  // Bị sét đánh: xoay tít + nhảy
+  function zap(pos) {
+    if (charState[pos]) { charState[pos].spin = 1; charState[pos].hop = 1.2; }
+  }
+  // Chớp đèn cả phòng (sét)
+  let flashT = 0, flashColor = new THREE.Color(0xffffff), baseLamp = 14;
+  function flashLights(color = 0xfff6b0, dur = 0.7) {
+    flashColor.set(color); flashT = dur; flashDur = dur;
+  }
+  let flashDur = 0.7;
 
   function seatScreen(pos) {
     const p = SEAT_POS[pos].clone().multiplyScalar(1.12);
@@ -620,6 +630,18 @@ export function createScene(canvas) {
       const squash = active ? 1 + Math.sin(t * 12) * 0.04 : 1;
       c.scale.set(1 / squash, squash, 1 / squash);
       c.rotation.z = st.passed ? Math.sin(t * 1.5) * 0.05 - 0.15 : 0;
+      if (st.spin > 0) {
+        st.spin = Math.max(0, st.spin - dt * 0.8);
+        c.rotation.y = (1 - st.spin) * Math.PI * 6;
+        if (st.spin === 0) { const p = SEAT_POS[pos].clone().multiplyScalar(1.12); c.lookAt(0, c.position.y, 0); c.position.x = p.x; c.position.z = p.z; }
+      }
+    }
+    if (flashT > 0) {
+      flashT = Math.max(0, flashT - dt);
+      const k = flashT / flashDur;
+      const flick = k * (0.6 + 0.4 * Math.abs(Math.sin(t * 60)));
+      lamp.color.set(0xfff1d6).lerp(flashColor, flick);
+      lamp.intensity = baseLamp + flick * 160;
     }
     renderer.render(scene, camera);
     if (onFrame) onFrame();
@@ -632,7 +654,7 @@ export function createScene(canvas) {
   return {
     setTheme(k) { if (THEMES[k] && k !== themeKey) { themeKey = k; build(); } },
     setMode(m) { mode = m; if (m === 'lobby') setSeats([null, null, null, null]); },
-    setSeats, hop, seatScreen, tableScreen, burst,
+    setSeats, hop, zap, flashLights, seatScreen, tableScreen, burst,
     set onFrame(fn) { onFrame = fn; },
   };
 }
