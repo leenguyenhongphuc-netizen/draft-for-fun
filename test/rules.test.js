@@ -67,3 +67,50 @@ test('ván 4 bot chơi đến hết', async () => {
   }
   room.destroy();
 });
+
+import { finishViolation, chopValue, settleDebts, normalizeSettings, bombsInHand } from '../public/shared/rules.js';
+
+test('luật về heo / về hàng', () => {
+  const st = normalizeSettings({ noTwoLast: true, noBombLast: true });
+  assert.ok(finishViolation(1, getCombo([c(12, 0)]), st));
+  assert.equal(finishViolation(2, getCombo([c(12, 0)]), st), null, 'chưa phải lá cuối');
+  assert.ok(finishViolation(4, getCombo([c(5, 0), c(5, 1), c(5, 2), c(5, 3)]), st));
+  assert.equal(finishViolation(1, getCombo([c(11, 0)]), st), null);
+});
+
+test('giá trị chặt, thối hàng, trả nợ', () => {
+  assert.equal(chopValue(getCombo([c(12, 0)])), 1);
+  assert.equal(chopValue(getCombo([c(12, 3)])), 2);
+  assert.equal(chopValue(getCombo([c(12, 1), c(12, 2)])), 3);
+  assert.deepEqual(bombsInHand([c(4, 0), c(4, 1), c(4, 2), c(4, 3), c(0, 0)]), { quads: 1, pairSeqs: 0 });
+  const plan = settleDebts({ a: 30, b: -10, c: -20 });
+  assert.equal(plan.reduce((s, x) => s + x.amount, 0), 30);
+  assert.ok(plan.every((x) => x.to === 'a'));
+});
+
+test('ván bot với đủ luật + ghi nợ: tổng luôn bằng 0, không ai về heo hợp lệ', () => {
+  const room = new Room({
+    code: 'DEBT', name: 't', theme: 'candy', isPublic: false,
+    hooks: { emitState() {}, emitEvent() {}, getCoins: () => 1000, addCoins() {} },
+  });
+  for (let i = 0; i < 4; i++) room.addBot();
+  room.setSettings({ debt: true, unit: 5, noTwoLast: true, noBombLast: true, mustStart3: true });
+  for (let g = 0; g < 40; g++) {
+    room.start();
+    const lastPlays = {};
+    const orig = room.hooks.emitEvent;
+    room.hooks.emitEvent = (_r, ev) => { if (ev.kind === 'play') lastPlays[ev.seat] = ev; if (ev.kind === 'out' && !ev.bad) {
+      const lp = lastPlays[ev.seat];
+      assert.ok(!lp.cards.some((x) => Math.floor(x / 4) === 12), 'về bằng heo mà không bị phạt');
+    } };
+    let guard = 0;
+    while (room.state === 'playing' && guard++ < 3000) room.autoMove(room.game.turn);
+    room.hooks.emitEvent = orig;
+    assert.equal(room.state, 'ended');
+    assert.equal(room.results.reduce((s, r) => s + r.delta, 0), 0, 'tổng tiền một ván phải bằng 0');
+  }
+  const totals = Object.values(room.ledger.players).reduce((s, p) => s + p.total, 0);
+  assert.equal(totals, 0);
+  assert.equal(room.ledger.games.length, 30);
+  room.destroy();
+});

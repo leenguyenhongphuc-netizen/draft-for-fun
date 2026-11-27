@@ -1,5 +1,8 @@
 import { createScene, THEMES } from './scene3d.js';
-import { RANKS, SUITS, rankOf, suitOf, getCombo, canBeat, allPlays, sortHand, TWO } from './shared/rules.js';
+import {
+  RANKS, SUITS, rankOf, suitOf, getCombo, canBeat, allPlays, sortHand, TWO, cardLabel,
+  finishViolation, settleDebts, TURN_CHOICES, UNIT_CHOICES, UNIT_LABELS,
+} from './shared/rules.js';
 import { createNet } from './net.js';
 import * as audio from './audio.js';
 
@@ -240,7 +243,9 @@ function renderSeats() {
     const status = statusOf(p);
     tag.innerHTML = `
       ${pos === 0 ? `<div class="ava">${p.avatar}</div>` : ''}
-      <div><div class="nm"></div><div class="cn">🪙 ${p.coins}</div>
+      <div><div class="nm"></div>${s.settings && s.settings.debt
+        ? `<div class="cn ${p.debt > 0 ? 'debt-pos' : p.debt < 0 ? 'debt-neg' : ''}">📒 ${fmtAmt(p.debt)}</div>`
+        : `<div class="cn">🪙 ${p.coins}</div>`}
       ${status ? `<div class="status ${status.cls}">${status.text}</div>` : ''}</div>
       ${p.cardCount != null && pos !== 0 && p.cardCount > 0 ? `<div class="count">${p.cardCount}</div>` : ''}
       ${p.id === s.hostId ? '<div class="host" title="Chủ phòng">👑</div>' : ''}
@@ -260,6 +265,7 @@ function renderSeats() {
 }
 
 function statusOf(p) {
+  if (p.bad) return { cls: 'bad', text: '🐷 về heo · bét' };
   if (p.rank) return { cls: 'r' + Math.min(4, p.rank), text: MEDALS[p.rank - 1] + ' ' + RANK_TXT[p.rank - 1] };
   if (!p.connected) return { cls: 'pass', text: '💤 mất mạng' };
   if (p.passed) return { cls: 'pass', text: '🙅 bỏ lượt' };
@@ -282,7 +288,7 @@ scene3d.onFrame = () => {
   const seats = $('#seats').children;
   for (const el of seats) {
     const p = scene3d.seatScreen(+el.dataset.pos);
-    place(el, Math.max(60, Math.min(window.innerWidth - 60, p.x)), Math.max(84, Math.min(window.innerHeight - 220, p.y)));
+    place(el, Math.max(60, Math.min(window.innerWidth - 60, p.x)), Math.max(window.innerWidth < 560 ? 136 : 84, Math.min(window.innerHeight - 220, p.y)));
   }
   const c = scene3d.tableScreen();
   place($('#centerPile'), c.x, c.y);
@@ -290,7 +296,7 @@ scene3d.onFrame = () => {
   if (state.state === 'playing' && state.deadline) {
     const left = Math.max(0, state.deadline - (Date.now() + clockOffset));
     const t = document.querySelector('.seat.active .timer');
-    if (t) t.style.transform = `scaleX(${left / 25000})`;
+    if (t) t.style.transform = `scaleX(${left / (state.turnMs || 25000)})`;
     const mine = state.turn === state.mySeat;
     const sec = Math.ceil(left / 1000);
     document.body.classList.toggle('hurry', mine && sec <= 6 && left > 0);
@@ -402,7 +408,8 @@ function renderControls() {
   $('#actions').classList.toggle('hidden', !playing || !inGame || !handOrder.length);
   const prev = s.lastPlay ? getCombo(s.lastPlay.cards) : null;
   const combo = getCombo([...selected]);
-  $('#playBtn').disabled = !mine || !combo || !canBeat(prev, combo);
+  const rule = mine && combo && canBeat(prev, combo) ? ruleProblem(combo) : null;
+  $('#playBtn').disabled = !mine || !combo || !canBeat(prev, combo) || (rule && !rule.forced);
   $('#passBtn').disabled = !mine || !s.lastPlay;
   $('#hintBtn').disabled = !mine;
 
@@ -412,18 +419,23 @@ function renderControls() {
   if (!playing) banner.textContent = '';
   else if (!inGame) banner.textContent = '👀 Bạn sẽ vào chơi ở ván sau';
   else if (s.seats[s.mySeat].rank) banner.textContent = `🎉 Bạn về ${RANK_TXT[s.seats[s.mySeat].rank - 1]}! Ngồi xem nha`;
-  else if (mine) banner.textContent = s.lastPlay ? (selected.size && combo && !canBeat(prev, combo) ? '😅 Bộ này chưa đè được' : '✨ Tới lượt bạn!') : '✨ Bạn được đánh tự do!';
+  else if (mine && rule) banner.textContent = rule.forced ? '😱 Hết đường, đành về heo → bị xếp bét' : '🚫 ' + rule.msg;
+  else if (mine) banner.textContent = s.lastPlay ? (selected.size && combo && !canBeat(prev, combo) ? '😅 Bộ này chưa đè được' : '✨ Tới lượt bạn!') : (s.startCard != null && s.settings?.mustStart3 && handOrder.includes(s.startCard) ? `✨ Ván đầu: đánh kèm ${cardLabel(s.startCard)} nha` : '✨ Bạn được đánh tự do!');
   else {
     const t = s.seats[s.turn];
     banner.textContent = t ? `⏳ Chờ ${t.avatar} ${t.name}…` : '';
   }
 
+  $('#ledgerBtn').classList.toggle('hidden', !s.ledger);
+  if (!$('#rulesModal').classList.contains('hidden')) renderRules();
+  if (!$('#ledgerModal').classList.contains('hidden')) renderLedger();
   const waiting = s.state === 'waiting' || (s.state === 'ended' && $('#resultModal').classList.contains('hidden'));
   $('#waitPanel').classList.toggle('hidden', !waiting);
   if (waiting) {
     const count = s.seats.filter(Boolean).length;
     $('#waitTitle').textContent = s.state === 'ended' ? 'Làm thêm ván nữa không? 🃏' : count < 2 ? 'Đang chờ người chơi…' : `Đã có ${count}/4 người 🎈`;
     $('#waitSub').textContent = isHost ? (count < 4 ? 'Gửi mã phòng cho bạn bè hoặc thêm bot nhé!' : 'Đủ người rồi, bắt đầu thôi!') : 'Chờ chủ phòng 👑 bắt đầu nha…';
+    renderRuleChips();
     $('#startBtn').classList.toggle('hidden', !isHost);
     $('#addBotBtn').classList.toggle('hidden', !isHost || count >= 4);
     $('#startBtn').disabled = count < 2;
@@ -447,7 +459,7 @@ $('#sortBtn').onclick = () => {
 };
 $('#hintBtn').onclick = () => {
   const prev = state.lastPlay ? getCombo(state.lastPlay.cards) : null;
-  const plays = allPlays(handOrder, prev).sort((a, b) => (a.cards.length === b.cards.length ? a.top - b.top : prev ? a.top - b.top : b.cards.length - a.cards.length));
+  const plays = allPlays(handOrder, prev).filter((c) => !ruleProblem(c)).sort((a, b) => (a.cards.length === b.cards.length ? a.top - b.top : prev ? a.top - b.top : b.cards.length - a.cards.length));
   if (!plays.length) { toast('Không có bộ nào đè được, bỏ lượt thôi 🥲'); return; }
   hintIdx = (hintIdx + 1) % plays.length;
   selected = new Set(plays[hintIdx].cards);
@@ -463,7 +475,9 @@ $('#actions').addEventListener('pointerdown', (e) => {
   if (!mine) why = 'Chưa tới lượt bạn nha ⏳';
   else if (b.id === 'playBtn') {
     const combo = getCombo([...selected]);
-    why = !selected.size ? 'Chạm vào lá bài để chọn trước nha 👆' : !combo ? 'Bộ bài này không hợp lệ 🤔' : 'Bộ này chưa đè được 😅';
+    const prev = state.lastPlay ? getCombo(state.lastPlay.cards) : null;
+    const rule = combo && canBeat(prev, combo) ? ruleProblem(combo) : null;
+    why = !selected.size ? 'Chạm vào lá bài để chọn trước nha 👆' : !combo ? 'Bộ bài này không hợp lệ 🤔' : rule ? rule.msg : 'Bộ này chưa đè được 😅';
   } else if (b.id === 'passBtn') why = 'Bạn đang được đánh tự do, phải đánh 1 bộ nha';
   if (why) { toast(why); sfx.error(); }
 });
@@ -543,8 +557,12 @@ function onEvent(ev) {
         bigText(`CHẶT! ${ev.name} 🔪`, true);
         shake(); flash();
         scene3d.burst(['🐷', '💥', '⭐', '🔪'], 22, 1.3);
-        sysChat(`${nameOf(ev.seat)} chặt ${nameOf(ev.victim)} bằng ${ev.name} 🔪`);
+        sysChat(`${nameOf(ev.seat)} chặt ${nameOf(ev.victim)} bằng ${ev.name} 🔪` + (ev.chopParts ? ` (+${fmtAmt(ev.chopParts * ev.unit.mult, ev.unit.label, false)})` : ''));
         bubble(ev.victim, '😱');
+        if (ev.chopParts) {
+          const amt = ev.chopParts * ev.unit.mult;
+          setTimeout(() => { floatAmt(ev.seat, '+' + fmtAmt(amt, ev.unit.label, false), true); floatAmt(ev.victim, '−' + fmtAmt(amt, ev.unit.label, false), false); sfx.coin(); }, 500);
+        }
       } else {
         sfx.play(n);
         if (isPig) { setTimeout(() => sfx.pig(), 120); bubble(ev.seat, ev.name + '! 🐷'); scene3d.burst(['🐷', '💗'], 10, 0.9); }
@@ -561,6 +579,12 @@ function onEvent(ev) {
       if (ev.seat === state.mySeat) toast('Vòng mới — bạn được đánh tự do ✨');
       break;
     case 'out':
+      if (ev.bad) {
+        sysChat(`${nameOf(ev.seat)} về bằng heo 🐷 → bị xếp bét!`);
+        bigText('Về heo chót! Bét 😭');
+        sfx.lose(); scene3d.burst(['🐷', '💦'], 12, 0.8);
+        break;
+      }
       sysChat(`${nameOf(ev.seat)} về ${RANK_TXT[ev.rank - 1]} ${MEDALS[ev.rank - 1]}`);
       if (ev.seat === state.mySeat) { sfx.win(); bigText(`Về ${RANK_TXT[ev.rank - 1]}! ${MEDALS[ev.rank - 1]}`, true); if (ev.rank === 1) confetti(); }
       if (ev.rank === 1) scene3d.burst(['🏆', '⭐', '🎉', '💖'], 20, 1.1);
@@ -606,16 +630,179 @@ function showResults(rows) {
     const d = document.createElement('div');
     d.className = 'rrow';
     d.style.animationDelay = i * 0.1 + 's';
-    d.innerHTML = `<span class="medal">${MEDALS[r.rank - 1]}</span><span class="who"><span class="nmx"></span><span class="note"></span></span><span class="delta ${r.delta >= 0 ? 'plus' : 'minus'}">${r.delta >= 0 ? '+' : ''}${r.delta} 🪙</span>`;
+    d.innerHTML = `<span class="medal">${r.bad ? '🐷' : MEDALS[r.rank - 1]}</span><span class="who"><span class="nmx"></span><span class="note"></span></span><span class="delta ${r.delta >= 0 ? 'plus' : 'minus'}">${r.delta >= 0 ? '+' : ''}${r.delta} 🪙</span>`;
     d.querySelector('.nmx').textContent = p ? `${p.avatar} ${p.name}${r.seat === state.mySeat ? ' (bạn)' : ''}` : 'Người chơi';
     d.querySelector('.note').textContent = r.note || (r.cardsLeft.length ? `còn ${r.cardsLeft.length} lá` : '');
     box.appendChild(d);
-    countUp(d.querySelector('.delta'), r.delta, 300 + i * 120);
+    countUp(d.querySelector('.delta'), r.delta, 300 + i * 120, unitLabel());
   });
+  $('#debtNote').classList.toggle('hidden', !state.settings?.debt);
   $('#againBtn').textContent = state.hostId === playerId ? 'Ván mới 🔁' : 'Đóng';
   $('#resultModal').classList.remove('hidden');
   if (meRow && meRow.rank === 1) confetti();
   renderControls();
+}
+
+// ---------- Luật phòng ----------
+function unitLabel() { return state && state.settings && state.settings.debt ? state.settings.unitLabel : 'xu'; }
+function fmtAmt(v, label = state?.settings?.unitLabel || 'điểm', sign = true) {
+  const n = Math.round(v * 100) / 100;
+  const sg = sign && n > 0 ? '+' : '';
+  return label === 'k' ? `${sg}${n}k` : `${sg}${n} ${label}`;
+}
+// Bộ bài có phạm luật phòng không? {msg, forced}
+function ruleProblem(combo) {
+  const s = state;
+  if (!s || !s.settings) return null;
+  if (s.settings.mustStart3 && s.startCard != null && handOrder.includes(s.startCard) && !combo.cards.includes(s.startCard)) {
+    return { msg: `Ván đầu phải đánh kèm ${cardLabel(s.startCard)} nha` };
+  }
+  const v = finishViolation(handOrder.length, combo, s.settings);
+  if (!v) return null;
+  // Được đánh tự do mà không còn nước nào hợp luật -> buộc phải về (bị xếp bét)
+  const forced = !s.lastPlay && !allPlays(handOrder, null).some((c) => !finishViolation(handOrder.length, c, s.settings));
+  return { msg: v, forced };
+}
+
+const RULES = [
+  { key: 'noTwoLast', name: '🐷 Cấm về heo chót', desc: 'Lá cuối cùng không được là heo (2). Hết đường mà phải về heo thì bị xếp bét.' },
+  { key: 'noBombLast', name: '💣 Cấm về bằng hàng', desc: 'Không được về bằng tứ quý hoặc đôi thông.' },
+  { key: 'mustStart3', name: '♠️ Ván đầu đánh 3♠', desc: 'Nước đầu tiên của ván đầu phải có lá nhỏ nhất (thường là 3♠).' },
+  { key: 'chopPay', name: '🔪 Chặt tính tiền', desc: 'Bị chặt phải trả: heo đen 1 phần, heo đỏ 2, 3 đôi thông 3, tứ quý 4. Chặt chồng cộng dồn.' },
+  { key: 'penalty', name: '😵 Thối heo, thối hàng', desc: 'Người về bét còn heo / hàng trong tay phải trả thêm cho người nhất.' },
+  { key: 'cong', name: '🥶 Cóng', desc: 'Về bét mà chưa đánh được lá nào thì thua gấp đôi.' },
+  { key: 'instantWin', name: '🎆 Tới trắng', desc: 'Tứ quý heo, sảnh rồng, 6 đôi, 5 đôi thông là thắng luôn.' },
+];
+
+function renderRuleChips() {
+  const st = state.settings;
+  if (!st) return;
+  const chips = [];
+  if (st.debt) chips.push(['📒 Ghi nợ · 1 phần = ' + fmtAmt(st.unit, st.unitLabel, false), true]);
+  RULES.forEach((r) => { if (st[r.key]) chips.push([r.name, false]); });
+  chips.push(['⏱ ' + st.turnSec + 's', false]);
+  const el = $('#rulesChips');
+  el.innerHTML = '';
+  chips.forEach(([t, hot]) => { const sp = document.createElement('span'); sp.textContent = t; if (hot) sp.className = 'hot'; el.appendChild(sp); });
+}
+
+function setRule(patch) { socket.emit('setSettings', { settings: patch }); sfx.pop(); }
+
+function renderRules() {
+  const st = state.settings;
+  const canEdit = state.hostId === playerId && state.state !== 'playing';
+  $('#rulesNote').textContent = state.hostId !== playerId ? 'Chỉ chủ phòng 👑 mới chỉnh được luật' : state.state === 'playing' ? 'Hết ván này rồi chỉnh luật nha' : 'Chạm để bật / tắt';
+  const list = $('#rulesList');
+  list.innerHTML = '';
+  const sw = (key, checked) => {
+    const l = document.createElement('label'); l.className = 'switch';
+    l.innerHTML = '<input type="checkbox"><span></span>';
+    const i = l.querySelector('input'); i.checked = checked; i.disabled = !canEdit;
+    i.onchange = () => setRule({ [key]: i.checked });
+    return l;
+  };
+  const seg = (vals, cur, fmt, onPick) => {
+    const d = document.createElement('div'); d.className = 'seg';
+    vals.forEach((v) => { const b = document.createElement('button'); b.textContent = fmt(v); b.className = v === cur ? 'sel' : ''; b.disabled = !canEdit; b.onclick = () => onPick(v); d.appendChild(b); });
+    return d;
+  };
+  const row = (name, desc, control, cls = '') => {
+    const r = document.createElement('div'); r.className = 'rule ' + cls;
+    r.innerHTML = '<div class="r-text"><div class="r-name"></div><div class="r-desc"></div></div>';
+    r.querySelector('.r-name').textContent = name; r.querySelector('.r-desc').textContent = desc;
+    r.appendChild(control); list.appendChild(r);
+    return r;
+  };
+  row('📒 Chế độ ghi nợ', 'Chơi cho vui: không trừ xu, ghi lại ai thắng ai thua qua các ván, cuối buổi xem ai trả ai.', sw('debt', st.debt), 'debt');
+  if (st.debt) {
+    row('Mỗi phần =', 'Nhất +3 phần, nhì +1, ba −1, bét −3 (4 người).', seg(UNIT_CHOICES, st.unit, (v) => v, (v) => setRule({ unit: v })));
+    row('Đơn vị', '"k" = nghìn đồng, hoặc chỉ tính điểm.', seg(UNIT_LABELS, st.unitLabel, (v) => v, (v) => setRule({ unitLabel: v })));
+  }
+  RULES.forEach((r) => row(r.name, r.desc, sw(r.key, st[r.key])));
+  const themeKeys = Object.keys(THEMES);
+  const th = seg(themeKeys, state.theme, (k) => THEMES[k].label.split(' ')[0], (k) => { socket.emit('setTheme', { theme: k }); sfx.pop(); });
+  th.querySelectorAll('button').forEach((b) => { b.disabled = state.hostId !== playerId; });
+  row('🏠 Trang trí phòng', themeKeys.map((k) => THEMES[k].label).join(' · '), th);
+  row('⏱ Thời gian mỗi lượt', 'Hết giờ sẽ tự bỏ lượt (hoặc đánh lá nhỏ nhất).', seg(TURN_CHOICES, st.turnSec, (v) => v + 's', (v) => setRule({ turnSec: v })));
+}
+
+function renderLedger() {
+  const L = state.ledger || { players: {}, games: [] };
+  const label = state.settings?.unitLabel || 'điểm';
+  const players = Object.entries(L.players).map(([id, p]) => ({ id, ...p })).sort((a, b) => b.total - a.total);
+  $('#ledgerSub').textContent = L.games.length ? `${L.games.length} ván đã ghi${state.settings?.debt ? '' : ' (đang tắt ghi nợ)'}` : 'Chưa có ván nào được ghi. Bật "Chế độ ghi nợ" trong ⚙️ Luật nha!';
+  const tot = $('#ledgerTotals'); tot.innerHTML = '';
+  players.forEach((p, i) => {
+    const r = document.createElement('div');
+    r.className = 'lrow' + (p.id === playerId ? ' me' : '');
+    r.innerHTML = `<span>${i === 0 && p.total > 0 ? '👑' : p.avatar}</span><span class="l-name"></span><span class="l-amt ${p.total > 0 ? 'delta plus' : p.total < 0 ? 'delta minus' : ''}">${fmtAmt(p.total, label)}</span>`;
+    r.querySelector('.l-name').innerHTML = '<span></span><div class="l-sub"></div>';
+    r.querySelector('.l-name span').textContent = (p.isBot ? '🤖 ' : '') + p.name + (p.id === playerId ? ' (bạn)' : '');
+    r.querySelector('.l-sub').textContent = `${p.games} ván · nhất ${p.wins}`;
+    tot.appendChild(r);
+  });
+  const plan = settleDebts(Object.fromEntries(players.map((p) => [p.id, p.total])));
+  const st = $('#ledgerSettle'); st.innerHTML = '';
+  if (!plan.length) st.innerHTML = '<div class="settle">Huề cả làng, không ai nợ ai 🥳</div>';
+  plan.forEach((x) => {
+    const d = document.createElement('div'); d.className = 'settle';
+    const a = L.players[x.from], b = L.players[x.to];
+    d.innerHTML = '<span class="f"></span> trả <span class="t"></span> <b></b>';
+    d.querySelector('.f').textContent = `${a.avatar} ${a.name}`;
+    d.querySelector('.t').textContent = `${b.avatar} ${b.name}`;
+    d.querySelector('b').textContent = fmtAmt(x.amount, label, false);
+    st.appendChild(d);
+  });
+  const gl = $('#ledgerGames'); gl.innerHTML = '';
+  L.games.slice(0, 15).forEach((g, i) => {
+    const d = document.createElement('div'); d.className = 'lgame';
+    const t = document.createElement('span'); t.className = 't';
+    t.textContent = `Ván ${L.games.length - i} · ${new Date(g.at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
+    d.appendChild(t);
+    g.rows.forEach((r) => {
+      const p = L.players[r.id]; const sp = document.createElement('span');
+      sp.textContent = `${p ? p.avatar : ''} ${r.delta > 0 ? '+' : ''}${r.delta}`;
+      sp.className = r.delta > 0 ? 'delta plus' : r.delta < 0 ? 'delta minus' : '';
+      d.appendChild(sp);
+    });
+    gl.appendChild(d);
+  });
+  $('#clearLedger').classList.toggle('hidden', state.hostId !== playerId || !L.games.length);
+}
+
+function ledgerText() {
+  const L = state.ledger; const label = state.settings?.unitLabel || 'điểm';
+  const players = Object.entries(L.players).map(([id, p]) => ({ id, ...p })).sort((a, b) => b.total - a.total);
+  const lines = [`📒 Sổ nợ Tiến Lên Cute — phòng ${state.code} (${L.games.length} ván)`, ''];
+  players.forEach((p) => lines.push(`${p.avatar} ${p.name}: ${fmtAmt(p.total, label)}`));
+  const plan = settleDebts(Object.fromEntries(players.map((p) => [p.id, p.total])));
+  if (plan.length) { lines.push('', '💸 Ai trả ai:'); plan.forEach((x) => lines.push(`• ${L.players[x.from].name} → ${L.players[x.to].name}: ${fmtAmt(x.amount, label, false)}`)); }
+  return lines.join('\n');
+}
+
+function openModal(id) { $(id).classList.remove('hidden'); sfx.pop(); }
+$('#rulesBtn').onclick = () => { renderRules(); openModal('#rulesModal'); };
+$('#rulesChips').onclick = () => { renderRules(); openModal('#rulesModal'); };
+$('#closeRules').onclick = () => $('#rulesModal').classList.add('hidden');
+$('#ledgerBtn').onclick = () => { renderLedger(); openModal('#ledgerModal'); };
+$('#openLedgerFromResult').onclick = () => { renderLedger(); openModal('#ledgerModal'); };
+$('#closeLedger').onclick = () => $('#ledgerModal').classList.add('hidden');
+$('#clearLedger').onclick = () => { if (confirm('Xoá hết sổ nợ của phòng này? (Không lấy lại được)')) socket.emit('clearLedger'); };
+$('#copyLedger').onclick = async () => {
+  const t = ledgerText();
+  try { await navigator.clipboard.writeText(t); toast('Đã sao chép sổ nợ 📋 dán vào Zalo/Messenger nha'); } catch { prompt('Sao chép sổ nợ:', t); }
+};
+document.querySelectorAll('.modal').forEach((m) => m.addEventListener('pointerdown', (e) => { if (e.target === m && m.id !== 'resultModal') m.classList.add('hidden'); }));
+
+function floatAmt(seat, text, plus) {
+  const pos = relPos(seat);
+  const p = pos === 0 ? { x: window.innerWidth / 2, y: window.innerHeight - 200 } : scene3d.seatScreen(pos);
+  const d = document.createElement('div');
+  d.className = 'float-amt ' + (plus ? 'plus' : 'minus');
+  d.textContent = text;
+  d.style.left = p.x + 'px'; d.style.top = p.y + 'px';
+  $('#fx').appendChild(d);
+  setTimeout(() => d.remove(), 1700);
 }
 
 // ---------- Hiệu ứng ----------
@@ -644,14 +831,15 @@ function flash() {
   $('#fx').appendChild(d);
   setTimeout(() => d.remove(), 500);
 }
-function countUp(el, target, delay) {
+function countUp(el, target, delay, label = 'xu') {
   const sign = target >= 0 ? '+' : '';
-  el.textContent = sign + '0 🪙';
+  const suffix = label === 'xu' ? ' 🪙' : label === 'k' ? 'k' : ' ' + label;
+  el.textContent = sign + '0' + suffix;
   setTimeout(() => {
     const t0 = performance.now(), dur = 600;
     const stepFn = (t) => {
       const k = Math.min(1, (t - t0) / dur);
-      el.textContent = sign + Math.round(target * k) + ' 🪙';
+      el.textContent = sign + Math.round(target * k) + suffix;
       if (k < 1) requestAnimationFrame(stepFn); else if (target > 0) sfx.coin();
     };
     requestAnimationFrame(stepFn);

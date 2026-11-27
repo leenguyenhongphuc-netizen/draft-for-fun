@@ -79,6 +79,7 @@
         <select id="themeSelect" class="pill" title="Đổi trang trí phòng"></select>
         <button class="pill music-btn" title="Nhạc nền">🎵</button>
         <button class="pill sfx-btn" title="Âm thanh">🔊</button>
+        <button class="pill hidden" id="ledgerBtn" title="Sổ nợ">📒</button>
         <button class="pill" id="chatToggle" title="Trò chuyện">💬</button>
       </div>
     </header>
@@ -93,7 +94,9 @@
     <div id="waitPanel" class="wait-panel hidden">
       <div class="wait-title" id="waitTitle">Đang chờ người chơi…</div>
       <div class="wait-sub" id="waitSub">Gửi mã phòng cho bạn bè nhé!</div>
+      <button class="rules-chips" id="rulesChips" title="Xem / chỉnh luật"></button>
       <div class="wait-actions">
+        <button class="btn soft" id="rulesBtn">⚙️ Luật</button>
         <button class="btn mint" id="addBotBtn">🤖 Thêm bot</button>
         <button class="btn big pink" id="startBtn">Bắt đầu 🃏</button>
       </div>
@@ -103,10 +106,10 @@
       <div class="me-row"><div id="meTag"></div><div class="turn-banner" id="turnBanner"></div></div>
       <div class="hand" id="hand"></div>
       <div class="actions" id="actions">
-        <button class="btn soft" id="sortBtn">🔀 Xếp</button>
-        <button class="btn soft" id="hintBtn">💡 Gợi ý</button>
-        <button class="btn grey" id="passBtn">🙅 Bỏ lượt</button>
-        <button class="btn big pink" id="playBtn">Đánh! ✨</button>
+        <button class="btn soft" id="sortBtn"><i>🔀</i> Xếp</button>
+        <button class="btn soft" id="hintBtn"><i>💡</i> Gợi ý</button>
+        <button class="btn grey" id="passBtn"><i>🙅</i> Bỏ lượt</button>
+        <button class="btn big pink" id="playBtn">Đánh! <i>✨</i></button>
       </div>
     </div>
 
@@ -124,9 +127,35 @@
       <div class="modal-card">
         <div class="modal-title" id="resultTitle">Kết thúc ván!</div>
         <div class="result-rows" id="resultRows"></div>
+        <div class="debt-note hidden" id="debtNote">📒 Đã ghi vào sổ nợ · <button class="link" id="openLedgerFromResult">xem sổ</button></div>
         <div class="modal-actions">
           <button class="btn soft" id="closeResult">Xem bàn</button>
           <button class="btn big pink" id="againBtn">Ván mới 🔁</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal hidden" id="rulesModal">
+      <div class="modal-card">
+        <div class="modal-title">⚙️ Luật chơi</div>
+        <div class="rules-host-note" id="rulesNote"></div>
+        <div class="rules-list" id="rulesList"></div>
+        <div class="modal-actions"><button class="btn big pink" id="closeRules">Xong ✨</button></div>
+      </div>
+    </div>
+
+    <div class="modal hidden" id="ledgerModal">
+      <div class="modal-card ledger-card">
+        <div class="modal-title">📒 Sổ nợ</div>
+        <div class="ledger-sub" id="ledgerSub"></div>
+        <div class="ledger-section">Bảng tổng</div>
+        <div class="ledger-totals" id="ledgerTotals"></div>
+        <div class="ledger-section">Ai trả ai? 💸</div>
+        <div class="ledger-settle" id="ledgerSettle"></div>
+        <details class="ledger-history"><summary>Lịch sử các ván</summary><div id="ledgerGames"></div></details>
+        <div class="modal-actions">
+          <button class="btn soft" id="copyLedger">📋 Sao chép</button>
+          <button class="btn grey hidden" id="clearLedger">🗑 Xoá sổ</button>
+          <button class="btn big pink" id="closeLedger">Đóng</button>
         </div>
       </div>
     </div>

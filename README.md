@@ -4,6 +4,8 @@ Game **Tiến Lên Miền Nam** chơi online nhiều người, giao diện paste
 
 ## Tính năng
 - 🃏 Đủ luật Tiến Lên Miền Nam: rác, đôi, sám, tứ quý, sảnh, đôi thông; **chặt heo** (3 đôi thông / tứ quý / 4 đôi thông); **tới trắng** (tứ quý heo, sảnh rồng, 6 đôi, 5 đôi thông); **cóng**, **thối heo**.
+- ⚙️ Luật tuỳ chỉnh theo phòng (chủ phòng bật/tắt): cấm về heo chót, cấm về bằng hàng, ván đầu phải đánh 3♠, chặt tính tiền (chặt chồng cộng dồn), thối heo/thối hàng, cóng, tới trắng, thời gian mỗi lượt.
+- 📒 Chế độ ghi nợ (chơi cho vui): không trừ xu, ghi lại ai thắng/thua qua các ván, bảng tổng, gợi ý "ai trả ai" ít lần chuyển nhất, lịch sử ván, sao chép sổ để dán vào Zalo/Messenger.
 - 🌐 Chơi online theo phòng 2–4 người: tạo phòng, gửi **link mời**/mã 4 chữ, danh sách phòng công khai.
 - 🤖 Thêm bot lấp chỗ trống; ai mất mạng thì bot đánh thay, vào lại trong 45 giây sẽ ngồi lại đúng chỗ.
 - 🏠 3 kiểu trang trí phòng 3D: **Kẹo Hồng**, **Vườn Xanh**, **Đêm Sao** (chủ phòng đổi được bất cứ lúc nào).

@@ -193,3 +193,81 @@ export function allPlays(hand, prev) {
   }
   return res;
 }
+
+// ---------- Luật tuỳ chọn của phòng ----------
+export const DEFAULT_SETTINGS = {
+  noTwoLast: true,    // Cấm về bằng heo (lá cuối có 2)
+  noBombLast: false,  // Cấm về bằng hàng (tứ quý / đôi thông)
+  mustStart3: false,  // Ván đầu phải đánh kèm lá nhỏ nhất (3♠)
+  chopPay: true,      // Chặt heo / chặt hàng tính tiền (chặt chồng cộng dồn)
+  penalty: true,      // Thối heo, thối hàng cho người về bét
+  cong: true,         // Cóng (bét còn nguyên 13 lá) thua gấp đôi
+  instantWin: true,   // Tới trắng
+  turnSec: 25,        // Thời gian mỗi lượt
+  debt: false,        // Chế độ ghi nợ
+  unit: 1,            // 1 phần = bao nhiêu (điểm / nghìn)
+  unitLabel: 'điểm',
+};
+export const TURN_CHOICES = [15, 25, 40, 60];
+export const UNIT_CHOICES = [1, 2, 5, 10];
+export const UNIT_LABELS = ['điểm', 'k'];
+
+export function normalizeSettings(s = {}) {
+  const d = DEFAULT_SETTINGS;
+  const out = { ...d };
+  for (const k of Object.keys(d)) if (typeof d[k] === 'boolean' && typeof s[k] === 'boolean') out[k] = s[k];
+  if (TURN_CHOICES.includes(s.turnSec)) out.turnSec = s.turnSec;
+  if (UNIT_CHOICES.includes(s.unit)) out.unit = s.unit;
+  if (UNIT_LABELS.includes(s.unitLabel)) out.unitLabel = s.unitLabel;
+  return out;
+}
+
+/** Lý do bộ bài vi phạm luật "về" (đánh lá cuối). null = hợp lệ. */
+export function finishViolation(handLen, combo, settings) {
+  if (!combo || combo.cards.length !== handLen) return null;
+  if (settings.noTwoLast && combo.cards.some((c) => rankOf(c) === TWO)) return 'Không được về bằng heo 🐷';
+  if (settings.noBombLast && (combo.type === 'quad' || combo.type === 'pairseq')) return 'Không được về bằng hàng 💣';
+  return null;
+}
+
+/** Giá trị (số phần) khi bị chặt: heo đen 1, heo đỏ 2, 3 đôi thông 3, tứ quý 4, 4 đôi thông 6. */
+export function chopValue(combo) {
+  if (!combo) return 0;
+  if ((combo.type === 'single' || combo.type === 'pair') && rankOf(combo.top) === TWO) {
+    return combo.cards.reduce((s, c) => s + (suitOf(c) >= 2 ? 2 : 1), 0);
+  }
+  if (combo.type === 'pairseq') return combo.len >= 4 ? 6 : 3;
+  if (combo.type === 'quad') return 4;
+  return 0;
+}
+
+/** Hàng còn trong tay (để tính thối): số tứ quý và số bộ 3 đôi thông rời nhau. */
+export function bombsInHand(hand) {
+  const count = new Array(13).fill(0);
+  hand.forEach((id) => count[rankOf(id)]++);
+  let quads = 0, pairSeqs = 0;
+  for (let r = 0; r < 13; r++) if (count[r] === 4) { quads++; count[r] = 0; }
+  let run = 0;
+  for (let r = 0; r < 12; r++) {
+    run = count[r] >= 2 ? run + 1 : 0;
+    if (run === 3) { pairSeqs++; run = 0; }
+  }
+  return { quads, pairSeqs };
+}
+
+/** Gợi ý cách trả nợ ít lần chuyển nhất. totals: {id: số dư} → [{from, to, amount}] */
+export function settleDebts(totals) {
+  const pos = [], neg = [];
+  Object.entries(totals).forEach(([id, v]) => { if (v > 0) pos.push([id, v]); else if (v < 0) neg.push([id, -v]); });
+  pos.sort((a, b) => b[1] - a[1]); neg.sort((a, b) => b[1] - a[1]);
+  const out = [];
+  let i = 0, j = 0;
+  while (i < neg.length && j < pos.length) {
+    const amt = Math.min(neg[i][1], pos[j][1]);
+    if (amt > 0) out.push({ from: neg[i][0], to: pos[j][0], amount: Math.round(amt * 100) / 100 });
+    neg[i][1] -= amt; pos[j][1] -= amt;
+    if (neg[i][1] <= 1e-9) i++;
+    if (pos[j][1] <= 1e-9) j++;
+  }
+  return out;
+}

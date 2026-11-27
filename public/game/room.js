@@ -1,7 +1,9 @@
-import { getCombo, canBeat, isChop, comboName, checkInstantWin, rankOf, TWO } from '../shared/rules.js';
+import {
+  getCombo, canBeat, isChop, comboName, checkInstantWin, rankOf, suitOf, TWO, allPlays,
+  normalizeSettings, finishViolation, chopValue, bombsInHand, cardLabel,
+} from '../shared/rules.js';
 import { botChoose } from './bot.js';
 
-const TURN_MS = 25000;
 const BOT_NAMES = [
   ['Bé Mèo', '🐱'], ['Cún Con', '🐶'], ['Thỏ Bông', '🐰'], ['Gấu Trúc', '🐼'],
   ['Cáo Nhỏ', '🦊'], ['Ếch Xanh', '🐸'], ['Heo Hồng', '🐷'], ['Hamster', '🐹'],
@@ -33,7 +35,19 @@ export class Room {
     this.timer = null;
     this.botTimer = null;
     this.createdAt = Date.now();
+    this.settings = normalizeSettings();
+    this.ledger = { players: {}, games: [] }; // sổ nợ
   }
+
+  get turnMs() { return this.settings.turnSec * 1000; }
+
+  setSettings(s) {
+    if (this.state === 'playing') return 'Đang chơi, hết ván rồi đổi luật nha';
+    this.settings = normalizeSettings({ ...this.settings, ...s });
+    return null;
+  }
+
+  clearLedger() { this.ledger = { players: {}, games: [] }; }
 
   // ---------- Ghế ngồi ----------
   humans() { return this.seats.filter((p) => p && !p.isBot); }
@@ -130,6 +144,7 @@ export class Room {
     this.game = {
       hands, inGame, turn, lastPlay: null, passed: new Set(), finished: [],
       deadline: 0, firstGame, startCard: firstGame ? Math.min(...hands.flat()) : null, round: 1,
+      chops: [], bad: [],
     };
     this.state = 'playing';
     this.results = null;
@@ -137,7 +152,7 @@ export class Room {
 
     // Tới trắng
     for (let s = 0; s < 4; s++) {
-      if (!inGame[s]) continue;
+      if (!inGame[s] || !this.settings.instantWin) continue;
       const win = checkInstantWin(hands[s]);
       if (win) {
         this.hooks.emitEvent(this, { kind: 'instant', seat: s, label: win, cards: hands[s] });
@@ -156,9 +171,9 @@ export class Room {
 
   beginTurn() {
     const g = this.game;
-    g.deadline = Date.now() + TURN_MS;
+    g.deadline = Date.now() + this.turnMs;
     clearTimeout(this.timer);
-    this.timer = setTimeout(() => this.onTimeout(), TURN_MS + 300);
+    this.timer = setTimeout(() => this.onTimeout(), this.turnMs + 300);
     this.hooks.emitState(this);
     this.scheduleAuto();
   }
@@ -178,12 +193,34 @@ export class Room {
     }
   }
 
+  // Lý do một bộ bài không được đánh theo luật phòng (ngoài chuyện đè bài)
+  ruleViolation(seat, combo) {
+    const g = this.game;
+    if (this.settings.mustStart3 && g.startCard != null && g.hands[seat].includes(g.startCard) && !combo.cards.includes(g.startCard)) {
+      return `Ván đầu phải đánh kèm lá ${cardLabel(g.startCard)} nha`;
+    }
+    return finishViolation(g.hands[seat].length, combo, this.settings);
+  }
+
+  legalPlays(seat) {
+    const g = this.game;
+    const prev = g.lastPlay && g.lastPlay.combo;
+    return allPlays(g.hands[seat], prev).filter((c) => !this.ruleViolation(seat, c));
+  }
+
+  // Được đánh tự do mà không còn nước nào hợp luật (vd: chỉ còn heo) -> buộc đánh, bị xếp bét
+  forcedMove(seat) {
+    const g = this.game;
+    const prev = g.lastPlay && g.lastPlay.combo;
+    if (prev || this.legalPlays(seat).length) return null;
+    return [Math.min(...g.hands[seat])];
+  }
+
   autoMove(seat) {
     const g = this.game;
-    const leading = !g.lastPlay;
     const oppMin = Math.min(...this.activeSeats().filter((s) => s !== seat).map((s) => g.hands[s].length), 13);
-    let cards = botChoose(g.hands[seat], g.lastPlay && g.lastPlay.combo, oppMin);
-    if (leading && !cards) cards = [Math.min(...g.hands[seat])];
+    let cards = botChoose(g.hands[seat], g.lastPlay && g.lastPlay.combo, oppMin, (c) => !this.ruleViolation(seat, c));
+    if (!cards && !g.lastPlay) cards = this.forcedMove(seat) || (this.legalPlays(seat)[0] || {}).cards;
     if (cards) this.play(seat, cards, true);
     else this.pass(seat, true);
   }
@@ -191,8 +228,10 @@ export class Room {
   onTimeout() {
     if (this.state !== 'playing') return;
     const seat = this.game.turn;
-    if (!this.game.lastPlay) this.play(seat, [Math.min(...this.game.hands[seat])], true);
-    else this.pass(seat, true);
+    if (!this.game.lastPlay) {
+      const plays = this.legalPlays(seat).sort((a, b) => a.cards.length - b.cards.length || a.top - b.top);
+      this.play(seat, plays.length ? plays[0].cards : this.forcedMove(seat), true);
+    } else this.pass(seat, true);
   }
 
   play(seat, cards, auto = false) {
@@ -205,19 +244,34 @@ export class Room {
     if (!combo) return 'Bộ bài không hợp lệ';
     const prev = g.lastPlay && g.lastPlay.combo;
     if (!canBeat(prev, combo)) return prev ? `Không đè được ${comboName(prev)}` : 'Không đánh được';
+    const violation = this.ruleViolation(seat, combo);
+    let forcedBad = false;
+    if (violation) {
+      const forced = this.forcedMove(seat);
+      if (!forced) return violation;
+      forcedBad = true; // hết đường: cho đánh nhưng xếp bét
+    }
 
     const chop = isChop(prev, combo);
+    let chopParts = 0;
+    if (chop) {
+      // Chặt chồng: cộng dồn giá trị lần chặt trước
+      chopParts = chopValue(prev) + (g.lastPlay.chopParts || 0);
+      if (this.settings.chopPay) g.chops.push({ from: g.lastPlay.seat, to: seat, parts: chopParts, label: comboName(prev) });
+    }
     g.hands[seat] = hand.filter((c) => !cards.includes(c));
-    g.lastPlay = { seat, combo, victim: chop ? g.lastPlay.seat : null };
-    g.startCard = null;
+    const victim = chop ? g.lastPlay.seat : null;
+    g.lastPlay = { seat, combo, victim, chopParts };
+    g.startCard = null; // chỉ nước đầu tiên của ván đầu mới bị ràng buộc
     this.hooks.emitEvent(this, {
-      kind: 'play', seat, cards: combo.cards, name: comboName(combo), chop,
-      victim: chop ? g.lastPlay.victim : null, auto,
+      kind: 'play', seat, cards: combo.cards, name: comboName(combo), chop, victim, auto,
+      chopParts: chop && this.settings.chopPay ? chopParts : 0, unit: this.unitInfo(),
     });
 
     if (g.hands[seat].length === 0) {
       g.finished.push(seat);
-      this.hooks.emitEvent(this, { kind: 'out', seat, rank: g.finished.length });
+      if (forcedBad) g.bad.push(seat);
+      this.hooks.emitEvent(this, { kind: 'out', seat, rank: g.finished.length, bad: forcedBad });
       const remaining = this.activeSeats();
       if (remaining.length <= 1) {
         if (remaining.length === 1) g.finished.push(remaining[0]);
@@ -272,8 +326,14 @@ export class Room {
     }
   }
 
+  unitInfo() {
+    const st = this.settings;
+    return st.debt ? { mult: st.unit, label: st.unitLabel } : { mult: COIN_UNIT, label: 'xu' };
+  }
+
   finishGame(instantSeat = null, instantLabel = null) {
     const g = this.game;
+    const st = this.settings;
     clearTimeout(this.timer);
     clearTimeout(this.botTimer);
     const players = [0, 1, 2, 3].filter((s) => g.inGame[s]);
@@ -281,40 +341,89 @@ export class Room {
     if (instantSeat != null) {
       order = [instantSeat, ...players.filter((s) => s !== instantSeat)];
     } else {
-      order = [...g.finished];
-      // còn lại (nếu có) xếp theo số bài
-      players.filter((s) => !order.includes(s))
+      // Người về đàng hoàng -> người còn bài -> người bị phạt "về heo"
+      order = g.finished.filter((s) => !g.bad.includes(s));
+      players.filter((s) => !order.includes(s) && !g.bad.includes(s))
         .sort((a, b) => g.hands[a].length - g.hands[b].length)
         .forEach((s) => order.push(s));
+      [...g.bad].reverse().forEach((s) => order.push(s));
     }
-    const pts = POINTS[players.length];
-    const rows = order.map((s, i) => {
-      let delta;
-      let note = '';
-      if (instantSeat != null) {
-        delta = s === instantSeat ? (players.length - 1) * 2 * COIN_UNIT : -2 * COIN_UNIT;
-        if (s === instantSeat) note = 'Tới trắng: ' + instantLabel;
-      } else {
-        delta = pts[i] * COIN_UNIT;
-        const leftCards = g.hands[s].length;
-        if (i === order.length - 1 && leftCards === 13) { delta *= 2; note = 'Cóng! ×2'; }
-        const twos = g.hands[s].filter((c) => rankOf(c) === TWO).length;
-        if (i === order.length - 1 && twos) { delta -= twos * COIN_UNIT; note += (note ? ' · ' : '') + `Thối ${twos} heo`; }
+    const parts = {};
+    const notes = {};
+    players.forEach((s) => { parts[s] = 0; notes[s] = []; });
+    const winner = order[0];
+    const last = order[order.length - 1];
+    if (instantSeat != null) {
+      players.forEach((s) => { if (s !== instantSeat) { parts[s] -= 2; parts[instantSeat] += 2; } });
+      notes[instantSeat].push('Tới trắng: ' + instantLabel);
+    } else {
+      const pts = POINTS[players.length];
+      order.forEach((s, i) => { parts[s] += pts[i]; });
+      if (g.bad.includes(last)) notes[last].push('Về heo chót → bét');
+      // Cóng: bét còn nguyên 13 lá -> thua gấp đôi
+      if (st.cong && g.hands[last].length === 13) {
+        const extra = -pts[pts.length - 1];
+        parts[last] -= extra; parts[winner] += extra;
+        notes[last].push('Cóng ×2');
       }
+      // Thối heo / thối hàng
+      if (st.penalty) {
+        const left = g.hands[last];
+        const twos = left.filter((c) => rankOf(c) === TWO);
+        if (twos.length) {
+          const v = twos.reduce((a, c) => a + (suitOf(c) >= 2 ? 2 : 1), 0);
+          parts[last] -= v; parts[winner] += v;
+          notes[last].push(`Thối ${twos.length} heo`);
+        }
+        const b = bombsInHand(left);
+        const bv = b.quads * 4 + b.pairSeqs * 3;
+        if (bv) {
+          parts[last] -= bv; parts[winner] += bv;
+          notes[last].push('Thối hàng');
+        }
+      }
+    }
+    // Tiền chặt
+    g.chops.forEach((c) => {
+      if (parts[c.from] == null || parts[c.to] == null) return;
+      parts[c.from] -= c.parts; parts[c.to] += c.parts;
+      notes[c.to].push(`Chặt +${c.parts}`);
+      notes[c.from].push(`Bị chặt −${c.parts}`);
+    });
+
+    const unit = this.unitInfo();
+    const rows = order.map((s, i) => {
+      const delta = parts[s] * unit.mult;
       const p = this.seats[s];
-      if (p) {
+      if (p && !st.debt) {
         if (p.isBot) p.botCoins = (p.botCoins || 1000) + delta;
         else this.hooks.addCoins(p.id, delta);
       }
-      return { seat: s, rank: i + 1, delta, note, cardsLeft: g.hands[s] };
+      return { seat: s, rank: i + 1, parts: parts[s], delta, note: notes[s].join(' · '), cardsLeft: g.hands[s], bad: g.bad.includes(s) };
     });
-    // Ai về chót có zero cũng không âm... lưu người thắng để ván sau đi trước
-    const winner = this.seats[order[0]];
-    this.lastWinnerId = winner ? winner.id : null;
+    if (st.debt) this.recordDebt(rows, unit);
+
+    const w = this.seats[order[0]];
+    this.lastWinnerId = w ? w.id : null;
     this.results = rows;
     this.state = 'ended';
-    this.hooks.emitEvent(this, { kind: 'end', results: rows });
+    this.hooks.emitEvent(this, { kind: 'end', results: rows, unit, debt: st.debt });
     this.hooks.emitState(this);
+  }
+
+  recordDebt(rows, unit) {
+    const L = this.ledger;
+    const game = { at: Date.now(), label: unit.label, rows: [] };
+    rows.forEach((r) => {
+      const p = this.seats[r.seat];
+      if (!p) return;
+      const e = (L.players[p.id] ||= { name: p.name, avatar: p.avatar, isBot: p.isBot, total: 0, games: 0, wins: 0 });
+      Object.assign(e, { name: p.name, avatar: p.avatar });
+      e.total += r.delta; e.games++; if (r.rank === 1) e.wins++;
+      game.rows.push({ id: p.id, delta: r.delta, rank: r.rank, note: r.note });
+    });
+    L.games.unshift(game);
+    L.games = L.games.slice(0, 30);
   }
 
   // ---------- Dữ liệu gửi xuống client ----------
@@ -337,7 +446,9 @@ export class Room {
         coins: p.isBot ? p.botCoins : this.hooks.getCoins(p.id),
         cardCount: g && g.inGame[s] && this.state !== 'waiting' ? g.hands[s].length : null,
         passed: playing ? g.passed.has(s) : false,
-        rank: g && this.state !== 'waiting' && g.finished.includes(s) ? g.finished.indexOf(s) + 1 : null,
+        rank: g && this.state !== 'waiting' && g.finished.includes(s) && !(g.bad || []).includes(s) ? g.finished.indexOf(s) + 1 : null,
+        bad: !!(g && this.state !== 'waiting' && (g.bad || []).includes(s)),
+        debt: this.ledger.players[p.id] ? this.ledger.players[p.id].total : 0,
         inGame: g ? !!g.inGame[s] && this.state !== 'waiting' : false,
       }),
       hand: g && mySeat >= 0 && this.state !== 'waiting' ? g.hands[mySeat] : [],
@@ -346,6 +457,9 @@ export class Room {
       lastPlay: playing && g.lastPlay ? { seat: g.lastPlay.seat, cards: g.lastPlay.combo.cards, name: comboName(g.lastPlay.combo) } : null,
       startCard: playing ? g.startCard : null,
       results: this.results,
+      settings: this.settings,
+      ledger: this.settings.debt || this.ledger.games.length ? this.ledger : null,
+      turnMs: this.turnMs,
       now: Date.now(),
     };
   }
@@ -361,6 +475,7 @@ export class Room {
     return {
       code: this.code, name: this.name, theme: this.theme, isPublic: this.isPublic, hostId: this.hostId,
       seats: this.seats, state: this.state, results: this.results, lastWinnerId: this.lastWinnerId, createdAt: this.createdAt,
+      settings: this.settings, ledger: this.ledger,
       game: g && { ...g, passed: [...g.passed] },
     };
   }
@@ -370,6 +485,7 @@ export class Room {
     Object.assign(r, {
       hostId: data.hostId, seats: data.seats, state: data.state, results: data.results,
       lastWinnerId: data.lastWinnerId, createdAt: data.createdAt,
+      settings: normalizeSettings(data.settings), ledger: data.ledger || { players: {}, games: [] },
     });
     if (data.game) r.game = { ...data.game, passed: new Set(data.game.passed) };
     if (r.state === 'playing') r.beginTurn();

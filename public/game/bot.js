@@ -8,8 +8,8 @@ const comboCost = (c) => c.top + (rankOf(c.top) === TWO ? 60 : 0);
  * - Phải đè: chọn bộ nhỏ nhất đè được, hạn chế dùng heo/hàng khi còn nhiều bài.
  * Trả về mảng id lá bài, hoặc null để bỏ lượt.
  */
-export function botChoose(hand, prev, opponentsMin = 13) {
-  const plays = allPlays(hand, prev);
+export function botChoose(hand, prev, opponentsMin = 13, legal = () => true) {
+  const plays = allPlays(hand, prev).filter(legal);
   if (!plays.length) return null;
 
   if (!prev) {

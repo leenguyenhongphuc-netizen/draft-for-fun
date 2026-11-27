@@ -600,7 +600,8 @@ export function createScene(canvas) {
       const dist = portrait ? 9.6 + (1 - aspect) * 4 : 7.2;
       const height = portrait ? 9.8 + (1 - aspect) * 3 : 7.0;
       camPos.set(mouseX * 0.35, height - mouseY * 0.2, dist);
-      camTarget.set(0, portrait ? 0.4 : 0.7, portrait ? 0.3 : 0.2);
+      // Điện thoại dọc: tay bài chiếm nửa dưới màn hình -> đẩy bàn lên cao hơn
+      camTarget.set(0, portrait ? -0.1 - (1 - aspect) * 0.9 : 0.7, portrait ? 0.8 : 0.2);
       camera.fov = portrait ? 52 : 45;
     }
     camera.position.lerp(camPos, mode === 'lobby' ? 1 : 0.06);
