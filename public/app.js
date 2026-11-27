@@ -1,5 +1,6 @@
 import { createScene, THEMES } from './scene3d.js';
-import { RANKS, SUITS, rankOf, suitOf, getCombo, canBeat, allPlays, sortHand, TWO } from '/shared/rules.js';
+import { RANKS, SUITS, rankOf, suitOf, getCombo, canBeat, allPlays, sortHand, TWO } from './shared/rules.js';
+import { createNet } from './net.js';
 
 const $ = (s) => document.querySelector(s);
 const AVATARS = ['🐱', '🐶', '🐰', '🐼', '🦊', '🐸', '🐷', '🐹', '🐨', '🐯', '🐻', '🐧'];
@@ -8,9 +9,10 @@ const MEDALS = ['🥇', '🥈', '🥉', '🥔'];
 const RANK_TXT = ['Nhất', 'Nhì', 'Ba', 'Bét'];
 
 // ---------- Lưu tạm trên máy ----------
+const LS = (() => { try { return new URLSearchParams(location.search).has('local') ? sessionStorage : localStorage; } catch { return null; } })();
 const store = {
-  get(k, d) { try { const v = localStorage.getItem('tlc:' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
-  set(k, v) { try { localStorage.setItem('tlc:' + k, JSON.stringify(v)); } catch { /* bỏ qua */ } },
+  get(k, d) { try { const v = LS.getItem('tlc:' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { LS.setItem('tlc:' + k, JSON.stringify(v)); } catch { /* bỏ qua */ } },
 };
 let playerId = store.get('id', null);
 if (!playerId) { playerId = 'p-' + Math.random().toString(36).slice(2, 12); store.set('id', playerId); }
@@ -52,7 +54,7 @@ const sfx = {
 };
 
 // ---------- Socket ----------
-const socket = io({ transports: ['websocket', 'polling'] });
+const socket = createNet(playerId);
 let state = null;
 let clockOffset = 0;
 let selected = new Set();
@@ -61,24 +63,24 @@ let hintIdx = -1;
 let lastTurnWasMine = false;
 let resultShownFor = null;
 const urlRoom = new URLSearchParams(location.search).get('room');
+const LOCAL = new URLSearchParams(location.search).has('local');
+const pageUrl = (code) => location.pathname + (code || LOCAL ? '?' : '') + (code ? 'room=' + code : '') + (code && LOCAL ? '&' : '') + (LOCAL ? 'local=1' : '');
 
-socket.on('connect', () => socket.emit('hello', { playerId, name: myName || randomName(), avatar: myAvatar }));
 socket.on('welcome', ({ coins }) => {
   $('#myCoins').textContent = coins;
   if (urlRoom && !state) socket.emit('joinRoom', { code: urlRoom });
 });
 socket.on('rooms', renderRooms);
 socket.on('toast', toast);
-socket.on('left', () => { state = null; showLobby(); history.replaceState(null, '', location.pathname); });
+socket.on('left', () => { state = null; showLobby(); history.replaceState(null, '', pageUrl()); });
 socket.on('state', (s) => {
   const prev = state;
-  state = s;
+  state = s; window.__tlc = s;
   clockOffset = s.now - Date.now();
   if (!prev) showGame();
   onState(prev, s);
 });
 socket.on('event', onEvent);
-socket.on('disconnect', () => toast('Mất kết nối… đang thử lại 🛜'));
 
 function randomName() {
   const n = ['Mochi', 'Bánh Bao', 'Kẹo Dẻo', 'Trà Sữa', 'Bông Gòn', 'Su Kem', 'Bắp Rang'][Math.floor(Math.random() * 7)];
@@ -193,7 +195,7 @@ function onState(prev, s) {
   $('#themeSelect').value = s.theme;
   $('#themeSelect').disabled = s.hostId !== playerId;
   scene3d.setTheme(s.theme);
-  if (history.replaceState && new URLSearchParams(location.search).get('room') !== s.code) history.replaceState(null, '', '?room=' + s.code);
+  if (new URLSearchParams(location.search).get('room') !== s.code) history.replaceState(null, '', pageUrl(s.code));
 
   const me = s.seats[s.mySeat];
   if (me) $('#myCoins').textContent = me.coins;
@@ -424,7 +426,7 @@ $('#leaveBtn').onclick = () => {
   socket.emit('leaveRoom');
 };
 $('#copyCode').onclick = async () => {
-  const link = location.origin + '/?room=' + state.code;
+  const link = location.origin + pageUrl(state.code);
   try { await navigator.clipboard.writeText(link); toast('Đã sao chép link mời 💌'); }
   catch { prompt('Gửi link này cho bạn bè:', link); }
 };
@@ -580,3 +582,4 @@ function sysChat(text) {
 
 initLobby();
 showLobby();
+socket.emit('hello', { name: myName || randomName(), avatar: myAvatar });

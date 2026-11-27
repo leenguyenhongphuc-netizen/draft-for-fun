@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { getCombo, canBeat, checkInstantWin, allPlays } from '../shared/rules.js';
-import { Room } from '../server/room.js';
+import { getCombo, canBeat, checkInstantWin, allPlays } from '../public/shared/rules.js';
+import { Room } from '../public/game/room.js';
 
 // helper: rank index (0='3'..12='2'), suit (0..3)
 const c = (r, s) => r * 4 + s;

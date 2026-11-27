@@ -1,21 +1,23 @@
 {
   "name": "tien-len-cute",
   "version": "1.0.0",
-  "description": "Tiến Lên Miền Nam online - giao diện dễ thương, phòng chơi 3D",
+  "description": "Tiến Lên Miền Nam online - giao diện dễ thương, phòng chơi 3D (Vercel + Supabase Realtime)",
   "type": "module",
-  "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
-    "dev": "node --watch server/index.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "vendor": "cp node_modules/three/build/three.module.min.js public/vendor/ && echo \"export { createClient } from '@supabase/supabase-js';\" > .sb.mjs && esbuild .sb.mjs --bundle --format=esm --minify --platform=browser --outfile=public/vendor/supabase.js && rm .sb.mjs"
   },
   "engines": {
     "node": ">=18"
   },
   "license": "MIT",
   "dependencies": {
-    "express": "^4.22.3",
-    "socket.io": "^4.8.4",
+    "express": "^4.22.3"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "^2.119.2",
+    "esbuild": "^0.28.2",
     "three": "^0.160.0"
   }
 }

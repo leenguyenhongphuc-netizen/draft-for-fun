@@ -10,29 +10,35 @@ Game **Tiến Lên Miền Nam** chơi online nhiều người, giao diện paste
 - 🐱 12 avatar thú cưng — người chơi khác hiện thành nhân vật 3D ngồi quanh bàn, nhún nhảy khi tới lượt.
 - 💬 Chat, thả emoji, hiệu ứng "CHẶT!", pháo giấy khi thắng, âm thanh nhỏ xinh, đếm giờ 25 giây/lượt.
 - 💡 Nút gợi ý, xếp bài theo số/chất, kéo ngón tay để chọn nhiều lá (điện thoại), phím tắt Enter = đánh, Space = bỏ lượt.
-- 🪙 Xu tích luỹ theo người chơi (lưu ở `data/coins.json` trên server).
+- 🪙 Xu tích luỹ theo người chơi.
 
-## Chạy trên máy
+## Cách hoạt động (không cần server riêng)
+- Web là **trang tĩnh** (thư mục `public/`), đưa lên **Vercel** là có link riêng.
+- Chơi online qua **Supabase Realtime**: trình duyệt của **chủ phòng** chạy ván bài, mọi người gửi/nhận nước đi qua kênh realtime. Không tạo bảng, không đụng dữ liệu nào trong Supabase.
+- Chủ phòng lỡ tải lại trang → ván được khôi phục. Người chơi mất mạng → bot đánh thay, vào lại trong 45 giây là ngồi đúng chỗ.
+- Xu lưu trên máy từng người (localStorage).
+- Cấu hình Supabase ở `public/config.js`.
+
+## Đưa lên Vercel
+1. vercel.com → **Add New… → Project** → chọn repo `draft-for-fun` → **Import**.
+2. Framework Preset: **Other**, để nguyên các ô khác (đã có `vercel.json`) → **Deploy**.
+3. Xong sẽ có link dạng `https://draft-for-fun.vercel.app` — gửi cho bạn bè là chơi.
+
+## Chạy thử trên máy
 ```bash
 npm install
-npm start          # mở http://localhost:3000
+npm start          # http://localhost:3000
 npm test           # kiểm thử luật chơi + 20 ván bot tự đánh
 ```
-Bạn bè cùng mạng Wi‑Fi vào `http://<IP-máy-bạn>:3000`.
-
-## Đưa lên mạng để chơi online
-Đây là app Node.js dùng WebSocket (Socket.IO), cần host chạy server liên tục:
-- **Render.com** (miễn phí): New → Blueprint → chọn repo này (đã có `render.yaml`).
-- **Railway / Fly.io / VPS**: có sẵn `Dockerfile`, hoặc chạy `npm ci && npm start` (đọc biến `PORT`).
-
-> Lưu ý: gói miễn phí của Render ngủ sau 15 phút không dùng, lần mở đầu sẽ chậm ~30 giây; xu lưu trong file sẽ mất khi server khởi động lại.
+Thử nhiều người trên 1 máy không cần mạng: mở nhiều tab `http://localhost:3000/?local=1`.
 
 ## Cấu trúc
 ```
-shared/rules.js   Luật chơi (dùng chung server + trình duyệt)
-server/index.js   Express + Socket.IO, quản lý phòng, xu
-server/room.js    Diễn biến 1 ván: chia bài, lượt, vòng, chặt, kết quả
-server/bot.js     AI bot
-public/           Giao diện: index.html, style.css, app.js, scene3d.js (phòng 3D)
+public/shared/rules.js  Luật chơi
+public/game/room.js     Diễn biến 1 ván: chia bài, lượt, vòng, chặt, kết quả
+public/game/bot.js      AI bot
+public/net.js           Kết nối online (Supabase Realtime / thử nhiều tab)
+public/app.js           Giao diện, public/scene3d.js phòng 3D, public/vendor/ thư viện
+server/index.js         Server tĩnh nhỏ để chạy thử trên máy
 test/             Kiểm thử
 ```

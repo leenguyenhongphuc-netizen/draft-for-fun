@@ -1,8 +1,0 @@
-services:
-  - type: web
-    name: tien-len-cute
-    runtime: node
-    plan: free
-    buildCommand: npm ci
-    startCommand: npm start
-    healthCheckPath: /healthz

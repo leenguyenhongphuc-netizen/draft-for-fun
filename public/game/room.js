@@ -354,4 +354,25 @@ export class Room {
     clearTimeout(this.timer);
     clearTimeout(this.botTimer);
   }
+
+  // ---------- Lưu / khôi phục (chủ phòng tải lại trang) ----------
+  serialize() {
+    const g = this.game;
+    return {
+      code: this.code, name: this.name, theme: this.theme, isPublic: this.isPublic, hostId: this.hostId,
+      seats: this.seats, state: this.state, results: this.results, lastWinnerId: this.lastWinnerId, createdAt: this.createdAt,
+      game: g && { ...g, passed: [...g.passed] },
+    };
+  }
+
+  static restore(data, hooks) {
+    const r = new Room({ code: data.code, name: data.name, theme: data.theme, isPublic: data.isPublic, hooks });
+    Object.assign(r, {
+      hostId: data.hostId, seats: data.seats, state: data.state, results: data.results,
+      lastWinnerId: data.lastWinnerId, createdAt: data.createdAt,
+    });
+    if (data.game) r.game = { ...data.game, passed: new Set(data.game.passed) };
+    if (r.state === 'playing') r.beginTurn();
+    return r;
+  }
 }
