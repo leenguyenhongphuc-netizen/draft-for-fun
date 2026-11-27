@@ -9,6 +9,7 @@ export const THEMES = {
     ambient: 0xfff0f5, ambientI: 0.75, sunI: 1.0, bg: 0xffe1ee,
     particles: ['💗', '💕', '🍬', '⭐', '🎀'], balloons: [0xff8fb8, 0xffd36e, 0x8fd3ff, 0xc7a6ff],
     posters: ['🍓', '🧁', '🐰'], bulbs: [0xffb3d1, 0xfff1a6, 0xa6e3ff],
+    win: 'day', logo: '💗', toy: '🐰', sleeper: '🐱', flower: '🌸', pot: 0xffffff, leaf: 0x7ccf86, lampI: 14,
   },
   garden: {
     label: '🌿 Vườn Xanh',
@@ -17,6 +18,7 @@ export const THEMES = {
     ambient: 0xf3fff0, ambientI: 0.8, sunI: 1.1, bg: 0xd9f5e0,
     particles: ['🌸', '🍃', '🦋', '🌼', '🍀'], balloons: [0xa8e6a1, 0xfff07a, 0xffb5a7, 0x9ad8ff],
     posters: ['🌻', '🐝', '🍄'], bulbs: [0xfff3b0, 0xc8f7c5, 0xffd6a5],
+    win: 'day', logo: '🌼', toy: '🐸', sleeper: '🐶', flower: '🌼', pot: 0xffffff, leaf: 0x7ccf86, lampI: 14,
   },
   night: {
     label: '🌙 Đêm Sao',
@@ -25,6 +27,43 @@ export const THEMES = {
     ambient: 0xb7b3ff, ambientI: 0.45, sunI: 0.35, bg: 0x2b2a55,
     particles: ['⭐', '✨', '🌙', '💫'], balloons: [0xffd86b, 0xff9ec7, 0x9fe8ff, 0xc9a7ff],
     posters: ['🪐', '🌙', '🦉'], bulbs: [0xffe27a, 0xff9ec7, 0x9fe8ff],
+    win: 'night', logo: '⭐', toy: '🐧', sleeper: '🐱', flower: null, pot: 0xffd86b, leaf: 0x6fc9a3, lampI: 26, dark: true,
+  },
+  tet: {
+    label: '🧧 Tết Sum Vầy',
+    wall: 0xffd2c2, wall2: 0xffe6d6, floor: 0xd9a066, rug: 0xfff1d0, rug2: 0xe53935,
+    felt: 0xd84343, rim: 0xffd54f, wood: 0xb5651d, sky: 0xbfe6ff, skyGlow: 0xfff4c2,
+    ambient: 0xfff3e0, ambientI: 0.8, sunI: 1.0, bg: 0xffdcc8,
+    particles: ['🧧', '🌼', '🏮', '✨', '💰'], balloons: [0xe53935, 0xffd54f, 0xff8a65, 0xffca28],
+    posters: ['🧧', '🐉', '🍊'], bulbs: [0xff5252, 0xffd740, 0xffab40],
+    win: 'day', logo: '🧧', toy: '🐯', sleeper: '🐱', flower: '🌼', pot: 0xe53935, leaf: 0x6aa84f, lampI: 16, extra: 'tet',
+  },
+  ocean: {
+    label: '🐚 Biển Xanh',
+    wall: 0xcdeffd, wall2: 0xe3f7ff, floor: 0xf2deb0, rug: 0xfffaf0, rug2: 0x4fc3f7,
+    felt: 0x4db6ac, rim: 0xffffff, wood: 0xd7b98a, sky: 0x4fc3f7, skyGlow: 0xfff59d,
+    ambient: 0xf0fbff, ambientI: 0.85, sunI: 1.05, bg: 0xcfefff,
+    particles: ['🫧', '🐠', '🐚', '⭐', '🫧'], balloons: [0x4fc3f7, 0xfff176, 0xff8a80, 0x80deea],
+    posters: ['🐳', '🐙', '🦀'], bulbs: [0x80deea, 0xfff59d, 0xffffff],
+    win: 'sea', logo: '🐚', toy: '🐧', sleeper: '🐶', flower: null, pot: 0xffffff, leaf: 0x66bb6a, lampI: 14, extra: 'ocean',
+  },
+  winter: {
+    label: '❄️ Mùa Đông',
+    wall: 0xdde7f7, wall2: 0xeef3fb, floor: 0xc9a27e, rug: 0xffffff, rug2: 0xe57373,
+    felt: 0x5c9ead, rim: 0xffffff, wood: 0xa1785c, sky: 0x9fb8d9, skyGlow: 0xffffff,
+    ambient: 0xf5f9ff, ambientI: 0.8, sunI: 0.8, bg: 0xdfe8f5,
+    particles: ['❄️', '⛄', '✨', '❄️', '🎁'], balloons: [0xe57373, 0xffffff, 0x81c784, 0x90caf9],
+    posters: ['⛄', '🦌', '🎄'], bulbs: [0xff5252, 0x69f0ae, 0xffd740],
+    win: 'snow', logo: '❄️', toy: '🐻', sleeper: '🐱', flower: null, pot: 0xe57373, leaf: 0x2e7d32, lampI: 20, extra: 'winter',
+  },
+  sakura: {
+    label: '🌸 Anh Đào',
+    wall: 0xf6e1f5, wall2: 0xfbeefa, floor: 0xe8c9a8, rug: 0xfff7fb, rug2: 0xf48fb1,
+    felt: 0xb39ddb, rim: 0xffffff, wood: 0xc79a7a, sky: 0xd1c4e9, skyGlow: 0xfff9c4,
+    ambient: 0xfff5fb, ambientI: 0.8, sunI: 1.0, bg: 0xf8e1f3,
+    particles: ['🌸', '🌸', '💮', '🦋', '💕'], balloons: [0xf48fb1, 0xce93d8, 0xfff59d, 0xb2ebf2],
+    posters: ['🍡', '🎐', '🐰'], bulbs: [0xf8bbd0, 0xe1bee7, 0xfff9c4],
+    win: 'day', logo: '🌸', toy: '🐰', sleeper: '🐱', flower: '🌸', pot: 0xffffff, leaf: 0x81c784, lampI: 14, extra: 'sakura',
   },
 };
 
@@ -42,6 +81,8 @@ const CHARS = {
   '🐯': { color: 0xffb347, ears: 'round', earColor: 0xff9a1f, belly: 0xffffff },
   '🐻': { color: 0xc79566, ears: 'round', earColor: 0xa87445, snout: 0xf2d2b0 },
   '🐧': { color: 0x4a5a8c, ears: 'none', earColor: 0x4a5a8c, belly: 0xffffff, beak: 0xffb347 },
+  '💕': { color: 0xffa6c9, ears: 'hearts', earColor: 0xff6f9f, topper: '💕' },
+  '🌷': { color: 0xff7eb0, ears: 'petals', earColor: 0xff5c93, leaves: 0x6cc56b },
 };
 
 const emojiTexCache = new Map();
@@ -116,6 +157,8 @@ function makeCharacter(emoji) {
     if (def.ears === 'round') { ear = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 12), em); ear.position.set(sx * 0.36, 0.42, 0); }
     if (def.ears === 'big') { ear = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), em); ear.position.set(sx * 0.45, 0.36, 0); ear.scale.z = 0.5; }
     if (def.ears === 'floppy') { ear = new THREE.Mesh(new THREE.CapsuleGeometry(0.1, 0.25, 6, 12), em); ear.position.set(sx * 0.5, 0.15, 0); ear.rotation.z = sx * 0.3; }
+    if (def.ears === 'hearts') { ear = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 10), em); ear.position.set(sx * 0.16, 0.58, 0); ear.scale.set(1, 0.9, 0.6); }
+    if (def.ears === 'petals') { ear = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.42, 3), em); ear.position.set(sx * 0.27, 0.5, 0); ear.rotation.z = -sx * 0.25; }
     if (def.ears === 'frog') { ear = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 12), em); ear.position.set(sx * 0.2, 0.42, 0.25); }
     if (ear) { ear.castShadow = true; g.add(ear); }
   }
@@ -128,6 +171,20 @@ function makeCharacter(emoji) {
     const bk = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.16, 10), mat(def.beak));
     bk.position.set(0, 0.0, 0.58); bk.rotation.x = Math.PI / 2;
     g.add(bk);
+  }
+  if (def.ears === 'petals') { // cánh hoa giữa + lá
+    const mid = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.46, 3), mat(def.earColor));
+    mid.position.set(0, 0.56, -0.08); g.add(mid);
+    for (const sx of [-1, 1]) {
+      const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 8), mat(def.leaves));
+      leaf.position.set(sx * 0.58, -0.25, 0.05); leaf.scale.set(0.5, 1.2, 0.35); leaf.rotation.z = sx * 0.6;
+      g.add(leaf);
+    }
+  }
+  if (def.topper) {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: emojiTexture(def.topper), transparent: true }));
+    sp.position.set(0, 0.85, 0); sp.scale.setScalar(0.42);
+    g.add(sp);
   }
   // Miệng cười
   const smile = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.014, 8, 16, Math.PI), black);
@@ -197,7 +254,7 @@ export function createScene(canvas) {
     scene.fog = new THREE.Fog(T.bg, 16, 30);
     ambient.color.set(T.ambient); ambient.intensity = T.ambientI;
     sun.intensity = T.sunI;
-    lamp.intensity = baseLamp = themeKey === 'night' ? 26 : 14;
+    lamp.intensity = baseLamp = T.lampI || 14;
 
     // Sàn + tường
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(16, 16), mat(T.floor));
@@ -225,7 +282,7 @@ export function createScene(canvas) {
     baseB.position.set(0, 0.17, -6.95);
     room.add(baseB);
     // Họa tiết chấm bi trên tường sau
-    const dotMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: themeKey === 'night' ? 0.12 : 0.45 });
+    const dotMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: T.dark ? 0.12 : 0.45 });
     for (let x = -7; x <= 7; x += 1) for (let y = 1; y <= 8; y += 1) {
       const d = new THREE.Mesh(new THREE.CircleGeometry(0.07, 12), dotMat);
       d.position.set(x + (y % 2) * 0.5, y, -6.98);
@@ -236,10 +293,33 @@ export function createScene(canvas) {
     const win = new THREE.Group();
     const glass = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 2.2), new THREE.MeshBasicMaterial({ color: T.sky }));
     win.add(glass);
-    const glow = new THREE.Mesh(new THREE.CircleGeometry(themeKey === 'night' ? 0.32 : 0.42, 32), new THREE.MeshBasicMaterial({ color: T.skyGlow }));
+    const glow = new THREE.Mesh(new THREE.CircleGeometry(T.win === 'night' ? 0.32 : 0.42, 32), new THREE.MeshBasicMaterial({ color: T.skyGlow }));
     glow.position.set(0.8, 0.5, 0.01);
     win.add(glow);
-    if (themeKey === 'night') {
+    if (T.win === 'sea') {
+      // Biển: nước, sóng, cá bơi
+      const sea = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 0.9), new THREE.MeshBasicMaterial({ color: 0x1e88e5 }));
+      sea.position.set(0, -0.65, 0.012); win.add(sea);
+      for (let i = 0; i < 3; i++) {
+        const wave = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 0.05), new THREE.MeshBasicMaterial({ color: 0xe3f2fd }));
+        wave.position.set(0, -0.25 - i * 0.25, 0.014); win.add(wave);
+        animated.push({ obj: wave, fn: (t) => { wave.position.x = Math.sin(t * 1.2 + i) * 0.08; } });
+      }
+      ['🐠', '🐟', '⛵'].forEach((e, i) => {
+        const f = new THREE.Mesh(new THREE.PlaneGeometry(0.32, 0.32), new THREE.MeshBasicMaterial({ map: emojiTexture(e), transparent: true }));
+        f.position.set(0, i === 2 ? -0.08 : -0.55 - i * 0.2, 0.02); win.add(f);
+        animated.push({ obj: f, fn: (t) => { f.position.x = (((t * (0.15 + i * 0.05) + i) % 3) - 1.5); } });
+      });
+    } else if (T.win === 'snow') {
+      for (let i = 0; i < 30; i++) {
+        const fl = new THREE.Mesh(new THREE.CircleGeometry(0.02 + Math.random() * 0.025, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+        const x0 = (Math.random() - 0.5) * 3, sp = 0.2 + Math.random() * 0.3, ph = Math.random() * 2.2;
+        win.add(fl);
+        animated.push({ obj: fl, fn: (t) => { fl.position.set(x0 + Math.sin(t + i) * 0.08, 1.05 - ((t * sp + ph) % 2.15), 0.015); } });
+      }
+      const ground = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 0.35), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+      ground.position.set(0, -0.93, 0.012); win.add(ground);
+    } else if (T.win === 'night') {
       const bite = new THREE.Mesh(new THREE.CircleGeometry(0.28, 32), new THREE.MeshBasicMaterial({ color: T.sky }));
       bite.position.set(0.95, 0.6, 0.02);
       win.add(bite);
@@ -307,7 +387,7 @@ export function createScene(canvas) {
     foot.position.y = 0.05;
     table.add(foot);
     // Trái tim / ngôi sao in giữa bàn
-    const logo = new THREE.Mesh(new THREE.CircleGeometry(0.55, 32), new THREE.MeshBasicMaterial({ map: emojiTexture(themeKey === 'night' ? '⭐' : themeKey === 'garden' ? '🌼' : '💗', 256), transparent: true, opacity: 0.35 }));
+    const logo = new THREE.Mesh(new THREE.CircleGeometry(0.55, 32), new THREE.MeshBasicMaterial({ map: emojiTexture(T.logo, 256), transparent: true, opacity: 0.35 }));
     logo.rotation.x = -Math.PI / 2; logo.position.y = 1.115;
     table.add(logo);
     room.add(table);
@@ -354,7 +434,7 @@ export function createScene(canvas) {
         if (Math.random() < 0.12) x += 0.25;
       }
     }
-    const shelfToy = makeCharacter(themeKey === 'night' ? '🐧' : themeKey === 'garden' ? '🐸' : '🐰');
+    const shelfToy = makeCharacter(T.toy);
     shelfToy.scale.setScalar(0.35);
     shelfToy.position.set(0.85, 3.37, 0);
     shelf.add(shelfToy);
@@ -441,7 +521,7 @@ export function createScene(canvas) {
     const pillow = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.85, 0.25, 24), mat(T.balloons[1]));
     pillow.position.set(-5.2, 0.13, -5.2); pillow.castShadow = true;
     room.add(pillow);
-    const sleeper = makeCharacter(themeKey === 'garden' ? '🐶' : '🐱');
+    const sleeper = makeCharacter(T.sleeper);
     sleeper.scale.set(0.7, 0.55, 0.7);
     sleeper.position.set(-5.2, 0.55, -5.2);
     sleeper.rotation.y = 0.6;
@@ -451,6 +531,9 @@ export function createScene(canvas) {
     zzz.scale.setScalar(0.5);
     room.add(zzz);
     animated.push({ obj: zzz, fn: (t) => { const k = (t * 0.4) % 1; zzz.position.set(-5.0 + k * 0.4, 1.1 + k * 0.8, -5.0); zzz.material.opacity = 1 - k; } });
+
+    // Đồ trang trí riêng của từng phòng
+    if (T.extra) buildExtra(T);
 
     // Hạt bay lơ lửng (emoji)
     for (let i = 0; i < 26; i++) {
@@ -467,15 +550,121 @@ export function createScene(canvas) {
     }
   }
 
+  function textTexture(text, color, bg, w = 1024, h = 160) {
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = `bold ${h * 0.55}px "Baloo 2", system-ui, sans-serif`;
+    ctx.fillText(text, w / 2, h / 2 + 4);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }
+
+  function sprite(emoji, x, y, z, size) {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: emojiTexture(emoji), transparent: true }));
+    sp.position.set(x, y, z); sp.scale.setScalar(size);
+    room.add(sp);
+    return sp;
+  }
+
+  function tree(x, z, trunkColor, blossom, emojis, scale = 1) {
+    const g = new THREE.Group();
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, 2.2, 8), mat(trunkColor));
+    trunk.position.y = 1.1; trunk.castShadow = true; g.add(trunk);
+    for (const [bx, by, br] of [[-0.5, 2.0, 0.6], [0.5, 2.2, 0.55], [0, 2.7, 0.7], [-0.2, 2.3, 0.5], [0.3, 2.9, 0.45]]) {
+      if (blossom) { const b = new THREE.Mesh(new THREE.SphereGeometry(br, 14, 10), mat(blossom)); b.position.set(bx, by, 0); b.castShadow = true; g.add(b); }
+    }
+    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.35, 0.5, 16), mat(0x8d6e63));
+    pot.position.y = 0.25; g.add(pot);
+    g.position.set(x, 0, z); g.scale.setScalar(scale);
+    room.add(g);
+    for (let i = 0; i < 14; i++) {
+      const a = Math.random() * Math.PI * 2, r = Math.random() * 0.9;
+      sprite(emojis[i % emojis.length], x + Math.cos(a) * r * scale, (1.9 + Math.random() * 1.3) * scale, z + Math.sin(a) * r * 0.6 * scale, 0.28 * scale);
+    }
+    return g;
+  }
+
+  function buildExtra(T) {
+    if (T.extra === 'tet') {
+      // Câu chúc trên tường
+      const banner = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 0.8), new THREE.MeshBasicMaterial({ map: textTexture('🧧 Chúc Mừng Năm Mới 🧧', '#ffd54f', '#c62828') }));
+      banner.position.set(0, 6.45, -6.9); room.add(banner);
+      // Đèn lồng đỏ đung đưa
+      [[-3.2, -3], [3.2, -3], [-4.5, 1.5], [4.5, 1.5]].forEach(([x, z], i) => {
+        const g = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.SphereGeometry(0.42, 18, 14), new THREE.MeshStandardMaterial({ color: 0xe53935, emissive: 0x8b0000, emissiveIntensity: 0.5 }));
+        body.scale.y = 0.85; g.add(body);
+        for (const y of [0.36, -0.36]) { const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.1, 12), mat(0xffd54f)); cap.position.y = y; g.add(cap); }
+        const tassel = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.06, 0.4, 6), mat(0xffd54f)); tassel.position.y = -0.62; g.add(tassel);
+        const rope = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 2, 4), mat(0x5d4037)); rope.position.y = 1.4; g.add(rope);
+        g.position.set(x, 5.6, z); room.add(g);
+        animated.push({ obj: g, fn: (t) => { g.rotation.z = Math.sin(t * 1.2 + i) * 0.06; } });
+      });
+      // Cây mai vàng
+      tree(-5.4, -1.2, 0x5d4037, null, ['🌼', '🌼', '🌼', '🧧'], 1.1);
+      sprite('🍊', 5.0, 0.4, 2.4, 0.6); sprite('🍉', 5.6, 0.35, 1.8, 0.6);
+    }
+    if (T.extra === 'ocean') {
+      // Phao tròn trên tường
+      const buoy = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.16, 12, 24), mat(0xffffff));
+      buoy.position.set(-6.9, 4.2, 1.5); buoy.rotation.y = Math.PI / 2; room.add(buoy);
+      for (let i = 0; i < 4; i++) {
+        const seg = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.17, 12, 6, Math.PI / 4), mat(0xe53935));
+        seg.position.copy(buoy.position); seg.rotation.y = Math.PI / 2; seg.rotation.x = (i * Math.PI) / 2; room.add(seg);
+      }
+      // Rong biển đung đưa
+      [[-5.6, 4.6], [5.5, -2.5], [-4.6, -5.8]].forEach(([x, z], i) => {
+        for (let k = 0; k < 3; k++) {
+          const w = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 1.1 + k * 0.3, 4, 8), mat(0x43a047));
+          w.position.set(x + k * 0.18, 0.7 + k * 0.15, z); room.add(w);
+          animated.push({ obj: w, fn: (t) => { w.rotation.z = Math.sin(t * 1.4 + i + k) * 0.25; } });
+        }
+      });
+      sprite('🐚', 3.5, 0.2, 3.8, 0.45); sprite('⭐', -3.2, 0.15, 4.0, 0.4); sprite('🦀', 4.8, 0.25, 0.5, 0.5);
+      sprite('🏖️', 6.0, 0.45, -4.5, 0.8);
+    }
+    if (T.extra === 'winter') {
+      // Người tuyết
+      const sm = new THREE.Group();
+      [[0.55, 0.5], [0.4, 1.3], [0.28, 1.9]].forEach(([r, y]) => { const b = new THREE.Mesh(new THREE.SphereGeometry(r, 18, 14), mat(0xffffff)); b.position.y = y; b.castShadow = true; sm.add(b); });
+      const nose = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.3, 8), mat(0xff8a00)); nose.rotation.x = Math.PI / 2; nose.position.set(0, 1.9, 0.38); sm.add(nose);
+      for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 6), mat(0x222222)); e.position.set(sx * 0.1, 2.0, 0.25); sm.add(e); }
+      const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.3, 14), mat(0x333333)); hat.position.y = 2.25; sm.add(hat);
+      const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.07, 8, 16), mat(0xe53935)); scarf.rotation.x = Math.PI / 2; scarf.position.y = 1.62; sm.add(scarf);
+      sm.position.set(-5.2, 0, 1.4); sm.rotation.y = 0.8; room.add(sm);
+      // Cây thông Noel
+      const xt = new THREE.Group();
+      [[1.0, 1.2, 0.9], [0.8, 1.0, 1.6], [0.55, 0.8, 2.2]].forEach(([r, h, y]) => { const c = new THREE.Mesh(new THREE.ConeGeometry(r, h, 12), mat(0x2e7d32)); c.position.y = y; c.castShadow = true; xt.add(c); });
+      const pot2 = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.25, 0.5, 12), mat(0x8d6e63)); pot2.position.y = 0.25; xt.add(pot2);
+      const balls = [0xff5252, 0xffd740, 0x40c4ff, 0xffffff];
+      for (let i = 0; i < 12; i++) {
+        const a = i * 2.4, y = 0.8 + (i / 12) * 1.6, r = 0.95 - (i / 12) * 0.6;
+        const b = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshBasicMaterial({ color: balls[i % 4] }));
+        b.position.set(Math.cos(a) * r, y, Math.sin(a) * r); xt.add(b);
+      }
+      xt.position.set(5.3, 0, -3.6); room.add(xt);
+      sprite('⭐', 5.3, 2.85, -3.6, 0.5);
+      sprite('🎁', 4.5, 0.3, -2.6, 0.55); sprite('🎁', 6.0, 0.3, -2.8, 0.45);
+    }
+    if (T.extra === 'sakura') {
+      tree(5.3, -4.0, 0x6d4c41, 0xf8bbd0, ['🌸', '🌸', '💮'], 1.15);
+      tree(-5.6, 0.6, 0x6d4c41, 0xf3a6c8, ['🌸', '🌸'], 0.85);
+      sprite('🎐', -3.5, 6.0, -6.5, 0.6); sprite('🎐', 3.5, 6.0, -6.5, 0.6);
+      sprite('🍡', 4.6, 0.3, 2.6, 0.5);
+    }
+  }
+
   function plant(x, y, z, size, T) {
     const g = new THREE.Group();
-    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.26, 0.55, 16), mat(themeKey === 'night' ? 0xffd86b : 0xffffff));
+    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.26, 0.55, 16), mat(T.pot));
     pot.position.y = 0.27; pot.castShadow = true;
     g.add(pot);
     const band = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.04, 8, 20), mat(T.rug2));
     band.rotation.x = Math.PI / 2; band.position.y = 0.45;
     g.add(band);
-    const leafM = mat(themeKey === 'night' ? 0x6fc9a3 : 0x7ccf86);
+    const leafM = mat(T.leaf);
     for (let i = 0; i < 6; i++) {
       const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 10), leafM);
       const a = (i / 6) * Math.PI * 2;
@@ -487,8 +676,8 @@ export function createScene(canvas) {
     const topLeaf = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 10), leafM);
     topLeaf.position.y = 1.35;
     g.add(topLeaf);
-    if (themeKey !== 'night') {
-      const flower = new THREE.Sprite(new THREE.SpriteMaterial({ map: emojiTexture(themeKey === 'garden' ? '🌼' : '🌸'), transparent: true }));
+    if (T.flower) {
+      const flower = new THREE.Sprite(new THREE.SpriteMaterial({ map: emojiTexture(T.flower), transparent: true }));
       flower.position.set(0.15, 1.6, 0.2); flower.scale.setScalar(0.35);
       g.add(flower);
     }

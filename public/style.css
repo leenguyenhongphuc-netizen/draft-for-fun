@@ -66,15 +66,15 @@ input:focus { border-color: var(--pink); }
 .avatar-big { width: 64px; height: 64px; border-radius: 50%; background: #fff; display: grid; place-items: center; font-size: 40px; box-shadow: var(--shadow); flex: none; }
 .profile-fields { flex: 1; display: flex; flex-direction: column; gap: 4px; }
 .coins { font-weight: 700; color: #c48a00; }
-.avatar-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin: 12px 0; }
-.avatar-grid button { border: 2px solid transparent; background: #fff; border-radius: 14px; font-size: 24px; padding: 4px 0; cursor: pointer; transition: transform 0.15s; }
+.avatar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin: 12px 0; }
+.avatar-grid button { border: 2px solid transparent; background: #fff; border-radius: 14px; font-size: 23px; padding: 4px 0; cursor: pointer; transition: transform 0.15s; }
 .avatar-grid button:hover { transform: scale(1.1); }
 .avatar-grid button.sel { border-color: var(--pink); background: var(--pink-l); }
 .tabs { display: flex; gap: 6px; background: #fff0f6; border-radius: 999px; padding: 4px; margin-bottom: 12px; }
 .tab { flex: 1; border: 0; background: transparent; border-radius: 999px; padding: 8px; font-weight: 700; cursor: pointer; color: var(--ink-soft); font-size: 15px; }
 .tab.active { background: #fff; color: var(--pink-d); box-shadow: var(--shadow); }
 .tab-body { display: flex; flex-direction: column; gap: 10px; }
-.theme-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.theme-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
 .theme-pick button { border: 3px solid transparent; border-radius: 16px; padding: 10px 4px; cursor: pointer; font-weight: 700; font-size: 13px; line-height: 1.2; }
 .theme-pick button.sel { border-color: var(--pink); transform: scale(1.04); }
 .theme-pick .t-candy { background: linear-gradient(135deg, #ffd9e8, #fff1a6); }

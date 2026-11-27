@@ -8,8 +8,8 @@ Game **Tiến Lên Miền Nam** chơi online nhiều người, giao diện paste
 - 📒 Chế độ ghi nợ (chơi cho vui): không trừ xu, ghi lại ai thắng/thua qua các ván, bảng tổng, gợi ý "ai trả ai" ít lần chuyển nhất, lịch sử ván, sao chép sổ để dán vào Zalo/Messenger.
 - 🌐 Chơi online theo phòng 2–4 người: tạo phòng, gửi **link mời**/mã 4 chữ, danh sách phòng công khai.
 - 🤖 Thêm bot lấp chỗ trống; ai mất mạng thì bot đánh thay, vào lại trong 45 giây sẽ ngồi lại đúng chỗ.
-- 🏠 3 kiểu trang trí phòng 3D: **Kẹo Hồng**, **Vườn Xanh**, **Đêm Sao** (chủ phòng đổi được bất cứ lúc nào).
-- 🐱 12 avatar thú cưng — người chơi khác hiện thành nhân vật 3D ngồi quanh bàn, nhún nhảy khi tới lượt.
+- 🏠 7 kiểu trang trí phòng 3D, mỗi phòng có nhạc riêng: **Kẹo Hồng**, **Vườn Xanh**, **Đêm Sao**, **Tết Sum Vầy**, **Biển Xanh**, **Mùa Đông**, **Anh Đào** (chủ phòng đổi được bất cứ lúc nào).
+- 🐱 14 avatar (thú cưng, 💕, 🌷) — người chơi khác hiện thành nhân vật 3D ngồi quanh bàn, nhún nhảy khi tới lượt.
 - 🎵 Nhạc nền riêng cho từng kiểu phòng + hiệu ứng âm thanh (tiếng bài, "ụt ịt" khi đánh heo, chặt, tích tắc sắp hết giờ…), tự tổng hợp bằng WebAudio, bật/tắt riêng nhạc và tiếng.
 - 💥 Hiệu ứng: bài bay từ người đánh vào bàn, rung màn hình + nổ hạt 3D khi chặt heo, chữ combo khi đánh sảnh dài/đôi thông/tứ quý, đếm xu khi kết thúc.
 - 💬 Chat, thả emoji, pháo giấy khi thắng, đếm giờ 25 giây/lượt.

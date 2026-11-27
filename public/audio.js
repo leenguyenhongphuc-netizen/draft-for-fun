@@ -121,6 +121,38 @@ const SONGS = {
       74, null, 72, null, 71, null, 67, null, 69, null, null, null, null, null, null, null],
     hat: true, kick: [0, 7, 10], snare: [4, 12],
   },
+  // Tết: ngũ cung rộn ràng
+  tet: {
+    bpm: 120, lead: 'square', leadVol: 0.045, padType: 'triangle', swing: 0,
+    chords: [[60, 64, 67], [57, 60, 64], [62, 65, 69], [55, 59, 62]],
+    melody: [72, 74, 76, null, 79, null, 76, 74, 72, null, 69, null, 72, null, null, null,
+      74, 76, 79, null, 81, null, 79, 76, 74, null, 72, 74, 72, null, null, null],
+    hat: true, kick: [0, 6, 8], snare: [4, 12],
+  },
+  // Biển: lắc lư nhẹ
+  ocean: {
+    bpm: 96, lead: 'triangle', leadVol: 0.08, padType: 'sine', swing: 0.15,
+    chords: [[62, 66, 69], [59, 62, 66], [55, 59, 62], [57, 61, 64]],
+    melody: [74, null, 78, null, 76, null, 74, 71, null, null, 69, null, 71, null, null, null,
+      74, null, 76, 78, 81, null, 78, null, 76, null, 74, null, 73, null, null, null],
+    hat: true, kick: [0, 10], snare: [8],
+  },
+  // Mùa đông: leng keng chuông
+  winter: {
+    bpm: 104, lead: 'sine', leadVol: 0.09, padType: 'triangle', swing: 0,
+    chords: [[60, 64, 67], [65, 69, 72], [67, 71, 74], [60, 64, 67]],
+    melody: [76, 76, 76, null, 76, 76, 76, null, 76, 79, 72, 74, 76, null, null, null,
+      77, 77, 77, 77, 77, 76, 76, 76, 76, 74, 74, 76, 74, null, 79, null],
+    hat: true, kick: [0, 8], snare: [4, 12],
+  },
+  // Anh đào: êm đềm
+  sakura: {
+    bpm: 84, lead: 'sine', leadVol: 0.09, padType: 'sine', swing: 0,
+    chords: [[57, 60, 64], [53, 57, 60], [55, 59, 62], [52, 56, 59]],
+    melody: [69, null, 71, 72, null, 71, 69, null, 64, null, null, null, 65, null, 64, null,
+      69, null, 71, 72, null, 76, 74, 72, 71, null, null, null, null, null, null, null],
+    hat: false, kick: [0], snare: [],
+  },
 };
 
 function scheduleStep(t, i) {

@@ -7,8 +7,8 @@
 import { Room } from './game/room.js';
 import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
 
-const THEMES = ['candy', 'garden', 'night'];
-const AVATARS = ['🐱', '🐶', '🐰', '🐼', '🦊', '🐸', '🐷', '🐹', '🐨', '🐯', '🐻', '🐧'];
+const THEMES = ['candy', 'garden', 'night', 'tet', 'ocean', 'winter', 'sakura'];
+const AVATARS = ['🐱', '🐶', '🐰', '🐼', '🦊', '🐸', '🐷', '🐹', '🐨', '🐯', '🐻', '🐧', '💕', '🌷'];
 const PREFIX = 'tlc-v1';
 const clean = (s, max) => String(s ?? '').replace(/[<>]/g, '').trim().slice(0, max);
 

@@ -8,7 +8,7 @@ import * as audio from './audio.js';
 import * as fx from './fx.js';
 
 const $ = (s) => document.querySelector(s);
-const AVATARS = ['🐱', '🐶', '🐰', '🐼', '🦊', '🐸', '🐷', '🐹', '🐨', '🐯', '🐻', '🐧'];
+const AVATARS = ['🐱', '🐶', '🐰', '🐼', '🦊', '🐸', '🐷', '🐹', '🐨', '🐯', '🐻', '🐧', '💕', '🌷'];
 const EMOTES = ['😂', '😭', '😡', '🥰', '👍', '🔥', '🐷'];
 const MEDALS = ['🥇', '🥈', '🥉', '🥔'];
 const RANK_TXT = ['Nhất', 'Nhì', 'Ba', 'Bét'];
@@ -108,6 +108,9 @@ function initLobby() {
   Object.entries(THEMES).forEach(([k, t]) => {
     const b = document.createElement('button');
     b.className = 't-' + k + (k === pickedTheme ? ' sel' : '');
+    const hex = (n) => '#' + n.toString(16).padStart(6, '0');
+    b.style.background = `linear-gradient(135deg, ${hex(t.wall)}, ${hex(t.rug2)})`;
+    if (t.dark) b.style.color = '#fff';
     b.textContent = t.label;
     b.onclick = () => { pickedTheme = k; tp.querySelectorAll('button').forEach((x) => x.classList.remove('sel')); b.classList.add('sel'); scene3d.setTheme(k); audio.setTheme(k); sfx.pop(); };
     tp.appendChild(b);
@@ -143,7 +146,7 @@ function renderRooms(list) {
   list.forEach((r) => {
     const b = document.createElement('button');
     b.className = 'room-item';
-    const icon = { candy: '🍬', garden: '🌿', night: '🌙' }[r.theme] || '🃏';
+    const icon = THEMES[r.theme] ? THEMES[r.theme].label.split(' ')[0] : '🃏';
     b.innerHTML = `<span class="ri-theme">${icon}</span><span class="ri-name"></span><span class="ri-meta">${r.players}/4 người<br>${r.state === 'playing' ? 'đang chơi' : 'đang chờ'}</span>`;
     b.querySelector('.ri-name').textContent = r.name;
     b.onclick = () => { myName = $('#nameInput').value.trim() || myName || randomName(); socket.emit('profile', { name: myName, avatar: myAvatar }); socket.emit('joinRoom', { code: r.code }); };
