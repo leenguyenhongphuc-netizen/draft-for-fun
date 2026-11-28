@@ -794,3 +794,15 @@ body[data-scene="typhu"] #board.typhu { top: var(--ttop); }
 .lt-sheet-head { white-space: nowrap; }
 .lt-sheet-head .lt-sheet-title { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .lt-sheet-head .mini { flex: none; font-size: 12px; }
+/* Điện thoại xoay ngang: thu nhỏ bàn cờ (mặt nghiêng làm bàn cao hơn) và sân khấu lô tô */
+@media (orientation: landscape) and (max-height: 520px) {
+  :root { --bs: calc(100vh - 120px); --bst: calc(100vh - 150px); }
+  .lt-stage { height: 30vh; min-height: 110px; }
+  .lt-bubble, .lt-mc .mc-hat { display: none; }
+  .lt-recent { padding: 3px 8px; }
+  .lt-grid i { height: 24px; font-size: 12px; }
+}
+@media (orientation: landscape) and (max-height: 520px) {
+  .lt-sheet-body { overflow-y: auto; touch-action: pan-x pan-y; }
+  .lt-sheet { min-height: 0; }
+}
