@@ -135,7 +135,7 @@ const HOWTO = {
   caro: ['2 người, ✕ đi trước (đổi lượt mỗi ván).', 'Ai có 5 quân liên tiếp ngang, dọc hoặc chéo là thắng.', 'Luật Việt Nam: bị chặn cả 2 đầu thì không tính (chủ phòng tắt được trong ⚙️ Luật).'],
   spin: ['Lần lượt từng người bấm quay. Trúng ô nào làm thử thách ô đó: hát, nhảy, gây cười, bắt chước, chúc Tết, đố vui, nâng ly…', 'Làm xong được 1 ⭐, chịu thua thì bị phạt nhẹ cho vui. Ô 🍀 May mắn luôn được sao.', 'Thử thách vui vẻ cho cả nhà, không tính xu. Chủ phòng dừng lúc nào cũng được.'],
   duoihinh: ['Mỗi ván 10 câu, nhìn emoji đoán ra chữ (thành ngữ, món ăn, ngày Tết, địa danh…).', 'Gõ đáp án, không dấu cũng được. Cứ 10 giây lộ thêm vài chữ cái gợi ý.', 'Đoán đúng càng sớm càng nhiều điểm (5 · 4 · 3 · 2 · 1), đoán trước khi có gợi ý +1. Chỉ tính điểm cho vui.'],
-  duathu: ['Mỗi người chọn 1 con thú (mỗi con 1 người), rồi cả đàn chạy 2 vòng quanh trường đua.', 'Mỗi người góp 1 phần, thú của ai về trước nhất ăn cả hũ.', 'Có tăng tốc 💨, thỏ ngủ quên 💤, rùa nước rút… nhưng ai cũng có cơ hội như nhau.'],
+  duathu: ['Mỗi người chọn 1 con thú (mỗi con 1 người), rồi cả đàn chạy 2 vòng quanh trường đua.', 'Chia thưởng đều: nửa số người có thú về trước mỗi người +1 phần, nửa về sau mỗi người −1 phần (lẻ người thì người ở giữa hoà).', 'Có tăng tốc 💨, thỏ ngủ quên 💤, rùa nước rút… nhưng ai cũng có cơ hội như nhau.'],
   loto: ['Sân khấu xổ liên tục: mở bán vé → xổ số → có người KINH.', 'Mỗi vòng mua tối đa 3 vé. Hàng nào đủ 5 số là KINH!', 'Vào phòng lúc nào cũng được, chờ vòng sau mua vé.'],
 };
 
@@ -984,7 +984,7 @@ const GAME_RULE_TEXT = {
   baucua: 'Nhà cái xoay vòng. Mỗi hột ra đúng con đã đặt ăn 1 lần tiền cược (ra 2 hột ăn gấp 2…), không ra thì mất. Cược tối đa bằng số xu đang có.',
   taixiu: 'Nhà cái xoay vòng. Tài 11–17, Xỉu 4–10, ăn 1:1. Bộ ba thì nhà cái ăn hết. Cược tối đa bằng số xu đang có.',
   duoihinh: 'Nhìn emoji đoán chữ, 10 câu mỗi ván. Đúng càng sớm càng nhiều điểm. Chỉ tính điểm cho vui, không tính xu.',
-  duathu: 'Mỗi người chọn 1 thú, góp 1 phần vào hũ. Thú của ai về trước nhất (trong các con có chủ) ăn cả hũ.',
+  duathu: 'Mỗi người chọn 1 thú. Xếp hạng theo thứ tự về đích: nửa trên mỗi người +1 phần, nửa dưới mỗi người −1 phần (vd 8 người: 4 người đầu ăn của 4 người sau). Lẻ người thì người ở giữa hoà.',
   spin: 'Lần lượt quay, làm thử thách được ⭐. Chỉ để vui, không tính xu.',
   caro: 'Bàn 15×15, 5 quân liên tiếp thắng (+1 phần), thua −1 phần, hoà 0.',
   cangua: 'Gieo 1 hoặc 6 thì ra quân, ra 1 hoặc 6 được gieo thêm. Đi trúng ngựa đối thủ thì đá về chuồng. Vào đích phải đúng số. Ai về đủ 4 ngựa trước thắng.',
@@ -1287,7 +1287,7 @@ initLobby();
 showLobby();
 
 // ---------- Báo có bản mới ----------
-const APP_VERSION = '20261128-1202';
+const APP_VERSION = '20261128-1214';
 document.querySelectorAll('.lobby-card').forEach((c) => { const v = document.createElement('div'); v.className = 'app-ver'; v.textContent = 'Phiên bản ' + APP_VERSION; c.appendChild(v); });
 async function checkUpdate() {
   try {

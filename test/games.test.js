@@ -232,6 +232,8 @@ test('đuổi hình bắt chữ: so đáp án không dấu, gợi ý, chấm đi
   assert.ok(!isRight('cá chép', p));
   assert.equal(maskAnswer('lì xì', 0, [0, 1, 3, 4]), '__ __');
   assert.ok(PUZZLES.every((x) => x[0] && x[1] && x[2]));
+  assert.ok(PUZZLES.length >= 999, 'kho phải có ít nhất 999 câu, đang có ' + PUZZLES.length);
+  assert.equal(new Set(PUZZLES.map((x) => x[1])).size, PUZZLES.length);
   const r = new DuoiHinhRoom({ code: 'D', name: 'd', theme: 'candy', isPublic: false, hooks: hooks() });
   r.join({ id: 'host', name: 'H', avatar: '🐱' }); r.join({ id: 'b', name: 'B', avatar: '🐶' });
   r.start(); r.destroy();
@@ -264,7 +266,8 @@ test('đua thú: đường chạy hợp lệ, chọn thú, người có thú v�
     const best = r.results.find((x) => x.rank === 1);
     const firstOwned = r.g.order.find((i) => Object.values(r.g.pick).includes(i));
     assert.equal(r.g.pick[best.seat], firstOwned);
-    assert.equal(best.parts, 2);
+    assert.equal(best.parts, 1);
+    assert.deepEqual(r.results.map((x) => x.parts).sort(), [-1, 0, 1]);
   }
 });
 

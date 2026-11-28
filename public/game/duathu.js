@@ -1,6 +1,6 @@
 // 🏇 ĐUA THÚ — mỗi người chọn 1 con thú, đua qua 4 chặng: Đồng lúa → Phố đèn lồng → Đường biển → Đồi hoa mai
 // - Chọn thú (mỗi con chỉ 1 người). Hết 20 giây hoặc chủ phòng bấm chạy thì xuất phát.
-// - Mỗi người góp 1 phần vào hũ. Thú của ai về trước nhất (trong các con có chủ) thì người đó ăn cả hũ.
+// - Chia thưởng đều: nửa số người có thú về trước mỗi người +1 phần, nửa về sau mỗi người −1 phần (lẻ thì người giữa hoà).
 // - Con không ai chọn vẫn chạy cho vui.
 // - Thứ tự về đích được bốc thăm công bằng trước, rồi mới "vẽ" đường chạy cho kịch tính:
 //   có con xuất phát nhanh rồi đuối, con bứt tốc cuối, tăng tốc 💨, trượt vũng bùn 🌀, nước rút sát nút…
@@ -140,7 +140,10 @@ export class DuaThuRoom extends BaseRoom {
     const n = players.length;
     const rows = players.map((s, k) => {
       const a = ANIMALS[g.pick[s]];
-      return { seat: s, parts: n < 2 ? 0 : k === 0 ? n - 1 : -1, rank: k + 1, note: `${a.icon} ${a.name} về thứ ${placeOf(s)}`, badge: k === 0 ? '🏆' : ['🥈', '🥉'][k - 1] || '🏁' };
+      // Chia đều: nửa trên mỗi người +1 phần, nửa dưới mỗi người −1 phần (lẻ người thì người giữa hoà)
+      const half = Math.floor(n / 2);
+      const parts = k < half ? 1 : k >= n - half ? -1 : 0;
+      return { seat: s, parts, rank: k + 1, note: `${a.icon} ${a.name} về thứ ${placeOf(s)}`, badge: k === 0 ? '🏆' : parts > 0 ? '🎉' : parts < 0 ? '😢' : '🤝' };
     });
     this.hooks.emitEvent(this, { kind: 'dt', what: 'finish', winner: g.order[0], seat: owner[g.order[0]] ?? null });
     this.finish(rows);

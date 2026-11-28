@@ -3,70 +3,14 @@
 // - Gõ đáp án (có dấu hay không dấu đều được). Đúng càng sớm càng nhiều điểm: 5 · 4 · 3 · 2 · 1.
 // - Chỉ tính điểm cho vui, không tính xu.
 import { BaseRoom } from './base.js';
+import { PUZZLES } from './duoihinh-data.js';
 
 export const Q_MS = 30000;
 export const REVEAL_MS = 4500;
 export const ROUNDS = 10;
 
-// [emoji, đáp án chính, gợi ý chủ đề, ...đáp án chấp nhận thêm]
-export const PUZZLES = [
-  ['🐟 ➡️ 🐉', 'cá chép hoá rồng', 'Thành ngữ'],
-  ['🐸 🕳️', 'ếch ngồi đáy giếng', 'Thành ngữ'],
-  ['🎻 🐃', 'đàn gảy tai trâu', 'Thành ngữ'],
-  ['🖌️ 🐍 ➕ 🦶', 'vẽ rắn thêm chân', 'Thành ngữ'],
-  ['🐱 🐭', 'mèo vờn chuột', 'Thành ngữ'],
-  ['🌧️ 🍄 🍄 🍄', 'mọc như nấm sau mưa', 'Thành ngữ', 'nấm sau mưa'],
-  ['🏹 🎯 🎯', 'một mũi tên trúng hai đích', 'Thành ngữ', 'một mũi tên hai đích'],
-  ['🐌 🐢', 'chậm như rùa', 'Thành ngữ', 'chậm như sên', 'rùa bò'],
-  ['🍯 💬', 'ngọt như mật', 'Thành ngữ', 'miệng ngọt như mật'],
-  ['🐯 👶 🐯', 'hổ phụ sinh hổ tử', 'Thành ngữ'],
-  ['🐉 ⬇️ 🌊', 'hạ long', 'Địa danh', 'vịnh hạ long'],
-  ['🗡️ 🌊 🐢', 'hồ gươm', 'Địa danh', 'hồ hoàn kiếm'],
-  ['🌉 🐉 🔥', 'cầu rồng', 'Địa danh'],
-  ['🌸 🍑', 'hoa đào', 'Ngày Tết'],
-  ['🌼 🌳 💛', 'hoa mai', 'Ngày Tết', 'cây mai'],
-  ['🎆 🌃', 'pháo hoa', 'Ngày Tết', 'bắn pháo hoa'],
-  ['🦁 💃 🥁', 'múa lân', 'Ngày Tết'],
-  ['🍉 🔴', 'dưa hấu', 'Ngày Tết'],
-  ['🍊 🌳', 'cây quất', 'Ngày Tết', 'cây tắc'],
-  ['🟩 🍃 🍚', 'bánh chưng', 'Ngày Tết'],
-  ['🧧 💰', 'lì xì', 'Ngày Tết', 'mừng tuổi', 'li xi'],
-  ['🏮 ✨', 'đèn lồng', 'Ngày Tết'],
-  ['🦀 🐟 🦐 🎲', 'bầu cua', 'Ngày Tết', 'bầu cua cá cọp', 'bầu cua tôm cá'],
-  ['🙏 🛕', 'đi chùa', 'Ngày Tết', 'lễ chùa'],
-  ['🏡 🛣️ 🚌', 'về quê', 'Ngày Tết', 'về quê ăn tết'],
-  ['🧹 🏠 ✨', 'dọn nhà', 'Ngày Tết', 'dọn dẹp nhà cửa'],
-  ['🍜 🐄', 'phở bò', 'Món ăn'],
-  ['🍞 🥩', 'bánh mì thịt', 'Món ăn', 'bánh mì'],
-  ['🍚 🐔', 'cơm gà', 'Món ăn'],
-  ['☕ 🥛', 'cà phê sữa', 'Món ăn', 'cafe sữa', 'cà phê sữa đá'],
-  ['🧊 🍵', 'trà đá', 'Món ăn'],
-  ['🥥 💧', 'nước dừa', 'Món ăn'],
-  ['🍌 🔥', 'chuối nướng', 'Món ăn'],
-  ['🐌 🍜', 'bún ốc', 'Món ăn'],
-  ['🦀 🍜', 'bún riêu', 'Món ăn', 'bún riêu cua'],
-  ['🍲 🔥', 'lẩu', 'Món ăn', 'nồi lẩu'],
-  ['🌙 🍰', 'bánh trung thu', 'Món ăn'],
-  ['🐝 🍯', 'mật ong', 'Đồ vật'],
-  ['🌞 🌻', 'hoa hướng dương', 'Đồ vật'],
-  ['⭐ 🐟', 'sao biển', 'Con vật'],
-  ['🐴 🌊', 'cá ngựa', 'Con vật'],
-  ['🐻 🧸', 'gấu bông', 'Đồ vật'],
-  ['🦷 🪥', 'bàn chải đánh răng', 'Đồ vật', 'bàn chải'],
-  ['🎤 🎶 📺', 'karaoke', 'Giải trí', 'hát karaoke'],
-  ['⚽ 🥅', 'bóng đá', 'Giải trí', 'đá banh'],
-  ['🍿 🎬', 'xem phim', 'Giải trí', 'rạp phim'],
-  ['📱 🤳', 'tự sướng', 'Giải trí', 'selfie', 'chụp hình'],
-  ['✈️ 🛫 🏢', 'sân bay', 'Địa điểm'],
-  ['🏫 📚 🎒', 'đi học', 'Đời sống', 'trường học'],
-  ['🌧️ ☂️', 'trời mưa', 'Thời tiết', 'mưa'],
-  ['❄️ ⛄', 'người tuyết', 'Đồ vật'],
-  ['🌈 🌧️ ☀️', 'cầu vồng', 'Thời tiết'],
-  ['🐓 🌅', 'gà gáy', 'Đời sống', 'gà gáy sáng'],
-  ['💤 🛏️', 'đi ngủ', 'Đời sống', 'ngủ'],
-  ['👵 👴 💕', 'ông bà', 'Gia đình'],
-  ['👨‍👩‍👧 📸', 'ảnh gia đình', 'Gia đình', 'chụp ảnh gia đình', 'hình gia đình'],
-];
+// Kho câu đố: [emoji, đáp án chính, chủ đề, ...đáp án chấp nhận thêm]
+export { PUZZLES };
 
 /** Bỏ dấu, chữ thường, bỏ ký tự lạ để so đáp án */
 export function norm(s) {
@@ -88,7 +32,7 @@ export class DuoiHinhRoom extends BaseRoom {
 
   begin() {
     const pool = PUZZLES.map((_, i) => i).sort(() => Math.random() - 0.5);
-    const used = (this.meta.used || []).slice(-40);
+    const used = (this.meta.used || []).slice(-300);
     const fresh = pool.filter((i) => !used.includes(i));
     const list = [...fresh, ...pool.filter((i) => used.includes(i))].slice(0, ROUNDS);
     this.meta.used = [...used, ...list];
