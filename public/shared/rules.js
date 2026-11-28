@@ -113,6 +113,7 @@ export function checkInstantWin(hand) {
 }
 
 export function sortHand(hand, mode = 'rank') {
+  if (mode === 'smart') return smartGroups(hand).flatMap((g) => g.cards);
   const h = [...hand];
   if (mode === 'suit') return h.sort((a, b) => suitOf(a) - suitOf(b) || a - b);
   return h.sort((a, b) => a - b);
@@ -274,3 +275,58 @@ export function settleDebts(totals) {
   }
   return out;
 }
+
+// ---------- Xếp bài thông minh: gom thành từng bộ đánh được ----------
+const takeRun = (byRank, need, minLen, out, type) => {
+  // tìm dãy bậc liên tiếp dài nhất (không có heo) mà mỗi bậc còn >= need lá
+  let best = null;
+  for (let s = 0; s < 12; s++) {
+    let e = s;
+    while (e < 12 && byRank[e].length >= need) e++;
+    if (e - s >= minLen && (!best || e - s > best[1] - best[0])) best = [s, e];
+  }
+  if (!best) return false;
+  const cards = [];
+  for (let r = best[0]; r < best[1]; r++) cards.push(...byRank[r].splice(0, need));
+  out.push({ type, cards });
+  return true;
+};
+
+function groupWith(hand, straightsFirst) {
+  const byRank = Array.from({ length: 13 }, () => []);
+  [...hand].sort((a, b) => a - b).forEach((id) => byRank[rankOf(id)].push(id));
+  const bombs = [], normal = [];
+  // Heo để riêng
+  const twos = byRank[TWO].splice(0);
+  // Tứ quý
+  for (let r = 0; r < 12; r++) if (byRank[r].length === 4) bombs.push({ type: 'quad', cards: byRank[r].splice(0) });
+  // Đôi thông
+  while (takeRun(byRank, 2, 3, bombs, 'pairseq'));
+  const sets = () => {
+    for (let r = 0; r < 12; r++) {
+      if (byRank[r].length === 3) normal.push({ type: 'triple', cards: byRank[r].splice(0) });
+      else if (byRank[r].length === 2) normal.push({ type: 'pair', cards: byRank[r].splice(0) });
+    }
+  };
+  if (straightsFirst) { while (takeRun(byRank, 1, 3, normal, 'straight')); sets(); }
+  else { sets(); while (takeRun(byRank, 1, 3, normal, 'straight')); }
+  for (let r = 0; r < 12; r++) byRank[r].forEach((c) => normal.push({ type: 'single', cards: [c] }));
+  normal.sort((a, b) => a.cards[0] - b.cards[0]);
+  // Gộp các lá rác liền nhau thành một nhóm "rác" cho gọn
+  const merged = [];
+  normal.forEach((g) => {
+    const last = merged[merged.length - 1];
+    if (g.type === 'single' && last && last.type === 'single') last.cards.push(...g.cards);
+    else merged.push({ ...g, cards: [...g.cards] });
+  });
+  const groups = [...merged, ...bombs];
+  if (twos.length) groups.push({ type: 'two', cards: twos });
+  return { groups, singles: normal.filter((g) => g.type === 'single').length };
+}
+
+/** Chia bài thành các bộ: [{type, cards}] (type: straight, pair, triple, single, quad, pairseq, two) */
+export function smartGroups(hand) {
+  const a = groupWith(hand, true), b = groupWith(hand, false);
+  return (b.singles < a.singles ? b : a).groups;
+}
+export const GROUP_LABEL = { straight: 'Sảnh', pair: 'Đôi', triple: 'Sám', single: 'Rác', quad: 'Tứ quý', pairseq: 'Đôi thông', two: 'Heo' };

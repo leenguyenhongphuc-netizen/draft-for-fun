@@ -830,3 +830,10 @@ body[data-scene="typhu"] #board.typhu { top: var(--ttop); }
 .rule.rule-stack .r-text { flex-basis: 100%; }
 .rule.rule-stack .seg { width: 100%; flex-direction: column; align-items: stretch; }
 .rule.rule-stack .seg button { height: auto; padding: 6px 10px; text-align: left; font-size: 13px; }
+
+/* Nhãn bộ bài khi xếp theo bộ */
+.hand .card.gs::before { content: attr(data-grp); position: absolute; left: 0; top: -15px; font-size: 10px; font-weight: 800; color: #fff; background: var(--mint-d); border-radius: 999px; padding: 0 6px; white-space: nowrap; line-height: 14px; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+.hand .card.gs[data-grp="Heo"]::before { background: var(--pink-d); }
+.hand .card.gs[data-grp="Tứ quý"]::before, .hand .card.gs[data-grp="Đôi thông"]::before { background: #ff9800; }
+.hand .card.gs[data-grp="Rác"]::before { background: #b9a9c6; }
+.hand.two-rows .hand-row + .hand-row { margin-top: calc(var(--ch) * -0.42 + 14px); }

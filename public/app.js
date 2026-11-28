@@ -1,7 +1,7 @@
 import { createScene, THEMES } from './scene3d.js';
 import {
   RANKS, SUITS, rankOf, suitOf, getCombo, canBeat, allPlays, sortHand, TWO, cardLabel,
-  finishViolation, settleDebts, TURN_CHOICES, UNIT_CHOICES, UNIT_LABELS, PTS3_CHOICES,
+  finishViolation, settleDebts, smartGroups, GROUP_LABEL, TURN_CHOICES, UNIT_CHOICES, UNIT_LABELS, PTS3_CHOICES,
 } from './shared/rules.js';
 import { createNet } from './net.js';
 import * as audio from './audio.js';
@@ -40,7 +40,7 @@ let myName = store.get('name', '');
 let myAvatar = store.get('avatar', AVATARS[Math.floor(Math.random() * AVATARS.length)]);
 let muted = store.get('muted', false);
 let pickedGame = store.get('game', 'tienlen');
-let sortMode = 'rank';
+let sortMode = store.get('sortMode', 'smart');
 
 // ---------- 3D ----------
 const scene3d = createScene($('#bg3d'));
@@ -309,7 +309,7 @@ function onState(prev, s) {
   const set = new Set(hand);
   const kept = handOrder.filter((c) => set.has(c));
   const added = hand.filter((c) => !kept.includes(c));
-  handOrder = added.length > 3 ? sortHand(hand, sortMode) : [...kept, ...sortHand(added, sortMode)];
+  handOrder = sortMode === 'smart' || added.length > 3 ? sortHand(hand, sortMode) : [...kept, ...sortHand(added, sortMode)];
   selected = new Set([...selected].filter((c) => set.has(c)));
   if (!prev || prev.state !== 'playing' || (prev.lastPlay && !s.lastPlay)) hintIdx = -1;
 
@@ -464,13 +464,19 @@ function renderHand(deal) {
   const cw = Math.max(40, Math.min(twoRows ? 64 : 76, W / (twoRows ? Math.max(4, perRow * 0.72) : Math.max(5, n * 0.58))));
   el.style.setProperty('--hcw', cw + 'px');
   el.classList.toggle('two-rows', twoRows);
+  // Xếp theo bộ: đánh dấu lá đầu mỗi bộ để chừa khoảng trống + ghi nhãn
+  const groupStart = new Map();
+  if (sortMode === 'smart') smartGroups(handOrder).forEach((g) => groupStart.set(g.cards[0], GROUP_LABEL[g.type] + (g.type === 'straight' ? ' ' + g.cards.length : '')));
   const rows = twoRows ? [handOrder.slice(0, perRow), handOrder.slice(perRow)] : [handOrder];
   let k = 0;
   rows.forEach((row) => {
     const r = document.createElement('div');
     r.className = 'hand-row';
     const m = row.length;
-    const overlap = m > 1 ? Math.max(0, Math.min(cw * 0.45, cw - (W - cw) / (m - 1))) : 0;
+    // Khoảng trống giữa các bộ cũng tính vào chiều rộng để không tràn màn hình
+    const gap = cw * 0.22;
+    const gaps = row.filter((id, i) => i > 0 && groupStart.has(id)).length * gap;
+    const overlap = m > 1 ? Math.max(0, Math.min(cw * 0.45, (m * cw + gaps - W) / (m - 1))) : 0;
     row.forEach((id, i) => {
       const c = cardEl(id);
       if (selected.has(id)) c.classList.add('sel');
@@ -478,7 +484,9 @@ function renderHand(deal) {
         c.classList.add('deal'); c.style.animationDelay = (k++) * 0.035 + 's';
         c.addEventListener('animationend', () => { c.classList.remove('deal'); c.style.animationDelay = ''; }, { once: true });
       }
-      if (i > 0) c.style.marginLeft = -overlap + 'px';
+      const gs = groupStart.get(id);
+      if (i > 0) c.style.marginLeft = (gs ? -overlap + gap : -overlap) + 'px';
+      if (gs) { c.dataset.grp = gs; c.classList.add('gs'); }
       r.appendChild(c);
     });
     el.appendChild(r);
@@ -623,10 +631,11 @@ $('#clearSelBtn').onclick = () => {
   sfx.deselect(); renderControls();
 };
 $('#sortBtn').onclick = () => {
-  sortMode = sortMode === 'rank' ? 'suit' : 'rank';
+  sortMode = { smart: 'rank', rank: 'suit', suit: 'smart' }[sortMode] || 'smart';
+  store.set('sortMode', sortMode);
   handOrder = sortHand(handOrder, sortMode);
   renderHand(); sfx.deal();
-  toast(sortMode === 'rank' ? 'Xếp theo số' : 'Xếp theo chất');
+  toast({ smart: '🧩 Xếp theo bộ (sảnh, đôi, heo…)', rank: '🔢 Xếp theo số', suit: '♠️ Xếp theo chất' }[sortMode]);
 };
 $('#hintBtn').onclick = () => {
   const prev = state.lastPlay ? getCombo(state.lastPlay.cards) : null;
