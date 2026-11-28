@@ -68,6 +68,7 @@ export function render(s, prev, ctx) {
   const seg = sp.seg != null ? SEGMENTS[sp.seg] : null;
   const showCard = seg && (sp.phase === 'task' || sp.phase === 'penalty');
   ui.card.classList.toggle('hidden', !showCard);
+  board.classList.toggle('has-card', !!showCard);
   if (showCard) {
     const key = sp.spinId + sp.phase;
     if (ui.card.dataset.key !== key) {
@@ -113,7 +114,7 @@ export function render(s, prev, ctx) {
   else if (sp.phase === 'penalty') ctx.banner(`🙈 ${who ? who.name : ''} chịu phạt nhẹ nè!`, false);
   else ctx.banner(who ? `⏳ Chờ ${who.avatar} ${who.name} ${sp.phase === 'spin' ? 'quay' : 'làm thử thách'}…` : '', false);
   if (isHost && !mine && who && !who.isBot && sp.phase !== 'spinning') btn('soft', '⏭ Qua lượt', 'next');
-  if (isHost) btn('soft', '⏹ Dừng', 'stop');
+  if (isHost) btn('soft sp-stop', row.children.length >= 2 ? '⏹' : '⏹ Dừng', 'stop');
   box.appendChild(row);
 }
 

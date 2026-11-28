@@ -3,11 +3,17 @@
 // - Phát ra: tiền chia ngẫu nhiên vào từng bao. Mỗi người (trừ chủ phòng) giành 1 bao.
 // - Hết bao hoặc hết 30 giây thì mở hết: ai trúng bao to nhất là 👑 Vua may mắn.
 // - Tiền: chủ phòng trả đúng số đã được giành, bao không ai lấy thì trả lại chủ phòng.
+// - 2 chế độ: 🪙 Xu trong game, hoặc 💵 Tiền thật (ghi sổ theo nghìn: mệnh giá 1k / 5k / 10k / 20k / 50k) để lì xì thật bên ngoài.
 import { BaseRoom } from './base.js';
+import { normalizeSettings } from '../shared/rules.js';
 
 export const GRAB_MS = 30000;
-export const TOTAL_XU = [200, 500, 1000, 2000];
-export const TOTAL_DEBT = [50, 100, 200, 500];
+export const TOTAL_XU = [100, 200, 500, 1000, 2000];
+export const STEPS_K = [1, 5, 10, 20, 50];
+export const TOTAL_MUL = [10, 20, 50, 100]; // tổng gợi ý = mệnh giá × …
+
+/** 1500 -> "1,5tr", 200 -> "200k" */
+export function fmtK(v) { return v >= 1000 ? `${(v / 1000).toLocaleString('vi-VN', { maximumFractionDigits: 3 })}tr` : `${v}k`; }
 
 /** Chia total thành count phần ngẫu nhiên (bội số của step, mỗi bao ít nhất 1 step nếu đủ) */
 export function splitLixi(total, count, step = 1) {
@@ -32,14 +38,24 @@ export class LiXiRoom extends BaseRoom {
   inGame(s) { return !!this.seats[s]; }
 
   giver() { return this.seatOf(this.hostId); }
-  label() { return this.settings.debt ? this.settings.unitLabel : 'xu'; }
-  presets() { return (this.settings.debt ? TOTAL_DEBT : TOTAL_XU).map((v) => v * (this.settings.stake || 1)); }
+  isTien() { return this.g && this.g.mode === 'tien'; }
+  label() { return this.isTien() ? 'k' : 'xu'; }
+  fmt(v) { return this.isTien() ? fmtK(v) : `${v} xu`; }
+  step() { return this.isTien() ? this.g.step : 10; }
+  presets() { return this.isTien() ? TOTAL_MUL.map((m) => m * this.g.step) : TOTAL_XU; }
   hostCoins() { const p = this.seats[this.giver()]; return p ? this.hooks.getCoins(p.id) : 0; }
   takers() { const h = this.giver(); return this.seats.map((p, s) => (p && s !== h ? s : -1)).filter((s) => s >= 0); }
+  /** Tổng gợi ý vừa túi: xu thì không quá số xu chủ phòng có */
+  fitTotal() {
+    const pre = this.presets();
+    if (this.isTien()) return pre[1];
+    const ok = pre.filter((v) => v <= this.hostCoins());
+    return ok.length ? ok[Math.min(ok.length - 1, 2)] : Math.max(10, Math.floor(this.hostCoins() / 10) * 10);
+  }
 
   begin() {
-    const n = Math.max(2, this.takers().length);
-    this.g = { phase: 'setup', round: 0, total: this.presets()[1], count: n, envs: [], deadline: 0, king: null, rows: null };
+    this.g = { phase: 'setup', round: 0, mode: this.settings.debt ? 'tien' : 'xu', step: 10, total: 0, count: Math.max(1, this.takers().length), envs: [], deadline: 0, king: null, rows: null };
+    this.g.total = this.fitTotal();
     this.hooks.emitState(this);
   }
   resume() {
@@ -71,12 +87,17 @@ export class LiXiRoom extends BaseRoom {
       if (g.phase === 'open') return null;
       if (p.a === 'auto') {
         const pre = this.presets();
-        const cap = this.settings.debt ? Infinity : this.hostCoins();
+        const cap = this.isTien() ? Infinity : this.hostCoins();
         const ok = pre.filter((v) => v <= cap);
-        g.total = ok.length ? ok[Math.floor(Math.random() * ok.length)] : Math.max(0, Math.floor(cap / 10) * 10);
-        g.count = Math.min(20, Math.max(2, this.takers().length + Math.floor(Math.random() * 3)));
+        g.total = ok.length ? ok[Math.floor(Math.random() * ok.length)] : this.fitTotal();
+        g.count = Math.min(20, Math.max(1, this.takers().length + Math.floor(Math.random() * 2)));
       } else {
-        if (p.total != null) g.total = Math.max(1, Math.min(1000000, Math.round(+p.total) || 1));
+        const modeChanged = (p.mode === 'xu' || p.mode === 'tien') && p.mode !== g.mode;
+        const stepChanged = STEPS_K.includes(+p.step) && +p.step !== g.step;
+        if (modeChanged) g.mode = p.mode;
+        if (stepChanged) g.step = +p.step;
+        if (p.total != null) g.total = Math.max(1, Math.min(100000000, Math.round(+p.total) || 1));
+        else if (modeChanged || stepChanged) g.total = this.fitTotal();
         if (p.count != null) g.count = Math.max(1, Math.min(20, Math.round(+p.count) || 1));
       }
       g.phase = 'setup';
@@ -87,9 +108,13 @@ export class LiXiRoom extends BaseRoom {
       if (!isHost) return 'Chủ phòng mới được phát lì xì nha 🧧';
       if (g.phase === 'open') return null;
       if (!this.takers().length) return 'Cần thêm người (hoặc bot) để giành lì xì nha';
-      if (!this.settings.debt && g.total > this.hostCoins()) return `Bạn chỉ còn ${this.hostCoins()} xu, giảm tổng tiền xuống nha`;
+      if (!this.isTien() && g.total > this.hostCoins()) return `Bạn chỉ còn ${this.hostCoins()} xu, giảm tổng tiền xuống nha`;
+      if (this.isTien() && g.total % g.step) return `Tổng tiền phải chia hết cho mệnh giá ${g.step}k nha`;
+      if (this.isTien() && g.total < g.step * g.count) return `Mỗi bao ít nhất ${g.step}k: ${g.count} bao cần tối thiểu ${g.step * g.count}k`;
       if (g.total < g.count) return 'Tổng tiền phải lớn hơn số bao nha';
-      const step = !this.settings.debt && g.total >= g.count * 10 ? 10 : 1;
+      // Chế độ tiền thật: ghi sổ theo nghìn; chế độ xu: trừ / cộng xu thật trong game
+      this.settings = normalizeSettings({ ...this.settings, debt: this.isTien(), ...(this.isTien() ? { unitLabel: 'k' } : {}) });
+      const step = this.isTien() ? g.step : g.total >= g.count * 10 ? 10 : 1;
       g.envs = splitLixi(g.total, g.count, step).map((amt) => ({ amt, seat: null }));
       g.phase = 'open'; g.round++; g.king = null; g.rows = null;
       g.deadline = Date.now() + GRAB_MS;
@@ -107,7 +132,7 @@ export class LiXiRoom extends BaseRoom {
       if (!e) return null;
       if (e.seat != null) return 'Bao này có người lấy rồi, chọn bao khác nha';
       e.seat = s;
-      this.hooks.emitEvent(this, { kind: 'lx', what: 'grab', seat: s, i: p.i, amt: e.amt });
+      this.hooks.emitEvent(this, { kind: 'lx', what: 'grab', seat: s, i: p.i, amt: e.amt, txt: this.fmt(e.amt) });
       const left = g.envs.some((x) => x.seat == null);
       const waiting = this.takers().some((t) => !g.envs.some((x) => x.seat === t));
       if (!left || !waiting) this.setTimer('phase', 900, () => this.reveal());
@@ -133,10 +158,10 @@ export class LiXiRoom extends BaseRoom {
     const h = this.giver();
     const got = g.envs.filter((e) => e.seat != null);
     let paid = 0;
-    const rows = got.map((e) => { paid += e.amt; return { seat: e.seat, parts: e.amt / mult, note: `Trúng ${e.amt} ${this.label()}`, badge: '🧧' }; });
+    const rows = got.map((e) => { paid += e.amt; return { seat: e.seat, parts: e.amt / mult, note: `Trúng ${this.fmt(e.amt)}`, badge: '🧧' }; });
     const best = got.reduce((m, e) => (!m || e.amt > m.amt ? e : m), null);
     if (best) { g.king = best.seat; const r = rows.find((x) => x.seat === best.seat); r.badge = '👑'; r.note += ' · Vua may mắn'; }
-    if (h >= 0 && paid) rows.push({ seat: h, parts: -paid / mult, note: `Phát ${paid} ${this.label()}`, badge: '🧧' });
+    if (h >= 0 && paid) rows.push({ seat: h, parts: -paid / mult, note: `Phát ${this.fmt(paid)}`, badge: '🧧' });
     rows.sort((a, b) => b.parts - a.parts).forEach((r, i) => { r.rank = i + 1; });
     if (rows.length) this.payout(rows);
     g.rows = rows.map((r) => ({ seat: r.seat, delta: r.delta, badge: r.badge }));
@@ -154,7 +179,7 @@ export class LiXiRoom extends BaseRoom {
     const showAll = g.phase === 'done';
     v.lx = {
       phase: g.phase, round: g.round, total: g.total, count: g.count, giver: this.giver(), label: this.label(),
-      presets: this.presets(), hostCoins: this.settings.debt ? null : this.hostCoins(), king: g.king, rows: g.rows,
+      mode: g.mode, step: g.step, steps: STEPS_K, presets: this.presets(), hostCoins: this.isTien() ? null : this.hostCoins(), king: g.king, rows: g.rows,
       envs: g.envs.map((e) => ({ seat: e.seat, amt: showAll || e.seat != null ? e.amt : null })),
       mine: g.envs.findIndex((e) => e.seat === me && me >= 0),
     };

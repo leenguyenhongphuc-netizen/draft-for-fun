@@ -251,6 +251,17 @@ test('lì xì: chia đủ tổng, mỗi người 1 bao, tổng tiền bằng 0',
   assert.equal(r.action(0, { a: 'again' }), null);
   assert.equal(r.g.phase, 'setup');
   r.action(0, { a: 'auto' });
-  assert.ok(r.g.total > 0 && r.g.count >= 2);
+  assert.ok(r.g.total > 0 && r.g.count >= 1);
+  // Tiền thật: mệnh giá 10k, mỗi bao chẵn 10k, ghi sổ, không trừ xu
+  r.action(0, { a: 'setup', mode: 'tien', step: 10 });
+  assert.equal(r.g.total % 10, 0);
+  assert.ok(r.action(0, { a: 'setup', total: 25, count: 2 }) === null && r.action(0, { a: 'deal' })); // không chia hết 10k
+  r.action(0, { a: 'setup', total: 200, count: 3 });
+  const before = coins.host;
+  assert.equal(r.action(0, { a: 'deal' }), null);
+  assert.ok(r.g.envs.every((e) => e.amt % 10 === 0 && e.amt >= 10));
+  r.action(1, { a: 'grab', i: 0 }); r.reveal();
+  assert.equal(coins.host, before);
+  assert.ok(r.ledger.games.length === 1 && r.ledger.games[0].label === 'k');
   r.destroy();
 });

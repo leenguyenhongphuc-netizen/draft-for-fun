@@ -1,7 +1,9 @@
 // Giao diện 🧧 Bao Lì Xì May Mắn: chủ phòng chọn tổng tiền + số bao, mọi người chạm giành bao.
 import { avaHTML } from '../ava.js';
+import { fmtK } from '../game/lixi.js';
 
 let draft = null; // {total, count} chủ phòng đang chỉnh
+const fmt = (v, lx) => (lx.mode === 'tien' ? fmtK(v) : `${v} xu`);
 
 export function reset() { draft = null; }
 
@@ -15,14 +17,13 @@ export function render(s, prev, ctx) {
   const me = s.mySeat;
   const isHost = s.hostId === ctx.playerId();
   const giver = s.seats[lx.giver];
-  const L = lx.label;
   const deltaOf = (k) => (lx.rows ? (lx.rows.find((r) => r.seat === k) || {}).delta : null);
 
   let html = '<div class="db-players lx-players"></div>';
   if (lx.phase === 'setup') {
-    html += `<div class="lx-hero"><div class="lx-big">🧧</div><div class="lx-cap"></div></div>`;
+    if (!isHost) html += `<div class="lx-hero"><div class="lx-big">🧧</div><div class="lx-cap"></div></div>`;
   } else {
-    html += `<div class="lx-info"></div><div class="lx-grid${lx.envs.length > 12 ? ' many' : ''}"></div>`;
+    html += `<div class="lx-info"></div><div class="lx-grid${lx.envs.length > 8 ? ' many' : ''}"></div>`;
   }
   board.innerHTML = html;
 
@@ -34,34 +35,56 @@ export function render(s, prev, ctx) {
     const dl = deltaOf(k);
     d.className = 'db-p' + (k === lx.giver ? ' dealer' : '') + (k === me ? ' me' : '') + (dl > 0 ? ' win' : dl < 0 ? ' lose' : '');
     const env = lx.envs.findIndex((e) => e.seat === k);
-    d.innerHTML = `<span class="av">${avaHTML(p.avatar, p.acc)}</span><span class="nm"></span><span class="bt">${k === lx.giver ? '🧧 Phát' : k === lx.king ? '👑' : env >= 0 ? '✓' : ''}${dl ? ` ${dl > 0 ? '+' : ''}${dl}` : ''}</span>`;
+    d.innerHTML = `<span class="av">${avaHTML(p.avatar, p.acc)}</span><span class="nm"></span><span class="bt">${k === lx.giver ? '🧧 Phát' : k === lx.king ? '👑' : env >= 0 ? '✓' : ''}${dl ? ` ${dl > 0 ? '+' : '−'}${lx.mode === 'tien' ? fmtK(Math.abs(dl)) : Math.abs(dl)}` : ''}</span>`;
     d.querySelector('.nm').textContent = p.name;
     pl.appendChild(d);
   });
 
   if (lx.phase === 'setup') {
-    board.querySelector('.lx-cap').textContent = isHost ? 'Chuẩn bị lì xì cho cả nhà nào!' : `${giver ? giver.name : 'Chủ phòng'} đang chuẩn bị lì xì…`;
+    if (!isHost) board.querySelector('.lx-cap').textContent = `${giver ? giver.name : 'Chủ phòng'} đang chuẩn bị lì xì…`;
     if (!isHost) return ctx.banner('🧧 Chờ chủ phòng phát lì xì nha, chuẩn bị tay giành bao!', false);
-    if (!draft || draft.round !== lx.round) draft = { total: lx.total, count: lx.count, round: lx.round };
+    const key = [lx.round, lx.mode, lx.step, lx.total, lx.count].join('|');
+    if (!draft || draft.key !== key) draft = { key, total: lx.total, count: lx.count };
+    const tien = lx.mode === 'tien';
+    const F = (v) => fmt(v, lx);
     const panel = document.createElement('div');
     panel.className = 'lx-setup';
-    const over = lx.hostCoins != null && draft.total > lx.hostCoins;
+    const over = !tien && lx.hostCoins != null && draft.total > lx.hostCoins;
+    const tooSmall = tien && draft.total < lx.step * draft.count;
     panel.innerHTML = `
+      <div class="lx-row"><b>Lì xì bằng</b><div class="seg lx-mode"><button data-m="xu">🪙 Xu game</button><button data-m="tien">💵 Tiền thật</button></div></div>
+      ${tien ? '<div class="lx-row"><b>Mệnh giá</b><div class="seg lx-stepk"></div></div>' : ''}
       <div class="lx-row"><b>Tổng tiền</b><div class="seg lx-tot"></div></div>
+      <div class="lx-row"><b>Tự nhập</b><div class="lx-custom"><input type="number" inputmode="numeric" min="1" value="${draft.total}"><span>${tien ? 'k' : 'xu'}</span></div></div>
       <div class="lx-row"><b>Số bao</b><div class="lx-step"><button class="mini" data-d="-1">−</button><span class="lx-n">${draft.count}</span><button class="mini" data-d="1">+</button></div></div>
-      <div class="lx-sum">${draft.count} bao · tổng <b>${draft.total} ${L}</b>${lx.hostCoins != null ? ` · bạn có ${lx.hostCoins} xu` : ''}${over ? ' · <span class="warn">không đủ xu</span>' : ''}</div>
+      <div class="lx-sum">${draft.count} bao · tổng <b>${F(draft.total)}</b>${tien ? ` · mỗi bao chẵn ${lx.step}k` : lx.hostCoins != null ? ` · bạn có ${lx.hostCoins} xu` : ''}${over ? ' · <span class="warn">không đủ xu</span>' : ''}${tooSmall ? ` · <span class="warn">cần ít nhất ${F(lx.step * draft.count)}</span>` : ''}</div>
+      ${tien ? '<div class="lx-note">💵 Chế độ tiền thật: không trừ xu, ghi vào 📒 sổ để lì xì thật bên ngoài.</div>' : ''}
       <div class="db-chips"><button class="btn soft lx-auto">🎲 Máy tự chọn</button><button class="btn big pink lx-deal">Phát lì xì 🧧</button></div>`;
+    panel.querySelectorAll('.lx-mode button').forEach((b) => {
+      b.classList.toggle('sel', b.dataset.m === lx.mode);
+      b.onclick = () => { ctx.sfx.select(); ctx.socket.emit('act', { a: 'setup', mode: b.dataset.m, count: draft.count }); };
+    });
+    if (tien) {
+      const sk = panel.querySelector('.lx-stepk');
+      lx.steps.forEach((v) => {
+        const b = document.createElement('button'); b.textContent = v + 'k'; b.className = v === lx.step ? 'sel' : '';
+        b.onclick = () => { ctx.sfx.select(); ctx.socket.emit('act', { a: 'setup', step: v, count: draft.count }); };
+        sk.appendChild(b);
+      });
+    }
     const seg = panel.querySelector('.lx-tot');
     lx.presets.forEach((v) => {
-      const b = document.createElement('button'); b.textContent = v; b.className = v === draft.total ? 'sel' : '';
-      if (lx.hostCoins != null && v > lx.hostCoins) b.classList.add('off');
+      const b = document.createElement('button'); b.textContent = tien ? F(v) : v; b.className = v === draft.total ? 'sel' : '';
+      if (!tien && lx.hostCoins != null && v > lx.hostCoins) { b.classList.add('off'); b.disabled = true; }
       b.onclick = () => { draft.total = v; ctx.sfx.select(); render(s, prev, ctx); };
       seg.appendChild(b);
     });
+    const inp = panel.querySelector('.lx-custom input');
+    inp.onchange = () => { const v = Math.round(+inp.value); if (v > 0) { draft.total = v; render(s, prev, ctx); } };
     panel.querySelectorAll('.lx-step button').forEach((b) => {
       b.onclick = () => { draft.count = Math.max(1, Math.min(20, draft.count + +b.dataset.d)); ctx.sfx.select(); render(s, prev, ctx); };
     });
-    panel.querySelector('.lx-auto').onclick = () => { draft = null; ctx.sfx.pop(); ctx.socket.emit('act', { a: 'auto' }); };
+    panel.querySelector('.lx-auto').onclick = () => { ctx.sfx.pop(); ctx.socket.emit('act', { a: 'auto' }); };
     panel.querySelector('.lx-deal').onclick = () => {
       ctx.sfx.coin();
       ctx.socket.emit('act', { a: 'setup', total: draft.total, count: draft.count });
@@ -74,14 +97,14 @@ export function render(s, prev, ctx) {
   // Bao lì xì
   const info = board.querySelector('.lx-info');
   const taken = lx.envs.filter((e) => e.seat != null).length;
-  info.innerHTML = `<span>🧧 ${lx.envs.length} bao · tổng ${lx.total} ${L}</span><span>${lx.phase === 'open' ? `Đã giành ${taken}/${lx.envs.length} · <span class="lx-left"></span>s` : 'Mở hết bao rồi!'}</span>`;
+  info.innerHTML = `<span>🧧 ${lx.envs.length} bao · tổng ${fmt(lx.total, lx)}</span><span>${lx.phase === 'open' ? `Đã giành ${taken}/${lx.envs.length} · <span class="lx-left"></span>s` : 'Mở hết bao rồi!'}</span>`;
   const grid = board.querySelector('.lx-grid');
   const canGrab = lx.phase === 'open' && me >= 0 && me !== lx.giver && lx.mine < 0;
   lx.envs.forEach((e, i) => {
     const b = document.createElement('button');
     const p = e.seat != null ? s.seats[e.seat] : null;
     b.className = 'lx-env' + (e.seat != null ? ' taken' : lx.phase === 'done' ? ' left' : '') + (e.seat === me && me >= 0 ? ' mine' : '') + (e.seat != null && e.seat === lx.king ? ' king' : '');
-    b.innerHTML = `<span class="lx-seal">福</span><span class="lx-amt">${e.amt != null ? e.amt : ''}</span><span class="lx-who">${p ? avaHTML(p.avatar, p.acc) : lx.phase === 'done' ? '↩️' : ''}</span>`;
+    b.innerHTML = `<span class="lx-seal">福</span><span class="lx-amt">${e.amt != null ? (lx.mode === 'tien' ? fmtK(e.amt) : e.amt) : ''}</span><span class="lx-who">${p ? avaHTML(p.avatar, p.acc) : lx.phase === 'done' ? '↩️' : ''}</span>`;
     b.disabled = !canGrab || e.seat != null;
     if (prev && prev.lx && prev.lx.envs[i] && prev.lx.envs[i].seat == null && e.seat != null) b.classList.add('pop');
     b.onclick = () => { ctx.sfx.pop(); ctx.socket.emit('act', { a: 'grab', i }); };
@@ -90,14 +113,14 @@ export function render(s, prev, ctx) {
 
   if (lx.phase === 'open') {
     if (me === lx.giver) ctx.banner('🧧 Bạn đang phát lì xì, xem mọi người giành bao nè', false);
-    else if (lx.mine >= 0) ctx.banner(`🎉 Bạn trúng ${lx.envs[lx.mine].amt} ${L}! Chờ mọi người mở bao…`, true);
+    else if (lx.mine >= 0) ctx.banner(`🎉 Bạn trúng ${fmt(lx.envs[lx.mine].amt, lx)}! Chờ mọi người mở bao…`, true);
     else ctx.banner('👉 Chạm nhanh 1 bao lì xì đi nào!', true);
     if (isHost) { const r = document.createElement('div'); r.className = 'db-chips'; r.innerHTML = '<button class="btn soft">⏹ Dừng</button>'; r.firstChild.onclick = () => ctx.socket.emit('act', { a: 'stop' }); box.appendChild(r); }
     return;
   }
   // Mở hết
   const king = s.seats[lx.king];
-  ctx.banner(king ? `👑 Vua may mắn: ${king.avatar} ${king.name} · ${lx.envs.find((e) => e.seat === lx.king).amt} ${L}` : '🥲 Không ai giành bao nào', true);
+  ctx.banner(king ? `👑 Vua may mắn: ${king.avatar} ${king.name} · ${fmt(lx.envs.find((e) => e.seat === lx.king).amt, lx)}` : '🥲 Không ai giành bao nào', true);
   if (isHost) {
     const r = document.createElement('div'); r.className = 'db-chips';
     r.innerHTML = '<button class="btn big pink">🧧 Phát vòng mới</button><button class="btn soft">⏹ Dừng</button>';
@@ -117,10 +140,10 @@ export function onEvent(ev, ctx) {
   if (ev.what === 'deal') { ctx.sfx.deal(); ctx.bigText('Phát lì xì! 🧧', true); ctx.burst(['🧧', '💰', '✨'], 18, 1.2); }
   if (ev.what === 'grab') {
     ctx.sfx.coin();
-    if (ev.seat === ctx.mySeat()) { ctx.bigText(`+${ev.amt} 🧧`, true); ctx.confetti(); }
-    else ctx.toast(`${ctx.nameOf(ev.seat)} giành được 1 bao 🧧`);
+    if (ev.seat === ctx.mySeat()) { ctx.bigText(`+${ev.txt || ev.amt} 🧧`, true); ctx.confetti(); }
+    else ctx.sysChat(`${ctx.nameOf(ev.seat)} giành được 1 bao 🧧`);
   }
   if (ev.what === 'reveal' && ev.king != null) {
-    setTimeout(() => { ctx.bigText(`👑 ${ctx.nameOf(ev.king)} trúng to nhất!`, true); ctx.sfx.win(); ctx.confetti(); }, 300);
+    setTimeout(() => { ctx.bigText(`👑 ${ctx.nameOf(ev.king)}`, true); ctx.toast("Trúng bao to nhất! 🧧"); ctx.sfx.win(); ctx.confetti(); }, 300);
   }
 }

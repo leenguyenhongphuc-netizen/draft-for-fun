@@ -1061,3 +1061,30 @@ body[data-scene="dicebet"] #board.dicebet { gap: 6px; max-height: calc(100vh - 2
 .lx-env.king { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #ffd54f, 0 0 22px #ffe066; animation: pulse .9s infinite; }
 .lx-env.pop { animation: pop .4s; }
 body[data-scene="dicebet"] #board.dicebet.lixi, body[data-scene="dicebet"] #board.dicebet.spin { bottom: calc(150px + env(safe-area-inset-bottom)); overflow-y: auto; }
+/* Vòng quay: căn giữa màn hình, to hơn trên điện thoại */
+body[data-scene="dicebet"] #board.dicebet.spin { gap: 12px; }
+#board.spin > .sp-players { margin-top: auto; }
+#board.spin > .sp-hist { margin-bottom: auto; }
+.sp-wrap { width: clamp(240px, min(88vw, 46vh), 420px); margin-top: 14px; flex-shrink: 0; }
+.sp-wheel { border-width: 8px; }
+.sp-lbl span { font-size: clamp(28px, 8.5vw, 40px); top: 9%; }
+.sp-lbl small { font-size: clamp(11px, 3vw, 14px); }
+.sp-pointer { top: -22px; font-size: 42px; }
+/* Lì xì: chỉnh tiền thật / xu, gọn hơn khi đông người */
+.lx-players .db-p { font-size: 11px; padding: 1px 7px 1px 3px; }
+.lx-players .db-p .av { font-size: 16px; }
+.lx-players .db-p .nm { max-width: 58px; }
+.lx-big { font-size: clamp(56px, 14vh, 110px); }
+.lx-custom { display: flex; align-items: center; gap: 6px; font-weight: 800; color: #7d0f1d; }
+.lx-custom input { width: 110px; font: inherit; font-size: 17px; text-align: right; padding: 6px 10px; border-radius: 12px; border: 2px solid #ffd0da; background: #fff; }
+.lx-note { font-size: 12px; text-align: center; color: #7d0f1d; background: #fff4d6; border-radius: 10px; padding: 4px 8px; }
+.lx-setup { gap: 6px; padding: 10px; }
+.lx-setup .seg { flex-wrap: wrap; justify-content: flex-end; }
+.lx-setup .seg button { padding: 6px 10px; }
+#board.spin.has-card .sp-wrap { width: clamp(170px, min(58vw, 28vh), 300px); }
+.sp-wrap { transition: width .45s ease; }
+#board.spin + * .sp-stop, .sp-stop { min-width: 0; }
+.sp-wrap { container-type: inline-size; }
+.sp-lbl span { font-size: 10.5cqw; top: 8%; }
+.sp-lbl small { font-size: 3.6cqw; }
+.sp-hub { font-size: 9cqw; }

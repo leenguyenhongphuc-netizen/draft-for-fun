@@ -26,7 +26,7 @@ export const SEGMENTS = [
   ] },
   { id: 'do', icon: '🧠', name: 'Đố vui', color: '#b388ff', list: [
     'Ra 1 câu đố mẹo cho cả bàn đoán', 'Đố: Con gì đầu dê, mình ốc? (Con dốc) — đọc to rồi cho cả bàn đoán',
-    'Đố: Cái gì càng kéo càng ngắn? (Điếu thuốc / cây bút chì gọt) — cho cả bàn đoán', 'Kể tên 5 nước bắt đầu bằng chữ “C” trong 15 giây',
+    'Đố: Cái gì càng gọt càng ngắn? (Cây bút chì) — cho cả bàn đoán', 'Kể tên 5 nước bắt đầu bằng chữ “C” trong 15 giây',
     'Đọc ngược tên mình nhanh 3 lần',
   ] },
   { id: 'nangly', icon: '🥤', name: 'Nâng ly', color: '#ff8a65', list: [

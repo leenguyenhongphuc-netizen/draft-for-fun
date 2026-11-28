@@ -5,6 +5,7 @@ import { normalizeSettings } from '../shared/rules.js';
 export const BOT_NAMES = [
   ['Bé Mèo', '🐱'], ['Cún Con', '🐶'], ['Thỏ Bông', '🐰'], ['Gấu Trúc', '🐼'],
   ['Cáo Nhỏ', '🦊'], ['Ếch Xanh', '🐸'], ['Heo Hồng', '🐷'], ['Hamster', '🐹'],
+  ['Gấu Bông', '🐻'], ['Cánh Cụt', '🐧'], ['Hổ Con', '🐯'], ['Koala', '🐨'],
 ];
 export const POINTS = { 2: [1, -1], 3: [2, 0, -2], 4: [3, 1, -1, -3] };
 export const COIN_UNIT = 10;
