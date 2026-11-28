@@ -186,7 +186,7 @@ export function render(s, prev, ctx) {
   if (s.state === 'playing') {
     const t = s.seats[s.turn];
     if (s.turn === s.mySeat) ctx.banner(cn.phase === 'move' ? (ready ? `🐴 Ra ${cn.dice}! Chạm con ngựa đang nhún để đi` : '🎲 Xúc xắc đang lăn…') : cn.phase === 'roll' ? '🎲 Tới lượt bạn! Chạm xúc xắc để gieo' : '🐴 Đang đi…', true);
-    else ctx.banner(t ? `⏳ ${t.avatar} ${t.name} (${NAMES[s.turn]}) đang đi…` : '', false);
+    else ctx.banner(t ? `${cn.dice && cn.phase !== 'roll' && ready ? `🎲 ${t.avatar} ${t.name} ra ${cn.dice}` : `⏳ ${t.avatar} ${t.name} (${NAMES[s.turn]}) đang gieo…`}` : '', false);
   } else ctx.banner('', false);
 }
 

@@ -1,6 +1,7 @@
 // 🎲 Xúc xắc 3D (CSS 3D): tung lên, lộn vòng, nảy trên bàn rồi dừng đúng mặt số.
-// Mặt 1 ở trước, 6 sau, 2 phải, 5 trái, 3 trên, 4 dưới -> góc xoay để đưa mặt v ra trước:
-const FACE_ROT = { 1: [0, 0], 2: [0, -90], 3: [-90, 0], 4: [90, 0], 5: [0, 90], 6: [0, 180] };
+// Mặt 1 ở trước, 6 sau, 2 phải, 5 trái, 3 trên, 4 dưới.
+// Góc xoay [X, Y, Z] để đưa mặt v lên TRÊN (kết quả đọc ở mặt trên, như xúc xắc thật):
+const FACE_ROT = { 1: [90, 0, 0], 2: [0, 0, -90], 3: [0, 0, 0], 4: [180, 0, 0], 5: [0, 0, 90], 6: [-90, 0, 0] };
 const PIPS = { 1: [5], 2: [1, 9], 3: [1, 5, 9], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9] };
 
 function faceHTML(n) {
@@ -15,9 +16,9 @@ export function dieEl(v = 1) {
   return w;
 }
 
-function rotFor(v, spins = 0) {
-  const [rx, ry] = FACE_ROT[v] || [0, 0];
-  return `rotateX(${rx + 360 * spins}deg) rotateY(${ry + 360 * spins}deg)`;
+function rotFor(v, spins = 0, dz = 0) {
+  const [rx, ry, rz] = FACE_ROT[v] || [0, 0, 0];
+  return `rotateX(${rx + 360 * spins}deg) rotateY(${ry + 360 * spins}deg) rotateZ(${rz + dz}deg)`;
 }
 export function setFace(w, v) { w.querySelector('.die').style.transform = rotFor(v); }
 
@@ -58,8 +59,8 @@ export function rollDice(tray, values, { onBounce } = {}) {
     const r0 = `rotateX(${Math.random() * 360}deg) rotateY(${Math.random() * 360}deg) rotateZ(${Math.random() * 180}deg)`;
     die.animate([
       { transform: r0 },
-      { transform: `${rotFor(v, 2)} rotateZ(${dir * 40}deg)`, offset: 0.72 },
-      { transform: `${rotFor(v, 2)} rotateZ(${dir * 8}deg)`, offset: 0.9 },
+      { transform: rotFor(v, 2, dir * 40), offset: 0.72 },
+      { transform: rotFor(v, 2, dir * 8), offset: 0.9 },
       { transform: rotFor(v, 2) },
     ], { duration: dur, easing: 'cubic-bezier(.25,.6,.35,1)', fill: 'backwards' });
     shadow.animate([

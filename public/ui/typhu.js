@@ -145,7 +145,7 @@ export function render(s, prev, ctx) {
   if (s.state === 'playing') {
     const t = s.seats[s.turn];
     if (mine) ctx.banner(tp.phase === 'roll' ? '🎲 Tới lượt bạn! Chạm xúc xắc để gieo' : tp.phase === 'buy' ? `🏷️ Mua ${CELLS[tp.pending].name} không?` : tp.phase === 'build' ? '🔨 Xây thêm nhà không?' : '🚶 Đang đi…', true);
-    else ctx.banner(t ? `⏳ ${t.avatar} ${t.name} đang đi… (vòng ${tp.round}/${tp.maxRounds})` : '', false);
+    else ctx.banner(t ? (tp.dice && tp.phase !== 'roll' ? `🎲 ${t.avatar} ${t.name} ra ${tp.dice[0]} + ${tp.dice[1]} = ${tp.dice[0] + tp.dice[1]}` : `⏳ ${t.avatar} ${t.name} đang gieo… (vòng ${tp.round}/${tp.maxRounds})`) : '', false);
   } else ctx.banner('', false);
 }
 
