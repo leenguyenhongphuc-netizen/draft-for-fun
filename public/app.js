@@ -1,7 +1,7 @@
 import { createScene, THEMES } from './scene3d.js';
 import {
   RANKS, SUITS, rankOf, suitOf, getCombo, canBeat, allPlays, sortHand, TWO, cardLabel,
-  finishViolation, settleDebts, smartGroups, GROUP_LABEL, TURN_CHOICES, UNIT_CHOICES, UNIT_LABELS, PTS3_CHOICES,
+  finishViolation, settleDebts, smartGroups, GROUP_LABEL, SMART_VARIANT, TURN_CHOICES, UNIT_CHOICES, UNIT_LABELS, PTS3_CHOICES,
 } from './shared/rules.js';
 import { createNet } from './net.js';
 import * as audio from './audio.js';
@@ -333,7 +333,7 @@ function onState(prev, s) {
   const set = new Set(hand);
   const kept = handOrder.filter((c) => set.has(c));
   const added = hand.filter((c) => !kept.includes(c));
-  handOrder = sortMode === 'smart' || added.length > 3 ? sortHand(hand, sortMode) : [...kept, ...sortHand(added, sortMode)];
+  handOrder = SMART_VARIANT[sortMode] || added.length > 3 ? sortHand(hand, sortMode) : [...kept, ...sortHand(added, sortMode)];
   selected = new Set([...selected].filter((c) => set.has(c)));
   if (!prev || prev.state !== 'playing' || (prev.lastPlay && !s.lastPlay)) hintIdx = -1;
 
@@ -489,7 +489,7 @@ function renderHand(deal) {
 
   // Xếp theo bộ: đánh dấu lá đầu mỗi bộ để chừa khoảng trống + ghi nhãn
   const groupStart = new Map();
-  handGroups = sortMode === 'smart' ? smartGroups(handOrder) : [];
+  handGroups = SMART_VARIANT[sortMode] ? smartGroups(handOrder, SMART_VARIANT[sortMode]) : [];
   handGroups.forEach((g, gi) => groupStart.set(g.cards[0], { label: GROUP_LABEL[g.type] + (g.type === 'straight' ? ' ' + g.cards.length : ''), gi }));
   let rows = twoRows ? [handOrder.slice(0, perRow), handOrder.slice(perRow)] : [handOrder];
   // 2 hàng: chia theo ranh giới bộ, không cắt một bộ ra 2 hàng
@@ -693,11 +693,20 @@ $('#clearSelBtn').onclick = () => {
   sfx.deselect(); renderControls();
 };
 $('#sortBtn').onclick = () => {
-  sortMode = { smart: 'rank', rank: 'suit', suit: 'smart' }[sortMode] || 'smart';
+  // Đổi vòng các kiểu xếp, bỏ qua kiểu cho ra y hệt cách đang xếp
+  const ORDER = ['smart', 'smart-straight', 'smart-pair', 'rank', 'suit'];
+  const sig = (m) => sortHand(handOrder, m).join(',') + '|' + (SMART_VARIANT[m] ? smartGroups(handOrder, SMART_VARIANT[m]).map((g) => g.cards.length).join('-') : m);
+  const cur = sig(sortMode);
+  let i = ORDER.indexOf(sortMode);
+  for (let k = 0; k < ORDER.length; k++) {
+    i = (i + 1) % ORDER.length;
+    if (sig(ORDER[i]) !== cur) break;
+  }
+  sortMode = ORDER[i];
   store.set('sortMode', sortMode);
   handOrder = sortHand(handOrder, sortMode);
   renderHand(); sfx.deal();
-  toast({ smart: '🧩 Xếp theo bộ (sảnh, đôi, heo…)', rank: '🔢 Xếp theo số', suit: '♠️ Xếp theo chất' }[sortMode]);
+  toast({ smart: '🧩 Gom bộ: ít rác nhất', 'smart-straight': '🧩 Gom bộ: ưu tiên sảnh', 'smart-pair': '🧩 Gom bộ: ưu tiên đôi, sám', rank: '🔢 Xếp theo số', suit: '♠️ Xếp theo chất' }[sortMode]);
 };
 $('#hintBtn').onclick = () => {
   const prev = state.lastPlay ? getCombo(state.lastPlay.cards) : null;
@@ -1255,7 +1264,7 @@ initLobby();
 showLobby();
 
 // ---------- Báo có bản mới ----------
-const APP_VERSION = '20261128-0636';
+const APP_VERSION = '20261128-1016';
 document.querySelectorAll('.lobby-card').forEach((c) => { const v = document.createElement('div'); v.className = 'app-ver'; v.textContent = 'Phiên bản ' + APP_VERSION; c.appendChild(v); });
 async function checkUpdate() {
   try {

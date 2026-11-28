@@ -477,7 +477,7 @@ export class Room {
       hand: g && mySeat >= 0 && this.state !== 'waiting' ? g.hands[mySeat] : [],
       turn: playing ? g.turn : null,
       deadline: playing ? g.deadline : 0,
-      lastPlay: playing && g.lastPlay ? { seat: g.lastPlay.seat, cards: g.lastPlay.combo.cards, name: comboName(g.lastPlay.combo) } : null,
+      lastPlay: (playing || this.state === 'ended') && g && g.lastPlay ? { seat: g.lastPlay.seat, cards: g.lastPlay.combo.cards, name: comboName(g.lastPlay.combo) } : null,
       startCard: playing ? g.startCard : null,
       results: this.results,
       settings: this.settings,

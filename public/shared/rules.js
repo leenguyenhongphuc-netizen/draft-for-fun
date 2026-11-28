@@ -116,7 +116,7 @@ export function checkInstantWin(hand) {
 }
 
 export function sortHand(hand, mode = 'rank') {
-  if (mode === 'smart') return smartGroups(hand).flatMap((g) => g.cards);
+  if (SMART_VARIANT[mode]) return smartGroups(hand, SMART_VARIANT[mode]).flatMap((g) => g.cards);
   const h = [...hand];
   if (mode === 'suit') return h.sort((a, b) => suitOf(a) - suitOf(b) || a - b);
   return h.sort((a, b) => a - b);
@@ -329,8 +329,11 @@ function groupWith(hand, straightsFirst) {
 }
 
 /** Chia bài thành các bộ: [{type, cards}] (type: straight, pair, triple, single, quad, pairseq, two) */
-export function smartGroups(hand) {
+export function smartGroups(hand, variant = 'best') {
   const a = groupWith(hand, true), b = groupWith(hand, false);
+  if (variant === 'straight') return a.groups; // ưu tiên sảnh
+  if (variant === 'pair') return b.groups;     // ưu tiên đôi / sám
   return (b.singles < a.singles ? b : a).groups;
 }
+export const SMART_VARIANT = { smart: 'best', 'smart-straight': 'straight', 'smart-pair': 'pair' };
 export const GROUP_LABEL = { straight: 'Sảnh', pair: 'Đôi', triple: 'Sám', single: 'Rác', quad: 'Tứ quý', pairseq: 'Đôi thông', two: 'Heo' };
