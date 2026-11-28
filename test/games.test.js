@@ -70,7 +70,7 @@ test('tỷ phú: bản đồ 28 ô, vị trí không trùng', () => {
 test('tỷ phú: bot chơi 10 ván tới khi hết vòng hoặc phá sản', async () => {
   await playOut(TyPhuRoom, 10, (r) => {
     const g = r.g;
-    if (g.phase === 'moving') { r.clearTimer('turn'); r.land(g.turn); return; }
+    if (g.phase === 'moving') { r.clearTimer('turn'); if (g.moveTarget != null) { r.completeMove(g.turn); r.clearTimer('turn'); } r.land(g.turn); return; }
     r.autoMove(g.turn);
   });
 });

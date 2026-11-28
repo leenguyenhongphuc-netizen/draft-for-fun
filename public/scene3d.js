@@ -749,9 +749,14 @@ export function createScene(canvas) {
         if (chars[pos]) { scene.remove(chars[pos]); chars[pos] = null; st.avatar = null; }
         continue;
       }
-      if (st.avatar !== info.avatar) {
+      if (st.avatar !== info.avatar || st.acc !== info.acc) {
         if (chars[pos]) scene.remove(chars[pos]);
         const c = makeCharacter(info.avatar);
+        if (info.acc) {
+          const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: emojiTexture(info.acc), transparent: true }));
+          sp.position.set(0.12, 0.78, 0.1); sp.scale.setScalar(0.42);
+          c.add(sp);
+        }
         const p = SEAT_POS[pos].clone().multiplyScalar(1.12);
         c.position.set(p.x, 1.35, p.z);
         c.lookAt(0, 1.35, 0);
@@ -817,7 +822,7 @@ export function createScene(canvas) {
       bursts.push(sp);
     }
   }
-  let lastT = 0, frameNo = 0;
+  let lastT = 0, frameNo = 0, active = true;
 
   const camTarget = new THREE.Vector3();
   const camPos = new THREE.Vector3();
@@ -826,7 +831,9 @@ export function createScene(canvas) {
   function frame() {
     requestAnimationFrame(frame);
     frameNo++;
-    if (MOBILE && frameNo % 2) return;
+    if (!active) { if (onFrame && frameNo % 6 === 0) onFrame(); return; } // cảnh 2D vẫn cần cập nhật đồng hồ đếm
+    // Điện thoại: 30 khung/giây khi chơi, 20 khung/giây ở sảnh cho nhẹ máy, dễ vuốt
+    if (MOBILE && frameNo % (mode === 'lobby' ? 3 : 2)) return;
     if (document.hidden) return;
     const t = clock.getElapsedTime();
     const dt = Math.min(0.1, t - lastT); lastT = t;
@@ -894,6 +901,7 @@ export function createScene(canvas) {
   frame();
 
   return {
+    setActive(v) { active = v; canvas.style.display = v ? '' : 'none'; },
     setTheme(k) { if (THEMES[k] && k !== themeKey) { themeKey = k; build(); } },
     setMode(m) { mode = m; if (m === 'lobby') setSeats([null, null, null, null]); },
     setSeats, hop, zap, flashLights, seatScreen, tableScreen, burst,

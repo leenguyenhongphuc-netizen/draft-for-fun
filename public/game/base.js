@@ -1,5 +1,5 @@
 // Khung chung cho các game mới (Xì Dách, Bài Cào, Cá Ngựa):
-// ghế ngồi, bot, chủ phòng, luật phòng (ghi nợ, thời gian), sổ nợ, hẹn giờ, lưu/khôi phục.
+// ghế ngồi, bot, chủ phòng, luật phòng (ghi sổ, thời gian), sổ ghi, hẹn giờ, lưu/khôi phục.
 import { normalizeSettings } from '../shared/rules.js';
 
 export const BOT_NAMES = [
@@ -49,7 +49,7 @@ export class BaseRoom {
   join(player) {
     let seat = this.seatOf(player.id);
     if (seat >= 0) {
-      Object.assign(this.seats[seat], { connected: true, leftMidGame: false, name: player.name, avatar: player.avatar });
+      Object.assign(this.seats[seat], { connected: true, leftMidGame: false, name: player.name, avatar: player.avatar, acc: player.acc || '' });
       return seat;
     }
     seat = this.seats.findIndex((p) => !p);
@@ -193,7 +193,7 @@ export class BaseRoom {
       game: this.gameType, code: this.code, name: this.name, theme: this.theme, isPublic: this.isPublic,
       hostId: this.hostId, state: this.state, mySeat, maxSeats: this.seats.length,
       seats: this.seats.map((p, s) => p && {
-        id: p.id, name: p.name, avatar: p.avatar, isBot: p.isBot, connected: p.connected,
+        id: p.id, name: p.name, avatar: p.avatar, acc: p.acc || '', isBot: p.isBot, connected: p.connected,
         coins: p.isBot ? p.botCoins : this.hooks.getCoins(p.id),
         debt: this.ledger.players[p.id] ? this.ledger.players[p.id].total : 0,
         inGame: this.state !== 'waiting' && this.inGame(s),

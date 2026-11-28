@@ -1,3 +1,5 @@
+import { avaHTML } from '../ava.js';
+import { rollDice, showDice } from '../dice.js';
 // Giao diện 🐴 Cờ Cá Ngựa: bàn cờ 15×15, xoay để chuồng của mình luôn ở góc dưới trái.
 const COLORS = ['#ff6b81', '#3fc97f', '#ffbf3c', '#4f9dff'];
 const LIGHT = ['#ffd3da', '#c9f3d9', '#ffe9b8', '#cfe3ff'];
@@ -134,12 +136,13 @@ export function render(s, prev, ctx) {
     const n = document.createElement('div');
     n.className = 'ludo-name' + (s.turn === k ? ' active' : '');
     n.style.left = (x / 15) * 100 + '%'; n.style.top = (y / 15) * 100 + '%';
-    n.innerHTML = `<span class="ava">${p.avatar}</span><span class="nm"></span>`;
+    n.innerHTML = `<span class="ava">${avaHTML(p.avatar, p.acc)}</span><span class="nm"></span>`;
     n.querySelector('.nm').textContent = p.name + (k === s.mySeat ? ' (bạn)' : '');
     built.plane.appendChild(n);
   });
-  // Ngựa
-  const mineTurn = s.state === 'playing' && s.turn === s.mySeat && cn.phase === 'move';
+  // Ngựa: đi từng ô một
+  const ready = Date.now() > rollingUntil;
+  const mineTurn = s.state === 'playing' && s.turn === s.mySeat && cn.phase === 'move' && ready;
   const seen = new Set();
   cn.horses.forEach((hs, seat) => {
     if (!cn.inGame[seat]) return;
@@ -155,48 +158,84 @@ export function render(s, prev, ctx) {
         built.layer.appendChild(el);
         built.pieces[id] = el;
       }
-      // Nhiều ngựa chung ô: xếp lệch nhau
-      const same = hs.filter((x, k) => x === step && step >= 0 && step < 56 && k < h).length;
-      const [px, py] = T(horsePoint(seat, step, h));
-      el.style.left = ((px + same * 0.18) / 15) * 100 + '%';
-      el.style.top = ((py - same * 0.18) / 15) * 100 + '%';
+      walkTo(id, el, seat, h, step, T, ctx);
       const can = mineTurn && seat === s.mySeat && cn.movable.includes(h);
       el.classList.toggle('can', can);
       el.classList.toggle('home', step === 56);
       el.onclick = can ? () => { ctx.socket.emit('act', { a: 'move', h }); ctx.sfx.pop(); } : null;
     });
   });
-  Object.keys(built.pieces).forEach((id) => { if (!seen.has(id)) { built.pieces[id].remove(); delete built.pieces[id]; } });
+  Object.keys(built.pieces).forEach((id) => { if (!seen.has(id)) { built.pieces[id].remove(); delete built.pieces[id]; delete shown[id]; } });
 
-  // Xúc xắc + nút
+  // Xúc xắc 3D trên bàn
+  const tray = $('#diceTray');
+  tray.className = 'tray-ludo';
+  const myRoll = s.state === 'playing' && s.turn === s.mySeat && cn.phase === 'roll';
+  showDice(tray, [cn.dice || lastDice || 6]);
+  tray.classList.toggle('ready', myRoll);
+  tray.onclick = myRoll ? () => doRoll(ctx) : null;
   const box = $('#stageMine');
   box.innerHTML = '';
-  const row = document.createElement('div');
-  row.className = 'dice-row';
-  const dice = document.createElement('button');
-  dice.className = 'dice';
-  dice.innerHTML = diceFace(cn.dice || lastDice || 6);
-  const myRoll = s.state === 'playing' && s.turn === s.mySeat && cn.phase === 'roll';
-  if (myRoll) { dice.classList.add('ready'); dice.onclick = () => { ctx.socket.emit('act', { a: 'roll' }); dice.classList.add('rolling'); ctx.sfx.deal(); }; }
-  row.appendChild(dice);
   if (myRoll) {
     const b = document.createElement('button');
-    b.className = 'btn big pink';
+    b.className = 'btn big pink roll-btn';
     b.textContent = '🎲 Gieo xúc xắc';
-    b.onclick = () => dice.onclick();
-    row.appendChild(b);
+    b.onclick = () => doRoll(ctx);
+    box.appendChild(b);
   }
-  box.appendChild(row);
   if (s.state === 'playing') {
     const t = s.seats[s.turn];
-    if (s.turn === s.mySeat) ctx.banner(cn.phase === 'move' ? `🐴 Ra ${cn.dice}! Chạm con ngựa để đi` : cn.phase === 'roll' ? '🎲 Tới lượt bạn gieo xúc xắc!' : '…', true);
+    if (s.turn === s.mySeat) ctx.banner(cn.phase === 'move' ? (ready ? `🐴 Ra ${cn.dice}! Chạm con ngựa đang nhún để đi` : '🎲 Xúc xắc đang lăn…') : cn.phase === 'roll' ? '🎲 Tới lượt bạn! Chạm xúc xắc để gieo' : '🐴 Đang đi…', true);
     else ctx.banner(t ? `⏳ ${t.avatar} ${t.name} (${NAMES[s.turn]}) đang đi…` : '', false);
   } else ctx.banner('', false);
 }
 
-function diceFace(n) {
-  const pips = { 1: [5], 2: [1, 9], 3: [1, 5, 9], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9] }[n] || [];
-  return '<span class="pips">' + Array.from({ length: 9 }, (_, i) => `<i class="${pips.includes(i + 1) ? 'on' : ''}"></i>`).join('') + '</span>';
+let rolledByMe = 0;
+function doRoll(ctx) {
+  if (Date.now() - rolledByMe < 1500) return;
+  rolledByMe = Date.now();
+  ctx.sfx.diceShake();
+  ctx.socket.emit('act', { a: 'roll' });
+}
+
+// ---------- Ngựa đi từng ô ----------
+const shown = {};
+const walking = {};
+let rollingUntil = 0;
+function place(el, seat, step, h, T) {
+  const [px, py] = T(horsePoint(seat, step, h));
+  el.style.left = (px / 15) * 100 + '%';
+  el.style.top = (py / 15) * 100 + '%';
+}
+function walkTo(id, el, seat, h, target, T, ctx) {
+  let cur = shown[id];
+  if (cur === target && !walking[id]) return;
+  clearTimeout(walking[id]); walking[id] = null;
+  // Chờ xúc xắc lăn xong rồi mới đi
+  const wait = Math.max(0, rollingUntil - Date.now());
+  if (wait > 0 && cur !== undefined && cur !== target) { walking[id] = setTimeout(() => { walking[id] = null; walkTo(id, el, seat, h, target, T, ctx); }, wait); return; }
+  if (cur === undefined || target === -1 || cur === -1 || target < cur || target - cur > 12) {
+    if (cur >= 0 && target === -1) { el.classList.add('kicked'); setTimeout(() => el.classList.remove('kicked'), 700); }
+    shown[id] = target; place(el, seat, target, h, T);
+    if (cur === -1 && target === 0) hop(el);
+    return;
+  }
+  const step = () => {
+    if (cur >= target) { walking[id] = null; return; }
+    cur++; shown[id] = cur;
+    place(el, seat, cur, h, T); hop(el);
+    ctx.sfx.select();
+    walking[id] = setTimeout(step, 165);
+  };
+  step();
+}
+function hop(el) { el.classList.remove('hop'); void el.offsetWidth; el.classList.add('hop'); }
+
+export function reset() {
+  built = null; lastDice = null; rollingUntil = 0;
+  Object.keys(shown).forEach((k) => delete shown[k]);
+  Object.values(walking).forEach(clearTimeout);
+  Object.keys(walking).forEach((k) => delete walking[k]);
 }
 
 export function onEvent(ev, ctx) {
@@ -204,19 +243,20 @@ export function onEvent(ev, ctx) {
   const { sfx } = ctx;
   if (ev.what === 'roll') {
     lastDice = ev.d;
-    const d = document.querySelector('#stageMine .dice');
-    if (d) { d.classList.add('rolling'); setTimeout(() => { d.classList.remove('rolling'); d.innerHTML = diceFace(ev.d); }, 450); }
-    sfx.deal();
-    if (ev.d === 6) setTimeout(() => sfx.bigCombo(), 450);
+    rollingUntil = Date.now() + 1200;
+    rollDice(document.querySelector('#diceTray'), [ev.d], { onBounce: (i) => sfx.diceHit(i) }).then(() => {
+      if (ev.d === 6) { sfx.bigCombo(); ctx.burst(ctx.center(), ['✨', '6️⃣', '⭐'], 10); }
+      ctx.rerender();
+    });
   }
   if (ev.what === 'move') {
-    sfx.play(1);
+    const steps = ev.from === -1 ? 1 : ev.to - ev.from;
     if (ev.kicks && ev.kicks.length) {
-      setTimeout(() => { ctx.bigText('ĐÁ! 🦵💥', true); sfx.bump(); ctx.shake(); ctx.scene3d.burst(['🐴', '💥', '⭐'], 16, 1.1); }, 300);
+      setTimeout(() => { ctx.bigText('ĐÁ! 🦵💥', true); sfx.bump(); ctx.shake(); ctx.burst(ctx.center(), ['🐴', '💥', '⭐'], 14); }, 200 + steps * 165);
       ctx.sysChat(`${ctx.nameOf(ev.seat)} đá ngựa của ${ev.kicks.map(([s]) => ctx.nameOf(s)).join(', ')} về chuồng!`);
     }
-    if (ev.home) { setTimeout(() => { sfx.coin(); ctx.scene3d.burst(['🏁', '⭐', '🐴'], 12, 0.9); }, 350); }
-    if (ev.from === -1) ctx.bubble(ev.seat, 'Ra quân! 🐴');
+    if (ev.home) setTimeout(() => { sfx.coin(); ctx.burst(ctx.center(), ['🏁', '⭐', '🐴'], 12); }, 200 + steps * 165);
+    if (ev.from === -1) { sfx.pop(); ctx.toast(`${ctx.nameOf(ev.seat)} ra quân! 🐴`); }
   }
   if (ev.what === 'again' && ev.seat === ctx.mySeat()) ctx.toast('Ra 6! Được gieo thêm 🎲');
   if (ev.what === 'win') { ctx.bigText(`${ctx.nameOf(ev.seat)} về đích! 🏆`, true); sfx.win(); ctx.confetti(); }

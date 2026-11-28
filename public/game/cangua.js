@@ -39,7 +39,9 @@ export class CaNguaRoom extends BaseRoom {
 
   scheduleAuto() {
     if (this.state !== 'playing' || !this.g) return;
-    if (this.isAuto(this.g.turn)) this.setTimer('bot', 700 + Math.random() * 600, () => this.autoMove(this.g.turn));
+    // Sau khi gieo: chờ xúc xắc lăn xong (~1.2s) rồi mới đi
+    const wait = this.g.phase === 'move' ? 1500 + Math.random() * 500 : 700 + Math.random() * 600;
+    if (this.isAuto(this.g.turn)) this.setTimer('bot', wait, () => this.autoMove(this.g.turn));
   }
 
   // Các ngựa đi được với số d
@@ -105,14 +107,14 @@ export class CaNguaRoom extends BaseRoom {
       if (!g.movable.length) {
         g.phase = 'wait';
         this.hooks.emitState(this);
-        this.setTimer('turn', 1300, () => this.endTurn(d === 6));
+        this.setTimer('turn', 2000, () => this.endTurn(d === 6));
         return null;
       }
       g.phase = 'move';
       // Chỉ có 1 nước: tự đi cho nhanh
       if (g.movable.length === 1) {
         this.hooks.emitState(this);
-        this.setTimer('turn', 900, () => this.action(seat, { a: 'move', h: g.movable[0] }));
+        this.setTimer('turn', 1650, () => this.action(seat, { a: 'move', h: g.movable[0] }));
         return null;
       }
       this.beginTurn();
@@ -138,7 +140,9 @@ export class CaNguaRoom extends BaseRoom {
       if (g.horses[seat].every((x) => x === FINISH)) return this.win(seat);
       g.phase = 'wait';
       this.hooks.emitState(this);
-      this.setTimer('turn', 450, () => this.endTurn(g.dice === 6));
+      // Chờ ngựa đi từng ô xong rồi mới qua lượt
+      const steps = from === -1 ? 1 : to - from;
+      this.setTimer('turn', 350 + steps * 170 + (kicks.length ? 500 : 0), () => this.endTurn(g.dice === 6));
       return null;
     }
     return 'Không hiểu thao tác';

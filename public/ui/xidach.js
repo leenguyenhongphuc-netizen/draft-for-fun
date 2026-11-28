@@ -1,6 +1,8 @@
 // Giao diện 🂡 Xì Dách
 let lastKind = null;
 
+export function reset() { lastKind = null; }
+
 export function render(s, prev, ctx) {
   const { $, cardEl, nameOf } = ctx;
   const xd = s.xd || {};
@@ -44,13 +46,14 @@ export function render(s, prev, ctx) {
   chip.textContent = (isDealer ? '🎩 ' : '') + (my.label || '');
   box.appendChild(chip);
 
-  if (my.kind === 'quac' && lastKind !== 'quac' && prev) { ctx.bigText('QUẮC! 💥'); ctx.shake(); ctx.sfx.lose(); }
+  // Quắc: chỉ mình mình biết, nhắc nhỏ để giữ bí mật
+  if (my.kind === 'quac' && lastKind !== 'quac' && prev) ctx.toast('🤫 Quắc rồi… bình tĩnh, cứ dằn hoặc rút tiếp cho người khác không đoán ra');
   lastKind = my.kind;
 
   if (mine) {
     const acts = document.createElement('div');
     acts.className = 'stage-actions';
-    const canStand = my.score >= my.need || s.hand.length >= 5;
+    const canStand = my.score >= my.need || my.kind === 'quac' || s.hand.length >= 5;
     acts.innerHTML = `<button class="btn big mint" data-a="hit">🃏 Rút</button><button class="btn big pink" data-a="stand">✋ Dằn</button>`;
     const standBtn = acts.querySelector('[data-a=stand]');
     if (!canStand) standBtn.classList.add('soft-disabled');

@@ -36,7 +36,7 @@ export class Room {
     this.botTimer = null;
     this.createdAt = Date.now();
     this.settings = normalizeSettings();
-    this.ledger = { players: {}, games: [] }; // sổ nợ
+    this.ledger = { players: {}, games: [] }; // sổ ghi
   }
 
   get turnMs() { return this.settings.turnSec * 1000; }
@@ -57,7 +57,7 @@ export class Room {
   join(player) {
     let seat = this.seatOf(player.id);
     if (seat >= 0) {
-      Object.assign(this.seats[seat], { connected: true, leftMidGame: false, name: player.name, avatar: player.avatar });
+      Object.assign(this.seats[seat], { connected: true, leftMidGame: false, name: player.name, avatar: player.avatar, acc: player.acc || '' });
       return seat;
     }
     seat = this.seats.findIndex((p) => !p);
@@ -444,7 +444,7 @@ export class Room {
       game: 'tienlen', code: this.code, name: this.name, theme: this.theme, isPublic: this.isPublic,
       hostId: this.hostId, state: this.state, mySeat,
       seats: this.seats.map((p, s) => p && {
-        id: p.id, name: p.name, avatar: p.avatar, isBot: p.isBot, connected: p.connected,
+        id: p.id, name: p.name, avatar: p.avatar, acc: p.acc || '', isBot: p.isBot, connected: p.connected,
         coins: p.isBot ? p.botCoins : this.hooks.getCoins(p.id),
         cardCount: g && g.inGame[s] && this.state !== 'waiting' ? g.hands[s].length : null,
         passed: playing ? g.passed.has(s) : false,

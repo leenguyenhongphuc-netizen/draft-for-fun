@@ -332,6 +332,20 @@ export const sfx = {
     noise(sfxBus, t + 0.55, 0.6, { vol: 0.3, freq: 400, type: 'lowpass', sweep: 60 });
     [72, 76, 79, 84].forEach((n, i) => tone(sfxBus, midi(n), t + 0.75 + i * 0.07, 0.2, { type: 'triangle', vol: 0.07, release: 0.35 }));
   },
+  // Xúc xắc rơi lên bàn gỗ: tiếng lạch cạch to dần rồi nhỏ dần
+  diceHit(i = 0) {
+    if (!ok()) return;
+    const t = now();
+    const v = [0.5, 0.3, 0.15][i] || 0.12;
+    noise(sfxBus, t, 0.05, { vol: v, freq: 2600, type: 'bandpass', q: 2.5 });
+    tone(sfxBus, 220 - i * 30, t, 0.06, { type: 'triangle', vol: v * 0.5, glide: 0.6 });
+    if (i === 0) noise(sfxBus, t + 0.04, 0.05, { vol: 0.25, freq: 3400, type: 'bandpass', q: 3 });
+  },
+  diceShake() {
+    if (!ok()) return;
+    const t = now();
+    for (let i = 0; i < 6; i++) noise(sfxBus, t + i * 0.05, 0.03, { vol: 0.12, freq: 3000 + Math.random() * 1500, type: 'bandpass', q: 3 });
+  },
   pop() { if (!ok()) return; tone(sfxBus, 700, now(), 0.08, { vol: 0.08, glide: 2.2 }); },
   coin() { if (!ok()) return; const t = now(); tone(sfxBus, midi(83), t, 0.06, { type: 'square', vol: 0.04, cutoff: 4000 }); tone(sfxBus, midi(88), t + 0.07, 0.2, { type: 'square', vol: 0.04, cutoff: 4000, release: 0.3 }); },
   error() { if (!ok()) return; const t = now(); tone(sfxBus, 220, t, 0.1, { type: 'square', vol: 0.04, cutoff: 1200 }); tone(sfxBus, 180, t + 0.1, 0.15, { type: 'square', vol: 0.04, cutoff: 1200 }); },

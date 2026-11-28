@@ -6,6 +6,7 @@ import {
 import { createNet } from './net.js';
 import * as audio from './audio.js';
 import * as fx from './fx.js';
+import { avaHTML } from './ava.js';
 import * as uiXiDach from './ui/xidach.js';
 import * as uiBaiCao from './ui/baicao.js';
 import * as uiCaNgua from './ui/cangua.js';
@@ -38,7 +39,6 @@ if (!playerId) { playerId = 'p-' + Math.random().toString(36).slice(2, 12); stor
 let myName = store.get('name', '');
 let myAvatar = store.get('avatar', AVATARS[Math.floor(Math.random() * AVATARS.length)]);
 let muted = store.get('muted', false);
-let pickedTheme = 'candy';
 let pickedGame = store.get('game', 'tienlen');
 let sortMode = 'rank';
 
@@ -79,7 +79,7 @@ socket.on('welcome', ({ coins }) => {
 });
 socket.on('rooms', renderRooms);
 socket.on('toast', toast);
-socket.on('left', () => { state = null; showLobby(); history.replaceState(null, '', pageUrl()); });
+socket.on('left', () => { state = null; curGame = null; resetStage(); showLobby(); history.replaceState(null, '', pageUrl()); });
 socket.on('state', (s) => {
   const prev = state;
   state = s; window.__tlc = s;
@@ -96,10 +96,86 @@ function randomName() {
   return n;
 }
 
-// ---------- Sảnh ----------
+// ---------- Sảnh 3 bước ----------
+const ACCS = ['', '🎀', '🎩', '👑', '🕶️', '🌸', '🧢', '🎧', '🧣', '⭐'];
+let myAcc = store.get('acc', '');
+const profile = () => ({ name: myName, avatar: myAvatar, acc: myAcc });
+const syncProfile = () => socket.emit('profile', profile());
+
+const HOWTO = {
+  tienlen: ['Bài từ nhỏ tới lớn: 3 → … → A → 2. Chất ♠ < ♣ < ♦ < ♥.', 'Đánh cùng loại, cùng số lá và lớn hơn. Bỏ lượt thì chờ vòng mới.', 'Chặt heo bằng 3 đôi thông / tứ quý; tới trắng; cóng; thối heo.', 'Chủ phòng chỉnh thêm luật (cấm về heo…) trong ⚙️ Luật.'],
+  xidach: ['Xì bàn > Xì dách > Ngũ linh > điểm. Quá 21 là quắc (bí mật, không ai biết).', 'Người chơi đủ 16 nút, nhà cái đủ 15 nút mới được dằn.', 'Nhà cái xoay vòng mỗi ván.'],
+  baicao: ['Mỗi người 3 lá, chạm từng lá để nặn.', 'Điểm = hàng đơn vị của tổng (10/J/Q/K = 0). Ba tây lớn nhất.', 'Người cao nhất ăn hết.'],
+  cangua: ['Gieo 6 mới ra quân, ra 6 được gieo thêm.', 'Đi trúng ngựa đối thủ thì đá về chuồng.', 'Vào đích phải đúng số. Ai về đủ 4 ngựa trước thắng.'],
+  typhu: ['Gieo 2 xúc xắc, mua tỉnh thành, xây nhà, thu tiền thuê.', 'Đủ cặp tỉnh cùng màu thì tiền thuê gấp đôi. Gieo đôi đi thêm.', 'Hết 15 vòng ai giàu nhất thắng, hết tiền là phá sản.'],
+  loto: ['Sân khấu xổ liên tục: mở bán vé → xổ số → có người KINH.', 'Mỗi vòng mua tối đa 3 vé. Hàng nào đủ 5 số là KINH!', 'Vào phòng lúc nào cũng được, chờ vòng sau mua vé.'],
+};
+
+// ---------- Cảnh riêng từng game ----------
+// Game bài dùng phòng 3D (tự đổi phòng ngẫu nhiên mỗi ván); Cá Ngựa, Tỷ Phú, Lô Tô có cảnh riêng.
+const SCENE_OF = { tienlen: 'room', xidach: 'room', baicao: 'room', cangua: 'ludo', typhu: 'typhu', loto: 'loto' };
+let curScene = null, curGame = null;
+const d = (e, l, t, size = 38, cls = 'float', delay = 0) => `<span class="decor ${cls}" style="left:${l};top:${t};font-size:${size}px;animation-delay:${delay}s">${e}</span>`;
+const lights = (n, colors) => `<div class="lights">${Array.from({ length: n }, (_, i) => `<i style="--c:${colors[i % colors.length]};--d:${(i % 3) * 0.4}s"></i>`).join('')}</div>`;
+const SCENE_DECOR = {
+  // Bàn gỗ ngày Tết: ấm trà, mứt, lì xì, hoa mai
+  ludo: d('🍵', '3%', '78%', 44) + d('🍬', '86%', '80%', 40, 'float', 1) + d('🧧', '6%', '17%', 36, 'float', 2) + d('🌼', '88%', '16%', 40, 'float', .5)
+    + d('🍊', '82%', '64%', 34, 'bob', 1.2) + d('🥮', '10%', '62%', 34, 'bob', .3) + d('🌸', '48%', '93%', 30, 'float', 1.6),
+  // Biển xanh quanh bản đồ
+  typhu: d('☁️', '0', '9%', 56, 'drift') + d('☁️', '0', '24%', 40, 'drift', -12) + d('⛵', '4%', '82%', 40, 'bob') + d('🛳️', '80%', '86%', 46, 'bob', 1)
+    + d('🐋', '84%', '70%', 40, 'bob', .6) + d('🏝️', '2%', '66%', 42, 'float', 1.4) + d('🐬', '44%', '92%', 32, 'bob', .2),
+  // Hội chợ đêm: dây đèn, đèn lồng, đu quay
+  loto: lights(18, ['#ffd54f', '#ff8a80', '#80d8ff', '#b9f6ca']) + d('🏮', '2%', '10%', 40, 'bob') + d('🏮', '89%', '10%', 40, 'bob', 1)
+    + d('🎡', '-2%', '86%', 70, 'float') + d('🎠', '84%', '87%', 56, 'float', 1) + d('🎈', '92%', '50%', 34, 'float', .4) + d('🎈', '1%', '46%', 30, 'float', 1.3),
+};
+function setScene(sc) {
+  if (sc === curScene) return;
+  curScene = sc;
+  document.body.dataset.scene = sc;
+  scene3d.setActive(sc === 'room' || sc === 'lobby');
+  const bg = $('#sceneBg');
+  bg.className = 'scene-' + sc;
+  bg.innerHTML = SCENE_DECOR[sc] || '';
+}
+function resetStage() {
+  const b = $('#board'); b.innerHTML = ''; b.className = 'hidden';
+  $('#stageMine').innerHTML = ''; $('#stageCenter').innerHTML = ''; $('#diceTray').innerHTML = '';
+  $('#pileCards').innerHTML = ''; $('#pileCards').dataset.key = ''; $('#pileLabel').textContent = '';
+  $('#hand').innerHTML = '';
+  Object.values(GAMES).forEach((g) => g.ui && g.ui.reset && g.ui.reset());
+}
+
+function showStep(id) {
+  ['stepProfile', 'stepHub', 'stepGame'].forEach((x) => $('#' + x).classList.toggle('hidden', x !== id));
+  $('#lobby').scrollTop = 0;
+  if (id === 'stepHub') renderMeChip();
+  if (id === 'stepGame') { renderGameHero(); socket.emit('listRooms'); }
+}
+
+function renderHero() {
+  $('#heroEmoji').textContent = myAvatar;
+  $('#heroAcc').textContent = myAcc;
+}
+function renderMeChip() {
+  const c = $('#meChip');
+  c.querySelector('.e').textContent = myAvatar;
+  c.querySelector('.a').textContent = myAcc;
+  c.querySelector('.n').textContent = myName || 'Bạn';
+}
+function renderGameHero() {
+  const g = GAMES[pickedGame];
+  $('#gameHero').innerHTML = `<span class="gh-icon">${g.icon}</span><div><div class="gh-name">${g.name}</div><div class="gh-desc">${g.desc}</div></div>`;
+  $('#gameHero').dataset.game = pickedGame;
+  $('#createBtn').textContent = pickedGame === 'loto' ? 'Mở sân khấu Lô Tô 🎪' : `Tạo phòng ${g.name} 🎉`;
+  $('#botsLabel').textContent = pickedGame === 'loto' ? 'Mời sẵn vài bot làm khán giả' : 'Thêm sẵn 3 bot để chơi ngay';
+  $('#howtoBody').innerHTML = '<ul>' + HOWTO[pickedGame].map((t) => `<li>${t.replace(/</g, '&lt;')}</li>`).join('') + '</ul>';
+  renderRooms(lastRooms);
+}
+
+let lastRooms = [];
 function initLobby() {
   $('#nameInput').value = myName;
-  $('#myAvatarBig').textContent = myAvatar;
+  renderHero();
   const grid = $('#avatarGrid');
   AVATARS.forEach((a) => {
     const b = document.createElement('button');
@@ -107,79 +183,65 @@ function initLobby() {
     b.className = a === myAvatar ? 'sel' : '';
     b.onclick = () => {
       myAvatar = a; store.set('avatar', a);
-      grid.querySelectorAll('button').forEach((x) => x.classList.toggle('sel', x.textContent === a));
-      $('#myAvatarBig').textContent = a;
-      sfx.pop();
-      socket.emit('profile', { name: myName, avatar: a });
+      grid.querySelectorAll('button').forEach((x) => x.classList.toggle('sel', x === b));
+      renderHero(); sfx.pop();
     };
     grid.appendChild(b);
   });
-  $('#nameInput').addEventListener('change', (e) => {
-    myName = e.target.value.trim().slice(0, 16); store.set('name', myName);
-    socket.emit('profile', { name: myName, avatar: myAvatar });
+  const ag = $('#accGrid');
+  ACCS.forEach((a) => {
+    const b = document.createElement('button');
+    b.textContent = a || '🚫';
+    b.title = a ? 'Phụ kiện' : 'Không đeo gì';
+    b.className = a === myAcc ? 'sel' : '';
+    b.onclick = () => {
+      myAcc = a; store.set('acc', a);
+      ag.querySelectorAll('button').forEach((x) => x.classList.toggle('sel', x === b));
+      renderHero(); sfx.pop();
+    };
+    ag.appendChild(b);
   });
+  $('#toHubBtn').onclick = () => {
+    myName = $('#nameInput').value.trim().slice(0, 16) || randomName();
+    store.set('name', myName); store.set('profileDone', true);
+    syncProfile(); sfx.pop();
+    showStep('stepHub');
+  };
+  $('#nameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#toHubBtn').click(); });
+  $('#editProfile').onclick = () => { showStep('stepProfile'); sfx.pop(); };
 
   const gp = $('#gamePick');
   Object.entries(GAMES).forEach(([k, g]) => {
     const b = document.createElement('button');
-    b.className = 'game-card' + (k === pickedGame ? ' sel' : '');
+    b.className = 'game-card';
     b.dataset.game = k;
     b.innerHTML = `<span class="g-icon">${g.icon}</span><span class="g-name">${g.name}</span><span class="g-desc">${g.desc}</span>`;
-    b.onclick = () => {
-      pickedGame = k; store.set('game', k);
-      gp.querySelectorAll('.game-card').forEach((x) => x.classList.toggle('sel', x === b));
-      $('#createBtn').textContent = `Tạo phòng ${g.name} 🎉`;
-      sfx.pop();
-    };
+    b.onclick = () => { pickedGame = k; store.set('game', k); sfx.pop(); showStep('stepGame'); };
     gp.appendChild(b);
   });
-  $('#createBtn').textContent = `Tạo phòng ${GAMES[pickedGame].name} 🎉`;
-  const tp = $('#themePick');
-  Object.entries(THEMES).forEach(([k, t]) => {
-    const b = document.createElement('button');
-    b.className = 't-' + k + (k === pickedTheme ? ' sel' : '');
-    const hex = (n) => '#' + n.toString(16).padStart(6, '0');
-    b.style.background = `linear-gradient(135deg, ${hex(t.wall)}, ${hex(t.rug2)})`;
-    if (t.dark) b.style.color = '#fff';
-    b.textContent = t.label;
-    b.onclick = () => { pickedTheme = k; tp.querySelectorAll('button').forEach((x) => x.classList.remove('sel')); b.classList.add('sel'); scene3d.setTheme(k); audio.setTheme(k); sfx.pop(); };
-    tp.appendChild(b);
-  });
-  const ts = $('#themeSelect');
-  Object.entries(THEMES).forEach(([k, t]) => { const o = document.createElement('option'); o.value = k; o.textContent = window.innerWidth < 560 ? t.label.split(' ')[0] : t.label; ts.appendChild(o); });
-  ts.onchange = () => socket.emit('setTheme', { theme: ts.value });
-
-  document.querySelectorAll('.tab').forEach((t) => (t.onclick = () => {
-    document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('active', x === t));
-    $('#tab-create').classList.toggle('hidden', t.dataset.tab !== 'create');
-    $('#tab-join').classList.toggle('hidden', t.dataset.tab !== 'join');
-    if (t.dataset.tab === 'join') socket.emit('listRooms');
-  }));
-  const ensureName = () => {
-    myName = $('#nameInput').value.trim().slice(0, 16) || randomName();
-    store.set('name', myName);
-    socket.emit('profile', { name: myName, avatar: myAvatar });
-  };
+  $('#backHub').onclick = () => { showStep('stepHub'); sfx.pop(); };
   $('#createBtn').onclick = () => {
-    ensureName();
-    socket.emit('createRoom', { game: pickedGame, name: $('#roomName').value, theme: pickedTheme, isPublic: $('#roomPublic').checked, bots: $('#roomBots').checked ? 3 : 0 });
+    syncProfile();
+    socket.emit('createRoom', { game: pickedGame, name: $('#roomName').value, isPublic: $('#roomPublic').checked, bots: $('#roomBots').checked ? 3 : 0 });
   };
-  $('#joinBtn').onclick = () => { ensureName(); socket.emit('joinRoom', { code: $('#codeInput').value }); };
+  $('#joinBtn').onclick = () => { syncProfile(); socket.emit('joinRoom', { code: $('#codeInput').value }); };
   $('#codeInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#joinBtn').click(); });
-  $('#refreshRooms').onclick = () => socket.emit('listRooms');
+  $('#refreshRooms').onclick = () => { socket.emit('listRooms'); sfx.pop(); };
 }
 
 function renderRooms(list) {
+  lastRooms = list || [];
   const el = $('#roomList');
+  if (!el) return;
   el.innerHTML = '';
-  if (!list.length) { el.innerHTML = '<div class="empty">Chưa có phòng nào… tạo một phòng đi! 🌷</div>'; return; }
-  list.forEach((r) => {
+  const mine = lastRooms.filter((r) => (r.game || 'tienlen') === pickedGame);
+  if (!mine.length) { el.innerHTML = `<div class="empty">Chưa có phòng ${GAMES[pickedGame].name} nào… tạo một phòng đi! 🌷</div>`; return; }
+  mine.forEach((r) => {
     const b = document.createElement('button');
     b.className = 'room-item';
-    const icon = (GAMES[r.game || 'tienlen'] || GAMES.tienlen).icon;
-    b.innerHTML = `<span class="ri-theme">${icon}</span><span class="ri-name"></span><span class="ri-meta">${(GAMES[r.game || 'tienlen'] || GAMES.tienlen).name} · ${r.players}/4<br>${r.state === 'playing' ? 'đang chơi' : 'đang chờ'}</span>`;
+    b.innerHTML = `<span class="ri-theme">${GAMES[pickedGame].icon}</span><span class="ri-name"></span><span class="ri-meta">${r.players} người<br>${r.state === 'playing' ? 'đang chơi' : 'đang chờ'}</span>`;
     b.querySelector('.ri-name').textContent = r.name;
-    b.onclick = () => { myName = $('#nameInput').value.trim() || myName || randomName(); socket.emit('profile', { name: myName, avatar: myAvatar }); socket.emit('joinRoom', { code: r.code }); };
+    b.onclick = () => { syncProfile(); socket.emit('joinRoom', { code: r.code }); };
     el.appendChild(b);
   });
 }
@@ -188,15 +250,20 @@ function showLobby() {
   $('#lobby').classList.remove('hidden');
   $('#game').classList.add('hidden');
   $('#resultModal').classList.add('hidden');
+  document.body.dataset.scene = 'lobby';
+  setScene('lobby');
   scene3d.setMode('lobby');
-  scene3d.setTheme(pickedTheme);
-  audio.setTheme(pickedTheme);
+  const themes = Object.keys(THEMES);
+  const t = themes[Math.floor(Math.random() * themes.length)];
+  scene3d.setTheme(t); audio.setTheme(t);
+  showStep(store.get('profileDone', false) && myName ? (store.get('game', null) && document.body.dataset.wasInGame ? 'stepGame' : 'stepHub') : 'stepProfile');
   socket.emit('listRooms');
 }
 
 function showGame() {
   $('#lobby').classList.add('hidden');
   $('#game').classList.remove('hidden');
+  document.body.dataset.wasInGame = '1';
   scene3d.setMode('game');
   $('#chatLog').innerHTML = '';
   sysChat('Chào mừng tới phòng! Chúc bạn may mắn 🍀');
@@ -220,10 +287,11 @@ const relPos = (seat) => (state.mySeat < 0 ? seat % 4 : (((seat - state.mySeat) 
 function onState(prev, s) {
   $('#roomTitle').textContent = s.name;
   $('#roomCode').textContent = s.code;
-  $('#themeSelect').value = s.theme;
-  $('#themeSelect').disabled = s.hostId !== playerId;
-  scene3d.setTheme(s.theme);
-  audio.setTheme(s.theme);
+  const gameKey = s.game || 'tienlen';
+  if (gameKey !== curGame) { curGame = gameKey; resetStage(); }
+  setScene(SCENE_OF[gameKey]);
+  if (SCENE_OF[gameKey] === 'room') { scene3d.setTheme(s.theme); audio.setTheme(s.theme); }
+  else audio.setTheme({ cangua: 'garden', typhu: 'rainbow', loto: 'tet' }[gameKey]);
   if (new URLSearchParams(location.search).get('room') !== s.code) history.replaceState(null, '', pageUrl(s.code));
 
   const me = s.seats[s.mySeat];
@@ -242,6 +310,7 @@ function onState(prev, s) {
   $('#gameChip').textContent = `${G.icon} ${G.name}`;
   document.body.dataset.game = s.game || 'tienlen';
   renderSeats();
+  if (SCENE_OF[gameKey] === 'room') { const b = $('#board'); if (b.className !== 'hidden') { b.innerHTML = ''; b.className = 'hidden'; } }
   if (G.ui) {
     $('#hand').innerHTML = '';
     $('#pileCards').innerHTML = ''; $('#pileCards').dataset.key = ''; $('#pileLabel').textContent = '';
@@ -297,7 +366,7 @@ function renderSeats() {
     tag.className = 'tag';
     const status = statusOf(p);
     tag.innerHTML = `
-      ${pos === 0 ? `<div class="ava">${p.avatar}</div>` : ''}
+      ${pos === 0 ? `<div class="ava">${avaHTML(p.avatar, p.acc)}</div>` : ''}
       <div><div class="nm"></div>${s.settings && s.settings.debt
         ? `<div class="cn ${p.debt > 0 ? 'debt-pos' : p.debt < 0 ? 'debt-neg' : ''}">📒 ${fmtAmt(p.debt)}</div>`
         : `<div class="cn">🪙 ${p.coins}</div>`}
@@ -327,7 +396,7 @@ function renderSeats() {
       el.appendChild(rv);
     }
     (pos === 0 ? $('#meTag') : wrap).appendChild(el);
-    scenePlayers[pos] = { avatar: p.avatar, active, passed: p.passed, rank: p.rank };
+    scenePlayers[pos] = { avatar: p.avatar, acc: p.acc, active, passed: p.passed, rank: p.rank };
   });
   scene3d.setSeats(s.game === 'loto' ? [null, null, null, null] : scenePlayers.slice(0, 4));
 }
@@ -815,7 +884,7 @@ function renderRuleChips() {
   const st = state.settings;
   if (!st) return;
   const chips = [];
-  if (st.debt) chips.push(['📒 Ghi nợ · 1 phần = ' + fmtAmt(st.unit, st.unitLabel, false), true]);
+  if (st.debt) chips.push(['📒 Ghi sổ · 1 phần = ' + fmtAmt(st.unit, st.unitLabel, false), true]);
   RULES.forEach((r) => { if (st[r.key]) chips.push([r.name, false]); });
   chips.push(['⏱ ' + st.turnSec + 's', false]);
   const el = $('#rulesChips');
@@ -850,17 +919,13 @@ function renderRules() {
     r.appendChild(control); list.appendChild(r);
     return r;
   };
-  row('📒 Chế độ ghi nợ', 'Chơi cho vui: không trừ xu, ghi lại ai thắng ai thua qua các ván, cuối buổi xem ai trả ai.', sw('debt', st.debt), 'debt');
+  row('📒 Chế độ ghi sổ', 'Chơi cho vui: không trừ xu, ghi lại điểm thắng thua qua các ván, cuối buổi xem tổng kết.', sw('debt', st.debt), 'debt');
   if (st.debt) {
     row('Mỗi phần =', 'Nhất +3 phần, nhì +1, ba −1, bét −3 (4 người).', seg(UNIT_CHOICES, st.unit, (v) => v, (v) => setRule({ unit: v })));
     row('Đơn vị', '"k" = nghìn đồng, hoặc chỉ tính điểm.', seg(UNIT_LABELS, st.unitLabel, (v) => v, (v) => setRule({ unitLabel: v })));
   }
   if ((state.game || 'tienlen') === 'tienlen') RULES.forEach((r) => row(r.name, r.desc, sw(r.key, st[r.key])));
   else row(`${GAMES[state.game].icon} Luật ${GAMES[state.game].name}`, GAME_RULE_TEXT[state.game], document.createElement('span'));
-  const themeKeys = Object.keys(THEMES);
-  const th = seg(themeKeys, state.theme, (k) => THEMES[k].label.split(' ')[0], (k) => { socket.emit('setTheme', { theme: k }); sfx.pop(); });
-  th.querySelectorAll('button').forEach((b) => { b.disabled = state.hostId !== playerId; });
-  row('🏠 Trang trí phòng', themeKeys.map((k) => THEMES[k].label).join(' · '), th);
   row('⏱ Thời gian mỗi lượt', 'Hết giờ sẽ tự bỏ lượt (hoặc đánh lá nhỏ nhất).', seg(TURN_CHOICES, st.turnSec, (v) => v + 's', (v) => setRule({ turnSec: v })));
 }
 
@@ -868,7 +933,7 @@ function renderLedger() {
   const L = state.ledger || { players: {}, games: [] };
   const label = state.settings?.unitLabel || 'điểm';
   const players = Object.entries(L.players).map(([id, p]) => ({ id, ...p })).sort((a, b) => b.total - a.total);
-  $('#ledgerSub').textContent = L.games.length ? `${L.games.length} ván đã ghi${state.settings?.debt ? '' : ' (đang tắt ghi nợ)'}` : 'Chưa có ván nào được ghi. Bật "Chế độ ghi nợ" trong ⚙️ Luật nha!';
+  $('#ledgerSub').textContent = L.games.length ? `${L.games.length} ván đã ghi${state.settings?.debt ? '' : ' (đang tắt ghi sổ)'}` : 'Chưa có ván nào được ghi. Bật "Chế độ ghi sổ" trong ⚙️ Luật nha!';
   const tot = $('#ledgerTotals'); tot.innerHTML = '';
   players.forEach((p, i) => {
     const r = document.createElement('div');
@@ -881,11 +946,11 @@ function renderLedger() {
   });
   const plan = settleDebts(Object.fromEntries(players.map((p) => [p.id, p.total])));
   const st = $('#ledgerSettle'); st.innerHTML = '';
-  if (!plan.length) st.innerHTML = '<div class="settle">Huề cả làng, không ai nợ ai 🥳</div>';
+  if (!plan.length) st.innerHTML = '<div class="settle">Huề cả làng, không ai phải đưa ai 🥳</div>';
   plan.forEach((x) => {
     const d = document.createElement('div'); d.className = 'settle';
     const a = L.players[x.from], b = L.players[x.to];
-    d.innerHTML = '<span class="f"></span> trả <span class="t"></span> <b></b>';
+    d.innerHTML = '<span class="f"></span> đưa <span class="t"></span> <b></b>';
     d.querySelector('.f').textContent = `${a.avatar} ${a.name}`;
     d.querySelector('.t').textContent = `${b.avatar} ${b.name}`;
     d.querySelector('b').textContent = fmtAmt(x.amount, label, false);
@@ -911,10 +976,10 @@ function renderLedger() {
 function ledgerText() {
   const L = state.ledger; const label = state.settings?.unitLabel || 'điểm';
   const players = Object.entries(L.players).map(([id, p]) => ({ id, ...p })).sort((a, b) => b.total - a.total);
-  const lines = [`📒 Sổ nợ Tiến Lên Cute — phòng ${state.code} (${L.games.length} ván)`, ''];
+  const lines = [`📒 Sổ ghi Game nhà Pum — phòng ${state.code} (${L.games.length} ván)`, ''];
   players.forEach((p) => lines.push(`${p.avatar} ${p.name}: ${fmtAmt(p.total, label)}`));
   const plan = settleDebts(Object.fromEntries(players.map((p) => [p.id, p.total])));
-  if (plan.length) { lines.push('', '💸 Ai trả ai:'); plan.forEach((x) => lines.push(`• ${L.players[x.from].name} → ${L.players[x.to].name}: ${fmtAmt(x.amount, label, false)}`)); }
+  if (plan.length) { lines.push('', '💸 Tổng kết:'); plan.forEach((x) => lines.push(`• ${L.players[x.from].name} → ${L.players[x.to].name}: ${fmtAmt(x.amount, label, false)}`)); }
   return lines.join('\n');
 }
 
@@ -925,10 +990,10 @@ $('#closeRules').onclick = () => $('#rulesModal').classList.add('hidden');
 $('#ledgerBtn').onclick = () => { renderLedger(); openModal('#ledgerModal'); };
 $('#openLedgerFromResult').onclick = () => { renderLedger(); openModal('#ledgerModal'); };
 $('#closeLedger').onclick = () => $('#ledgerModal').classList.add('hidden');
-$('#clearLedger').onclick = () => { if (confirm('Xoá hết sổ nợ của phòng này? (Không lấy lại được)')) socket.emit('clearLedger'); };
+$('#clearLedger').onclick = () => { if (confirm('Xoá hết sổ ghi của phòng này? (Không lấy lại được)')) socket.emit('clearLedger'); };
 $('#copyLedger').onclick = async () => {
   const t = ledgerText();
-  try { await navigator.clipboard.writeText(t); toast('Đã sao chép sổ nợ 📋 dán vào Zalo/Messenger nha'); } catch { prompt('Sao chép sổ nợ:', t); }
+  try { await navigator.clipboard.writeText(t); toast('Đã sao chép sổ ghi 📋 dán vào Zalo/Messenger nha'); } catch { prompt('Sao chép sổ ghi:', t); }
 };
 document.querySelectorAll('.modal').forEach((m) => m.addEventListener('pointerdown', (e) => { if (e.target === m && m.id !== 'resultModal') m.classList.add('hidden'); }));
 
@@ -959,6 +1024,9 @@ const uiCtx = {
   mySeat: () => (state ? state.mySeat : -1),
   hopSeat: (seat, p) => { if (state) scene3d.hop(relPos(seat), p); },
   now: () => Date.now() + clockOffset,
+  burst: (pt, emojis, n) => fx.burstAt(pt, emojis, n),
+  center: () => { const r = $('#board').getBoundingClientRect(); return r.width ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : { x: innerWidth / 2, y: innerHeight / 2 }; },
+  rerender: () => { if (!state) return; const G2 = GAMES[state.game || 'tienlen']; if (G2 && G2.ui) G2.ui.render(state, null, uiCtx); },
   banner(text, mine, html = false) { const b = $('#turnBanner'); if (html) b.innerHTML = text; else b.textContent = text; b.classList.toggle('mine', !!mine); },
   playerId: () => playerId,
 };
@@ -1032,4 +1100,4 @@ function sysChat(text) {
 
 initLobby();
 showLobby();
-socket.emit('hello', { name: myName || randomName(), avatar: myAvatar });
+socket.emit('hello', { name: myName || randomName(), avatar: myAvatar, acc: myAcc });

@@ -1,7 +1,7 @@
 // 🂡 XÌ DÁCH (luật miền Nam, nhà cái xoay vòng)
 // - Chia 2 lá. Xì bàn (2 lá A) > Xì dách (A + 10/J/Q/K) > Ngũ linh (5 lá ≤ 21) > điểm thường. Quá 21 là quắc.
 // - Lá A: 2 lá -> 10 hoặc 11; 3 lá -> 1 hoặc 10; từ 4 lá -> 1.
-// - Người chơi phải đủ 16 mới được dằn; nhà cái phải đủ 15.
+// - Người chơi phải đủ 16 mới được dằn; nhà cái phải đủ 15. Quắc là bí mật: vẫn được rút/dằn tới khi lật bài.
 // - Thắng thường +1 phần; thắng bằng xì bàn / xì dách / ngũ linh +2 phần. Cùng quắc thì hoà.
 import { BaseRoom, shuffle } from './base.js';
 import { rankOf } from '../shared/rules.js';
@@ -128,11 +128,11 @@ export class XiDachRoom extends BaseRoom {
     const isDealer = seat === g.dealer;
     if (p.a === 'hit') {
       if (hand.length >= 5) return 'Đủ 5 lá rồi';
-      if (scoreHand(hand) > 21) return 'Quắc rồi, không rút nữa';
+      // Quắc rồi vẫn được rút / dằn như thường để người khác không đoán ra (giữ bí mật tới lúc lật bài)
       hand.push(g.deck.pop());
       const j = judge(hand);
       this.hooks.emitEvent(this, { kind: 'xd', what: 'hit', seat, n: hand.length });
-      if (j.kind === 'quac' || hand.length === 5) {
+      if (hand.length === 5) {
         if (j.kind === 'ngulinh') this.hooks.emitEvent(this, { kind: 'xd', what: 'ngulinh', seat });
         g.stood[seat] = true;
         this.clearTimer('bot');

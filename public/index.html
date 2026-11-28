@@ -13,60 +13,56 @@
 </head>
 <body>
   <canvas id="bg3d"></canvas>
+  <div id="sceneBg"></div>
 
-  <!-- ============ SẢNH ============ -->
+  <!-- ============ SẢNH (3 bước) ============ -->
   <section id="lobby" class="screen">
-    <div class="lobby-card">
-      <div class="lobby-sound"><button class="pill music-btn" title="Nhạc nền">🎵</button><button class="pill sfx-btn" title="Âm thanh">🔊</button></div>
-      <h1 class="logo">Game nhà <span>Pum</span> <i>🐷</i></h1>
-      <p class="sub">Tết này cả nhà mình cùng chơi nha 🧧</p>
+    <div class="lobby-sound"><button class="pill music-btn" title="Nhạc nền">🎵</button><button class="pill sfx-btn" title="Âm thanh">🔊</button></div>
 
-      <div class="profile">
-        <div class="avatar-big" id="myAvatarBig">🐱</div>
-        <div class="profile-fields">
-          <input id="nameInput" maxlength="16" placeholder="Tên của bạn" autocomplete="off" />
-          <div class="coins">🪙 <b id="myCoins">1000</b> xu</div>
+    <!-- Bước 1: tạo nhân vật -->
+    <div class="lobby-step" id="stepProfile">
+      <div class="lobby-card">
+        <h1 class="logo">Game nhà <span>Pum</span> <i>🐷</i></h1>
+        <p class="sub">Bước 1 · Tạo nhân vật của bạn</p>
+        <div class="hero-preview"><div class="hero-ava" id="heroAva"><span id="heroEmoji">🐱</span><i id="heroAcc"></i></div></div>
+        <input id="nameInput" class="name-input" maxlength="16" placeholder="Tên của bạn" autocomplete="off" />
+        <div class="pick-label">Chọn nhân vật</div>
+        <div class="avatar-grid" id="avatarGrid"></div>
+        <div class="pick-label">Chọn phụ kiện</div>
+        <div class="acc-grid" id="accGrid"></div>
+        <button class="btn big pink wide" id="toHubBtn">Vào sảnh chơi game ➜</button>
+      </div>
+    </div>
+
+    <!-- Bước 2: chọn game -->
+    <div class="lobby-step hidden" id="stepHub">
+      <div class="lobby-card">
+        <div class="me-chip" id="meChip"><span class="hero-ava sm"><span class="e"></span><i class="a"></i></span><span class="who"><b class="n"></b><span class="c">🪙 <b id="myCoins">1000</b> xu</span></span><button class="mini" id="editProfile">✏️ Đổi</button></div>
+        <h1 class="logo sm">Game nhà <span>Pum</span> <i>🐷</i></h1>
+        <p class="sub">Bước 2 · Hôm nay chơi gì nè? 🧧</p>
+        <div class="game-pick" id="gamePick"></div>
+        <div class="join-row">
+          <input id="codeInput" maxlength="4" placeholder="Có mã phòng? Nhập vào" autocomplete="off" />
+          <button class="btn mint" id="joinBtn">Vào</button>
         </div>
       </div>
-      <div class="avatar-grid" id="avatarGrid"></div>
+    </div>
 
-      <div class="section-title">Chọn trò chơi</div>
-      <div class="game-pick" id="gamePick"></div>
-
-      <div class="tabs">
-        <button class="tab active" data-tab="create">✨ Tạo phòng</button>
-        <button class="tab" data-tab="join">🚪 Vào phòng</button>
-      </div>
-
-      <div class="tab-body" id="tab-create">
-        <input id="roomName" maxlength="24" placeholder="Tên phòng (tuỳ chọn)" autocomplete="off" />
-        <div class="theme-pick" id="themePick"></div>
-        <label class="row-check"><input type="checkbox" id="roomPublic" checked /> Hiện phòng trong danh sách</label>
-        <label class="row-check"><input type="checkbox" id="roomBots" /> Thêm sẵn 3 bot để chơi ngay</label>
-        <button class="btn big pink" id="createBtn">Tạo phòng mới 🎉</button>
-      </div>
-
-      <div class="tab-body hidden" id="tab-join">
-        <div class="join-row">
-          <input id="codeInput" maxlength="4" placeholder="MÃ PHÒNG" autocomplete="off" />
-          <button class="btn mint" id="joinBtn">Vào</button>
+    <!-- Bước 3: phòng của game đã chọn -->
+    <div class="lobby-step hidden" id="stepGame">
+      <div class="lobby-card">
+        <button class="mini back" id="backHub">⬅ Chọn game khác</button>
+        <div class="game-hero" id="gameHero"></div>
+        <div class="create-box">
+          <input id="roomName" maxlength="24" placeholder="Tên phòng (tuỳ chọn)" autocomplete="off" />
+          <label class="row-check"><input type="checkbox" id="roomPublic" checked /> Hiện phòng trong danh sách</label>
+          <label class="row-check"><input type="checkbox" id="roomBots" /> <span id="botsLabel">Thêm sẵn bot để chơi ngay</span></label>
+          <button class="btn big pink wide" id="createBtn">Tạo phòng mới 🎉</button>
         </div>
         <div class="room-list-head">Phòng đang mở <button class="mini" id="refreshRooms">↻</button></div>
         <div class="room-list" id="roomList"></div>
+        <details class="howto"><summary>📖 Luật chơi tóm tắt</summary><div id="howtoBody"></div></details>
       </div>
-
-      <details class="howto">
-        <summary>📖 Luật chơi tóm tắt</summary>
-        <ul>
-          <li>Bài từ nhỏ đến lớn: <b>3 → 4 → … → K → A → 2</b>. Chất: ♠ &lt; ♣ &lt; ♦ &lt; ♥.</li>
-          <li>Bộ hợp lệ: rác, đôi, sám cô, tứ quý, sảnh (≥ 3 lá liên tiếp, không có 2), đôi thông (≥ 3 đôi liên tiếp).</li>
-          <li>Phải đánh cùng loại, cùng số lá và lớn hơn. Bỏ lượt thì phải chờ vòng mới.</li>
-          <li><b>Chặt heo:</b> 3 đôi thông hoặc tứ quý chặt 1 heo; 4 đôi thông chặt đôi heo, tứ quý và 3 đôi thông.</li>
-          <li><b>Tới trắng:</b> tứ quý heo, sảnh rồng, 6 đôi, 5 đôi thông.</li>
-          <li>Ván đầu: ai cầm lá nhỏ nhất (3♠) đi trước. Ván sau: người thắng đi trước.</li>
-          <li>Về chót còn nguyên 13 lá là <b>cóng</b> (thua gấp đôi); còn heo trong tay bị <b>thối heo</b>.</li>
-        </ul>
-      </details>
     </div>
   </section>
 
@@ -79,17 +75,17 @@
         <button class="code-chip" id="copyCode" title="Bấm để sao chép link mời">Mã: <b id="roomCode">----</b> 🔗</button>
       </div>
       <div class="top-actions">
-        <select id="themeSelect" class="pill" title="Đổi trang trí phòng"></select>
         <button class="pill music-btn" title="Nhạc nền">🎵</button>
         <button class="pill sfx-btn" title="Âm thanh">🔊</button>
-        <button class="pill hidden" id="ledgerBtn" title="Sổ nợ">📒</button>
+        <button class="pill hidden" id="ledgerBtn" title="Sổ ghi">📒</button>
         <button class="pill" id="chatToggle" title="Trò chuyện">💬</button>
       </div>
     </header>
 
     <div id="seats"></div>
 
-    <div id="board" class="ludo hidden"></div>
+    <div id="board" class="hidden"></div>
+    <div id="diceTray"></div>
     <div id="stageCenter"></div>
 
     <div id="centerPile">
@@ -140,7 +136,7 @@
       <div class="modal-card">
         <div class="modal-title" id="resultTitle">Kết thúc ván!</div>
         <div class="result-rows" id="resultRows"></div>
-        <div class="debt-note hidden" id="debtNote">📒 Đã ghi vào sổ nợ · <button class="link" id="openLedgerFromResult">xem sổ</button></div>
+        <div class="debt-note hidden" id="debtNote">📒 Đã ghi vào sổ ghi · <button class="link" id="openLedgerFromResult">xem sổ</button></div>
         <div class="modal-actions">
           <button class="btn soft" id="closeResult">👀 Xem bài</button>
           <button class="btn big pink" id="againBtn">Ván mới 🔁</button>
@@ -158,11 +154,11 @@
 
     <div class="modal hidden" id="ledgerModal">
       <div class="modal-card ledger-card">
-        <div class="modal-title">📒 Sổ nợ</div>
+        <div class="modal-title">📒 Sổ ghi</div>
         <div class="ledger-sub" id="ledgerSub"></div>
         <div class="ledger-section">Bảng tổng</div>
         <div class="ledger-totals" id="ledgerTotals"></div>
-        <div class="ledger-section">Ai trả ai? 💸</div>
+        <div class="ledger-section">Tổng kết cuối buổi 💸</div>
         <div class="ledger-settle" id="ledgerSettle"></div>
         <details class="ledger-history"><summary>Lịch sử các ván</summary><div id="ledgerGames"></div></details>
         <div class="modal-actions">

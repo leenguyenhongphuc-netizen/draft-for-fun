@@ -15,6 +15,8 @@ const GAME_CLASSES = { tienlen: Room, xidach: XiDachRoom, baicao: BaiCaoRoom, ca
 import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
 
 const THEMES = ['candy', 'garden', 'night', 'tet', 'ocean', 'winter', 'sakura', 'cafe', 'rainbow'];
+const ACCS = ['', '🎀', '🎩', '👑', '🕶️', '🌸', '🧢', '🎧', '🧣', '⭐'];
+const randTheme = (not) => { const t = THEMES.filter((x) => x !== not); return t[Math.floor(Math.random() * t.length)]; };
 const AVATARS = ['🐱', '🐶', '🐰', '🐼', '🦊', '🐸', '🐷', '🐹', '🐨', '🐯', '🐻', '🐧', '💕', '🌷'];
 const PREFIX = 'tlc-v1';
 const clean = (s, max) => String(s ?? '').replace(/[<>]/g, '').trim().slice(0, max);
@@ -183,7 +185,7 @@ export function createNet(playerId) {
       case 'join': {
         clearTimeout(host.dropTimers.get(from));
         host.members.set(from, { coins: Number(p.coins) || 1000 });
-        const s = room.join({ id: from, name: clean(p.name, 16) || 'Bạn Nhỏ', avatar: AVATARS.includes(p.avatar) ? p.avatar : AVATARS[0] });
+        const s = room.join({ id: from, name: clean(p.name, 16) || 'Bạn Nhỏ', avatar: AVATARS.includes(p.avatar) ? p.avatar : AVATARS[0], acc: ACCS.includes(p.acc) ? p.acc : '' });
         if (s < 0) { roomCh.send({ t: 'full', to: from }); return; }
         if (room.state === 'playing' && room.seats[s] && !room.seats[s].isBot) room.scheduleAuto();
         hostHooks.emitState(room);
@@ -198,6 +200,7 @@ export function createNet(playerId) {
         if (seat >= 0) {
           room.seats[seat].name = clean(p.name, 16) || room.seats[seat].name;
           if (AVATARS.includes(p.avatar)) room.seats[seat].avatar = p.avatar;
+          if (ACCS.includes(p.acc)) room.seats[seat].acc = p.acc;
           hostHooks.emitState(room);
         }
         return;
@@ -211,9 +214,14 @@ export function createNet(playerId) {
         return;
       }
       case 'setTheme': if (hostOnly() && THEMES.includes(p.theme)) { room.theme = p.theme; hostHooks.emitState(room); } return;
-      case 'start': if (hostOnly()) reply(room.start()); return;
+      case 'start':
+        if (!hostOnly()) return;
+        // Mỗi ván mới: tự đổi phòng ngẫu nhiên cho vui mắt
+        if (room.state !== 'playing') room.theme = randTheme(room.theme);
+        reply(room.start());
+        return;
       case 'setSettings': if (hostOnly()) { reply(room.setSettings(p.settings || {})); hostHooks.emitState(room); } return;
-      case 'clearLedger': if (hostOnly()) { room.clearLedger(); hostHooks.emitState(room); hostHooks.emitEvent(room, { kind: 'chat', seat: seat, name: '📒', text: 'Chủ phòng đã xoá sổ nợ' }); } return;
+      case 'clearLedger': if (hostOnly()) { room.clearLedger(); hostHooks.emitState(room); hostHooks.emitEvent(room, { kind: 'chat', seat: seat, name: '📒', text: 'Chủ phòng đã xoá sổ ghi' }); } return;
       case 'play': if (room.play) reply(room.play(seat, Array.isArray(p.cards) ? p.cards.map(Number) : [])); return;
       case 'act': if (room.action && seat >= 0) reply(room.action(seat, p || {})); return;
       case 'pass': if (room.pass) reply(room.pass(seat)); return;
@@ -279,10 +287,10 @@ export function createNet(playerId) {
     try { await openRoomChannel(code); } catch { return toast('Không kết nối được máy chủ 🥲 Thử lại nha'); }
     const room = new RoomClass({
       code, name: clean(name, 24) || `Phòng của ${profile.name}`,
-      theme: THEMES.includes(theme) ? theme : 'candy', isPublic: !!isPublic, hooks: hostHooks,
+      theme: THEMES.includes(theme) ? theme : randTheme(), isPublic: !!isPublic, hooks: hostHooks,
     });
     becomeHost(room);
-    room.join({ id: playerId, name: profile.name, avatar: profile.avatar });
+    room.join({ id: playerId, name: profile.name, avatar: profile.avatar, acc: profile.acc });
     for (let i = 0; i < Math.min(3, bots | 0); i++) room.addBot();
     hostHooks.emitState(room);
   }
@@ -291,7 +299,7 @@ export function createNet(playerId) {
     try { await openRoomChannel(snap.code); } catch { return toast('Không kết nối được máy chủ 🥲'); }
     const room = (GAME_CLASSES[snap.room.game] || Room).restore(snap.room, hostHooks);
     becomeHost(room, snap.members);
-    room.join({ id: playerId, name: profile.name, avatar: profile.avatar });
+    room.join({ id: playerId, name: profile.name, avatar: profile.avatar, acc: profile.acc });
     hostHooks.emitState(room);
     setTimeout(hostPresence, 6000); // cho mọi người kịp vào lại
     toast('Đã khôi phục phòng của bạn 🏠');
@@ -394,7 +402,7 @@ export function createNet(playerId) {
   function emit(type, p = {}) {
     switch (type) {
       case 'hello':
-        profile = { name: clean(p.name, 16) || 'Bạn Nhỏ', avatar: AVATARS.includes(p.avatar) ? p.avatar : AVATARS[0] };
+        profile = { name: clean(p.name, 16) || 'Bạn Nhỏ', avatar: AVATARS.includes(p.avatar) ? p.avatar : AVATARS[0], acc: ACCS.includes(p.acc) ? p.acc : '' };
         start().then(() => {
           fire('welcome', { coins });
           // Tự vào lại phòng cũ khi tải lại trang
@@ -410,7 +418,7 @@ export function createNet(playerId) {
       case 'joinRoom': joinRoom(p.code); return;
       case 'leaveRoom': leave(); return;
       case 'profile':
-        profile = { name: clean(p.name, 16) || profile.name, avatar: AVATARS.includes(p.avatar) ? p.avatar : profile.avatar };
+        profile = { name: clean(p.name, 16) || profile.name, avatar: AVATARS.includes(p.avatar) ? p.avatar : profile.avatar, acc: ACCS.includes(p.acc) ? p.acc : profile.acc };
         break;
     }
     if (!roomCh) return;

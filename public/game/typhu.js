@@ -26,7 +26,6 @@ export class TyPhuRoom extends BaseRoom {
     this.beginTurn();
   }
 
-  resume() { this.beginTurn(); }
 
   alive() { return [0, 1, 2, 3].filter((s) => this.g.inGame[s] && !this.g.bankrupt[s]); }
 
@@ -109,11 +108,12 @@ export class TyPhuRoom extends BaseRoom {
       g.doubles = dbl ? g.doubles + 1 : 0;
       const from = g.pos[seat];
       const to = (from + d[0] + d[1]) % N;
-      this.moveTo(seat, to);
       this.hooks.emitEvent(this, { kind: 'tp', what: 'roll', seat, d, from, to });
       g.phase = 'moving';
       this.hooks.emitState(this);
-      this.setTimer('turn', 1100, () => this.land(seat));
+      // Chờ xúc xắc lăn xong rồi mới đi từng ô, đi xong mới xét ô đứng
+      g.moveTarget = to;
+      this.setTimer('turn', 1250, () => this.completeMove(seat));
       return null;
     }
     if (p.a === 'buy' && g.phase === 'buy') {
@@ -137,6 +137,22 @@ export class TyPhuRoom extends BaseRoom {
     }
     if (p.a === 'skip' && (g.phase === 'buy' || g.phase === 'build')) return this.endTurn();
     return 'Không hiểu thao tác';
+  }
+
+  completeMove(seat) {
+    const g = this.g;
+    if (g.moveTarget == null) return;
+    const steps = (g.moveTarget - g.pos[seat] + N) % N;
+    this.moveTo(seat, g.moveTarget);
+    g.moveTarget = null;
+    this.hooks.emitState(this);
+    this.setTimer('turn', 350 + steps * 160, () => this.land(seat));
+  }
+
+  resume() {
+    const g = this.g;
+    if (g.phase === 'moving') { if (g.moveTarget != null) this.completeMove(g.turn); else this.setTimer('turn', 800, () => this.land(g.turn)); }
+    else this.beginTurn();
   }
 
   land(s) {
@@ -177,7 +193,7 @@ export class TyPhuRoom extends BaseRoom {
         const to = card.back ? (g.pos[s] - card.back + N) % N : card.moveTo;
         this.moveTo(s, to, !card.back);
         this.hooks.emitState(this);
-        if (card.moveTo !== 0) { g.phase = 'moving'; this.setTimer('turn', 900, () => this.land(s)); return; }
+        if (card.moveTo !== 0) { g.phase = 'moving'; this.setTimer('turn', 1400, () => this.land(s)); return; }
       }
     }
     this.endTurn();

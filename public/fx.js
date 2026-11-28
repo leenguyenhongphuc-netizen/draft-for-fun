@@ -161,3 +161,15 @@ export function chainText(n) {
     kill(f, 1800);
   }
 }
+
+// ---------- Hạt bung ra tại một điểm (dùng cho cảnh không có 3D) ----------
+export function burstAt(pt, emojis = ['✨', '⭐'], n = 12) {
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + Math.random() * 0.4;
+    const r = 70 + Math.random() * 90;
+    const sp = el('fx-spark big', emojis[i % emojis.length], { left: pt.x + 'px', top: pt.y + 'px' });
+    sp.style.setProperty('--dx', Math.cos(a) * r + 'px');
+    sp.style.setProperty('--dy', Math.sin(a) * r - 40 + 'px');
+    kill(sp, 950);
+  }
+}
