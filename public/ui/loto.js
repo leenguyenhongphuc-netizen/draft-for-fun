@@ -2,6 +2,8 @@
 // sân khấu (màn nhung, MC, lồng cầu) ở trên, khán giả ngồi ghế ở giữa, vé của mình ở khay dưới cùng.
 // Chỉ dựng DOM một lần rồi cập nhật từng phần -> không giật khi đang vuốt xem vé.
 import { avaHTML } from '../ava.js';
+import { speak } from '../voice.js';
+import { openVoicePicker } from '../voice-ui.js';
 
 const BALL_COLORS = ['#ff6b81', '#ffbf3c', '#3fc97f', '#4f9dff', '#b388ff', '#ff8a65'];
 const ballColor = (n) => BALL_COLORS[n % BALL_COLORS.length];
@@ -12,18 +14,6 @@ let ticketsKey = '';
 let calledCount = -1;
 let audienceKey = '';
 let lastPhase = '';
-
-function speak(text) {
-  try {
-    if (!window.speechSynthesis || localStorage.getItem('tlc:muted') === 'true') return;
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'vi-VN'; u.rate = 1.05; u.pitch = 1.15;
-    const v = speechSynthesis.getVoices().find((x) => x.lang && x.lang.toLowerCase().startsWith('vi'));
-    if (v) u.voice = v;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(u);
-  } catch { /* máy không hỗ trợ đọc */ }
-}
 
 export function reset() {
   ui = null; ticketsKey = ''; calledCount = -1; audienceKey = ''; lastPhase = ''; actionsKey = ''; marked.clear();
@@ -41,6 +31,7 @@ function build(board, ctx) {
       <div class="lt-cage-wrap"><div class="lt-cage"><div class="spokes"></div><div class="balls">${Array.from({ length: 14 }, (_, i) => `<i style="--a:${i * 26}deg;--r:${16 + (i % 3) * 9}%;background:${BALL_COLORS[i % 6]}"></i>`).join('')}</div><div class="hub"></div></div><div class="lt-stand"></div></div>
       <div class="lt-ball"><span></span></div>
       <button class="lt-stop hidden">⏹ Dừng</button>
+      <button class="lt-voice" title="Chọn giọng MC">🗣️ Giọng MC</button>
       <div class="lt-phase"></div>
     </div>
     <button class="lt-recent"></button>
@@ -61,6 +52,7 @@ function build(board, ctx) {
   u.full.onclick = () => u.full.classList.add('hidden');
   u.full.innerHTML = Array.from({ length: 90 }, (_, i) => `<i data-n="${i + 1}">${i + 1}</i>`).join('');
   u.auto.onclick = () => { autoMark = !autoMark; ctx.sfx.pop(); paintTickets(ctx); };
+  board.querySelector('.lt-voice').onclick = () => { ctx.sfx.pop(); openVoicePicker(); };
   u.stop.onclick = () => { if (confirm('Dừng sân khấu lô tô?')) ctx.socket.emit('act', { a: 'stop' }); };
   return u;
 }

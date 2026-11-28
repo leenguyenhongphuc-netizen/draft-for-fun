@@ -2,3 +2,7 @@
 // Khoá "publishable" được phép để công khai trên web.
 export const SUPABASE_URL = 'https://lpiwmdomdzebzhmxzesn.supabase.co';
 export const SUPABASE_KEY = 'sb_publishable_6H1om-emHz6RrLBy1guQfg_PfGyseKE';
+
+// Giọng Microsoft Neural (Azure Speech) qua hàm Supabase "tts". Để trống = chỉ dùng giọng có sẵn trong máy.
+// Bật: triển khai supabase/functions/tts, thêm khoá AZURE_SPEECH_KEY + AZURE_SPEECH_REGION, rồi điền URL vào đây.
+export const TTS_URL = '';

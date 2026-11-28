@@ -69,6 +69,21 @@ export function unlock() {
   } catch { /* bỏ qua */ }
   if (musicOn && !playing) startMusic();
 }
+// Phát đoạn âm thanh (mp3) qua WebAudio đã được mở khoá -> chạy được cả trên iPhone
+let voiceSrc = null;
+export async function playAudioBuffer(arr) {
+  if (!ensure()) return;
+  const buf = await ctx.decodeAudioData(arr);
+  try { voiceSrc && voiceSrc.stop(); } catch { /* bỏ qua */ }
+  const src = ctx.createBufferSource();
+  const g = ctx.createGain(); g.gain.value = 1.2;
+  src.buffer = buf; src.connect(g).connect(master);
+  // Nhạc nền nhỏ lại khi MC đọc
+  if (musicBus) { musicBus.gain.setTargetAtTime(musicOn ? 0.12 : 0, ctx.currentTime, 0.05); }
+  src.onended = () => { if (musicBus) musicBus.gain.setTargetAtTime(musicOn ? 0.32 : 0, ctx.currentTime, 0.3); };
+  src.start();
+  voiceSrc = src;
+}
 export const isRunning = () => !!ctx && ctx.state === 'running';
 
 // ---------- Nhạc cụ nhỏ ----------
