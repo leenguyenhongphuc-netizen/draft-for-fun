@@ -16,7 +16,6 @@ import * as uiPoker from './ui/poker.js';
 import * as uiCaro from './ui/caro.js';
 import * as uiDiceBet from './ui/dicebet.js';
 import * as uiSpin from './ui/spin.js';
-import * as uiLiXi from './ui/lixi.js';
 import * as uiDuoiHinh from './ui/duoihinh.js';
 import * as uiDuaThu from './ui/duathu.js';
 
@@ -32,7 +31,6 @@ const GAMES = {
   baucua: { icon: '🦀', name: 'Bầu Cua', desc: 'Tôm cá nai gà · tới 6 người', ui: uiDiceBet },
   taixiu: { icon: '🎲', name: 'Tài Xỉu', desc: 'Lắc 3 hột · tới 6 người', ui: uiDiceBet },
   spin: { icon: '🎡', name: 'Vòng Quay', desc: 'Thử thách vui · tới 10 người', ui: uiSpin },
-  lixi: { icon: '🧧', name: 'Bao Lì Xì', desc: 'Giành bao · xin xăm · tới 10 người', ui: uiLiXi },
   duoihinh: { icon: '🧩', name: 'Đuổi Hình Bắt Chữ', desc: 'Nhìn emoji đoán chữ · tới 10 người', ui: uiDuoiHinh },
   duathu: { icon: '🏇', name: 'Đua Thú', desc: 'Chọn thú chạy đua · tới 8 người', ui: uiDuaThu },
 };
@@ -138,13 +136,12 @@ const HOWTO = {
   spin: ['Lần lượt từng người bấm quay. Trúng ô nào làm thử thách ô đó: hát, nhảy, gây cười, bắt chước, chúc Tết, đố vui, nâng ly…', 'Làm xong được 1 ⭐, chịu thua thì bị phạt nhẹ cho vui. Ô 🍀 May mắn luôn được sao.', 'Thử thách vui vẻ cho cả nhà, không tính xu. Chủ phòng dừng lúc nào cũng được.'],
   duoihinh: ['Mỗi ván 10 câu, nhìn emoji đoán ra chữ (thành ngữ, món ăn, ngày Tết, địa danh…).', 'Gõ đáp án, không dấu cũng được. Cứ 10 giây lộ thêm vài chữ cái gợi ý.', 'Đoán đúng càng sớm càng nhiều điểm (5 · 4 · 3 · 2 · 1), đoán trước khi có gợi ý +1. Chỉ tính điểm cho vui.'],
   duathu: ['Mỗi người chọn 1 con thú (mỗi con 1 người), rồi cả đàn chạy 2 vòng quanh trường đua.', 'Mỗi người góp 1 phần, thú của ai về trước nhất ăn cả hũ.', 'Có tăng tốc 💨, thỏ ngủ quên 💤, rùa nước rút… nhưng ai cũng có cơ hội như nhau.'],
-  lixi: ['Chủ phòng chọn lì xì bằng xu game hoặc tiền thật (ghi sổ, mệnh giá 1k–50k), tổng tiền và số bao, hoặc bấm 🎲 Máy tự chọn.', 'Ai cũng bấm 🎋 Xin xăm đầu năm được, mỗi vòng 1 quẻ.', 'Mọi người chạm nhanh để giành 1 bao, tiền trong mỗi bao ngẫu nhiên.', 'Ai trúng bao to nhất là 👑 Vua may mắn. Chủ phòng trả đúng số đã giành, bao thừa trả lại.'],
   loto: ['Sân khấu xổ liên tục: mở bán vé → xổ số → có người KINH.', 'Mỗi vòng mua tối đa 3 vé. Hàng nào đủ 5 số là KINH!', 'Vào phòng lúc nào cũng được, chờ vòng sau mua vé.'],
 };
 
 // ---------- Cảnh riêng từng game ----------
 // Game bài dùng phòng 3D (tự đổi phòng ngẫu nhiên mỗi ván); Cá Ngựa, Tỷ Phú, Lô Tô có cảnh riêng.
-const SCENE_OF = { tienlen: 'room', xidach: 'room', baicao: 'room', cangua: 'ludo', typhu: 'typhu', loto: 'loto', poker: 'room', caro: 'caro', baucua: 'dicebet', taixiu: 'dicebet', spin: 'dicebet', lixi: 'dicebet', duoihinh: 'dicebet', duathu: 'dicebet' };
+const SCENE_OF = { tienlen: 'room', xidach: 'room', baicao: 'room', cangua: 'ludo', typhu: 'typhu', loto: 'loto', poker: 'room', caro: 'caro', baucua: 'dicebet', taixiu: 'dicebet', spin: 'dicebet', duoihinh: 'dicebet', duathu: 'dicebet' };
 let curScene = null, curGame = null;
 const d = (e, l, t, size = 38, cls = 'float', delay = 0) => `<span class="decor ${cls}" style="left:${l};top:${t};font-size:${size}px;animation-delay:${delay}s">${e}</span>`;
 const lights = (n, colors) => `<div class="lights">${Array.from({ length: n }, (_, i) => `<i style="--c:${colors[i % colors.length]};--d:${(i % 3) * 0.4}s"></i>`).join('')}</div>`;
@@ -687,7 +684,7 @@ function renderControls() {
     $('#startBtn').classList.toggle('hidden', !isHost);
     $('#addBotBtn').classList.toggle('hidden', !isHost || count >= max);
     $('#startBtn').disabled = count < solo;
-    $('#startBtn').textContent = isLoto ? 'Mở sân khấu 🎪' : s.game === 'spin' ? 'Bắt đầu quay 🎡' : s.game === 'lixi' ? 'Mở tiệc lì xì 🧧' : s.game === 'duathu' ? 'Vào trường đua 🏇' : s.game === 'duoihinh' ? 'Bắt đầu đoán 🧩' : 'Bắt đầu 🃏';
+    $('#startBtn').textContent = isLoto ? 'Mở sân khấu 🎪' : s.game === 'spin' ? 'Bắt đầu quay 🎡' : s.game === 'duathu' ? 'Vào trường đua 🏇' : s.game === 'duoihinh' ? 'Bắt đầu đoán 🧩' : 'Bắt đầu 🃏';
   }
 }
 
@@ -989,7 +986,6 @@ const GAME_RULE_TEXT = {
   duoihinh: 'Nhìn emoji đoán chữ, 10 câu mỗi ván. Đúng càng sớm càng nhiều điểm. Chỉ tính điểm cho vui, không tính xu.',
   duathu: 'Mỗi người chọn 1 thú, góp 1 phần vào hũ. Thú của ai về trước nhất (trong các con có chủ) ăn cả hũ.',
   spin: 'Lần lượt quay, làm thử thách được ⭐. Chỉ để vui, không tính xu.',
-  lixi: 'Chủ phòng phát lì xì: tổng tiền chia ngẫu nhiên vào các bao, mỗi người giành 1 bao. Bao to nhất là Vua may mắn. Mức cược nhân các mức tổng tiền gợi ý.',
   caro: 'Bàn 15×15, 5 quân liên tiếp thắng (+1 phần), thua −1 phần, hoà 0.',
   cangua: 'Gieo 1 hoặc 6 thì ra quân, ra 1 hoặc 6 được gieo thêm. Đi trúng ngựa đối thủ thì đá về chuồng. Vào đích phải đúng số. Ai về đủ 4 ngựa trước thắng.',
 };
@@ -1291,7 +1287,7 @@ initLobby();
 showLobby();
 
 // ---------- Báo có bản mới ----------
-const APP_VERSION = '20261128-1144';
+const APP_VERSION = '20261128-1202';
 document.querySelectorAll('.lobby-card').forEach((c) => { const v = document.createElement('div'); v.className = 'app-ver'; v.textContent = 'Phiên bản ' + APP_VERSION; c.appendChild(v); });
 async function checkUpdate() {
   try {

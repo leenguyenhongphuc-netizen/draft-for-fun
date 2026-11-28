@@ -14,11 +14,10 @@ import { PokerRoom } from './game/poker.js';
 import { CaroRoom } from './game/caro.js';
 import { BauCuaRoom, TaiXiuRoom } from './game/dicebet.js';
 import { SpinRoom } from './game/spin.js';
-import { LiXiRoom } from './game/lixi.js';
 import { DuoiHinhRoom } from './game/duoihinh.js';
 import { DuaThuRoom } from './game/duathu.js';
 
-const GAME_CLASSES = { tienlen: Room, xidach: XiDachRoom, baicao: BaiCaoRoom, cangua: CaNguaRoom, typhu: TyPhuRoom, loto: LoToRoom, poker: PokerRoom, caro: CaroRoom, baucua: BauCuaRoom, taixiu: TaiXiuRoom, spin: SpinRoom, lixi: LiXiRoom, duoihinh: DuoiHinhRoom, duathu: DuaThuRoom };
+const GAME_CLASSES = { tienlen: Room, xidach: XiDachRoom, baicao: BaiCaoRoom, cangua: CaNguaRoom, typhu: TyPhuRoom, loto: LoToRoom, poker: PokerRoom, caro: CaroRoom, baucua: BauCuaRoom, taixiu: TaiXiuRoom, spin: SpinRoom, duoihinh: DuoiHinhRoom, duathu: DuaThuRoom };
 import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
 
 const THEMES = ['candy', 'garden', 'night', 'tet', 'ocean', 'winter', 'sakura', 'cafe', 'rainbow', 'space', 'icecream', 'jungle', 'autumn', 'midautumn', 'bakery', 'disco', 'farm', 'castle', 'milktea'];

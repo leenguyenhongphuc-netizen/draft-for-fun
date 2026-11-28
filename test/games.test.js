@@ -201,7 +201,6 @@ test('bầu cua: cược tối đa theo xu đang có', () => {
 });
 
 import { SpinRoom, SEGMENTS } from '../public/game/spin.js';
-import { LiXiRoom, splitLixi } from '../public/game/lixi.js';
 
 test('vòng quay: lần lượt quay, làm xong được sao', () => {
   const r = new SpinRoom({ code: 'S', name: 's', theme: 'candy', isPublic: false, hooks: hooks() });
@@ -222,49 +221,6 @@ test('vòng quay: lần lượt quay, làm xong được sao', () => {
   r.destroy();
 });
 
-test('lì xì: chia đủ tổng, mỗi người 1 bao, tổng tiền bằng 0', () => {
-  for (let k = 0; k < 200; k++) {
-    const total = [200, 500, 1000, 37][k % 4], n = 2 + (k % 9);
-    const a = splitLixi(total, n, total >= n * 10 ? 10 : 1);
-    assert.equal(a.length, n);
-    assert.equal(a.reduce((x, y) => x + y, 0), total);
-    assert.ok(a.every((x) => x >= 1));
-  }
-  const coins = { host: 1000 };
-  const r = new LiXiRoom({ code: 'L', name: 'l', theme: 'candy', isPublic: false, hooks: { ...hooks(), getCoins: (id) => coins[id] ?? 1000, addCoins: (id, d) => { coins[id] = (coins[id] ?? 1000) + d; } } });
-  r.join({ id: 'host', name: 'H', avatar: '🐱' }); r.join({ id: 'me', name: 'M', avatar: '🐶' }); r.addBot();
-  r.start();
-  assert.ok(r.action(1, { a: 'deal' }));                  // không phải chủ phòng
-  assert.ok(r.action(0, { a: 'setup', total: 5000, count: 4 }) === null && r.action(0, { a: 'deal' })); // quá số xu
-  r.action(0, { a: 'setup', total: 500, count: 4 });
-  assert.equal(r.action(0, { a: 'deal' }), null);
-  assert.ok(r.action(0, { a: 'grab', i: 0 }));            // người phát không được giành
-  assert.equal(r.action(1, { a: 'grab', i: 1 }), null);
-  assert.ok(r.action(1, { a: 'grab', i: 2 }));            // 1 người 1 bao
-  r.action(2, { a: 'grab', i: 3 });
-  r.reveal();
-  assert.equal(r.g.phase, 'done');
-  const got = r.g.envs[1].amt + r.g.envs[3].amt;
-  assert.equal(coins.host, 1000 - got);
-  assert.equal(coins.me, 1000 + r.g.envs[1].amt);
-  assert.ok(Math.abs(r.g.rows.reduce((a, x) => a + x.delta, 0)) < 0.01);
-  assert.equal(r.action(0, { a: 'again' }), null);
-  assert.equal(r.g.phase, 'setup');
-  r.action(0, { a: 'auto' });
-  assert.ok(r.g.total > 0 && r.g.count >= 1);
-  // Tiền thật: mệnh giá 10k, mỗi bao chẵn 10k, ghi sổ, không trừ xu
-  r.action(0, { a: 'setup', mode: 'tien', step: 10 });
-  assert.equal(r.g.total % 10, 0);
-  assert.ok(r.action(0, { a: 'setup', total: 25, count: 2 }) === null && r.action(0, { a: 'deal' })); // không chia hết 10k
-  r.action(0, { a: 'setup', total: 200, count: 3 });
-  const before = coins.host;
-  assert.equal(r.action(0, { a: 'deal' }), null);
-  assert.ok(r.g.envs.every((e) => e.amt % 10 === 0 && e.amt >= 10));
-  r.action(1, { a: 'grab', i: 0 }); r.reveal();
-  assert.equal(coins.host, before);
-  assert.ok(r.ledger.games.length === 1 && r.ledger.games[0].label === 'k');
-  r.destroy();
-});
 
 import { DuoiHinhRoom, PUZZLES, isRight, maskAnswer } from '../public/game/duoihinh.js';
 import { DuaThuRoom, makeRace, progressAt, ANIMALS } from '../public/game/duathu.js';
@@ -312,12 +268,3 @@ test('đua thú: đường chạy hợp lệ, chọn thú, người có thú v�
   }
 });
 
-test('lì xì: xin xăm mỗi vòng 1 quẻ', () => {
-  const r = new LiXiRoom({ code: 'X', name: 'x', theme: 'candy', isPublic: false, hooks: hooks() });
-  r.join({ id: 'host', name: 'H', avatar: '🐱' }); r.addBot();
-  r.start();
-  assert.equal(r.action(1, { a: 'xam' }), null);
-  assert.ok(r.action(1, { a: 'xam' }));
-  assert.ok(r.viewFor('host').lx.xam[1] != null);
-  r.destroy();
-});
