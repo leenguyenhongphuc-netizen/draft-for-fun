@@ -966,3 +966,5 @@ body[data-scene="caro"] #sceneBg, body[data-scene="dicebet"] #sceneBg { display:
 body[data-scene="dicebet"] #board.dicebet { gap: 6px; max-height: calc(100vh - 230px - env(safe-area-inset-bottom)); }
 @supports (height: 100dvh) { body[data-scene="dicebet"] #board.dicebet { max-height: calc(100dvh - 230px - env(safe-area-inset-bottom)); } }
 @media (max-height: 760px) { .db-plate { width: clamp(120px, 32vw, 180px); } .db-sum { min-height: 0; } }
+
+.mini.lixi { background: #e53935; color: #fff3c4; animation: pulse 1s infinite; margin-right: 4px; }

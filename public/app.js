@@ -80,8 +80,10 @@ const urlRoom = new URLSearchParams(location.search).get('room');
 const LOCAL = new URLSearchParams(location.search).has('local');
 const pageUrl = (code) => location.pathname + (code || LOCAL ? '?' : '') + (code ? 'room=' + code : '') + (code && LOCAL ? '&' : '') + (LOCAL ? 'local=1' : '');
 
-socket.on('welcome', ({ coins }) => {
+socket.on('welcome', ({ coins, lixi }) => {
   $('#myCoins').textContent = coins;
+  $('#lixiBtn').classList.toggle('hidden', coins >= 500);
+  if (lixi) { toast('🧧 Nhận lì xì 1000 xu! Chúc mừng năm mới 🎉'); sfx.coin(); confetti(); }
   if (urlRoom && !state) socket.emit('joinRoom', { code: urlRoom });
 });
 socket.on('rooms', renderRooms);
@@ -116,7 +118,7 @@ const HOWTO = {
   cangua: ['Gieo 1 hoặc 6 thì ra quân, ra 1 hoặc 6 được gieo thêm.', 'Đi trúng ngựa đối thủ thì đá về chuồng.', 'Vào đích phải đúng số. Ai về đủ 4 ngựa trước thắng.'],
   typhu: ['Gieo 2 xúc xắc, mua tỉnh thành, xây nhà, thu tiền thuê.', 'Đủ cặp tỉnh cùng màu thì tiền thuê gấp đôi. Gieo đôi đi thêm.', 'Hết 15 vòng ai giàu nhất thắng, hết tiền là phá sản.'],
   poker: ['Mỗi ván mỗi người cầm 100 chip, mù 1/2. Nhận 2 lá tẩy + 5 lá chung.', 'Bỏ bài, Xem, Theo, Tố hoặc All-in. Ai còn bài mạnh nhất (5 lá tốt nhất) ăn pot.', 'Mạnh dần: mậu thầu < đôi < thú < sám < sảnh < thùng < cù lũ < tứ quý < thùng phá sảnh. 10 chip = 1 phần.'],
-  baucua: ['Nhà cái xoay vòng mỗi ván. Chọn chip 1/2/5 rồi chạm con muốn đặt (tối đa 20 phần/ván).', 'Nhà cái lắc 3 hột rồi mở bát. Mỗi hột ra đúng con mình đặt thì ăn 1 lần tiền cược, không ra thì mất.'],
+  baucua: ['Nhà cái xoay vòng mỗi ván. Chọn chip 1/2/5 rồi chạm con muốn đặt (cược tối đa bằng số xu đang có; 1 phần = 10 xu).', 'Nhà cái lắc 3 hột rồi mở bát. Mỗi hột ra đúng con mình đặt thì ăn 1 lần tiền cược, không ra thì mất.'],
   taixiu: ['Nhà cái xoay vòng mỗi ván. Đặt TÀI (tổng 11–17) hoặc XỈU (tổng 4–10), ăn 1:1.', 'Ra bộ ba (3 hột giống nhau) thì nhà cái ăn hết.'],
   caro: ['2 người, ✕ đi trước (đổi lượt mỗi ván).', 'Ai có 5 quân liên tiếp ngang, dọc hoặc chéo là thắng.', 'Luật Việt Nam: bị chặn cả 2 đầu thì không tính (chủ phòng tắt được trong ⚙️ Luật).'],
   loto: ['Sân khấu xổ liên tục: mở bán vé → xổ số → có người KINH.', 'Mỗi vòng mua tối đa 3 vé. Hàng nào đủ 5 số là KINH!', 'Vào phòng lúc nào cũng được, chờ vòng sau mua vé.'],
@@ -223,6 +225,7 @@ function initLobby() {
     showStep('stepHub');
   };
   $('#nameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#toHubBtn').click(); });
+  $('#lixiBtn').onclick = () => { socket.emit('lixi'); };
   $('#editProfile').onclick = () => { showStep('stepProfile'); sfx.pop(); };
 
   const gp = $('#gamePick');
@@ -945,8 +948,8 @@ const GAME_RULE_TEXT = {
   xidach: 'Xì bàn > Xì dách > Ngũ linh > điểm. Quá 21 là quắc. Người chơi đủ 16, nhà cái đủ 15 mới được dằn. Thắng thường +1 phần, thắng bằng xì bàn / xì dách / ngũ linh +2 phần. Nhà cái xoay vòng mỗi ván.',
   baicao: 'Mỗi người 3 lá, điểm = hàng đơn vị của tổng (10/J/Q/K = 0). Ba tây (3 lá J/Q/K) lớn nhất. Ai cao nhất ăn: mỗi người thua trả 1 phần.',
   poker: "Texas Hold'em: 2 lá tẩy + 5 lá chung, mỗi ván 100 chip, mù 1/2, chia pot phụ khi all-in. Lời/lỗ: 10 chip = 1 phần.",
-  baucua: 'Nhà cái xoay vòng. Mỗi hột ra đúng con đã đặt ăn 1 lần tiền cược (ra 2 hột ăn gấp 2…), không ra thì mất. Tối đa 20 phần/ván.',
-  taixiu: 'Nhà cái xoay vòng. Tài 11–17, Xỉu 4–10, ăn 1:1. Bộ ba thì nhà cái ăn hết. Tối đa 20 phần/ván.',
+  baucua: 'Nhà cái xoay vòng. Mỗi hột ra đúng con đã đặt ăn 1 lần tiền cược (ra 2 hột ăn gấp 2…), không ra thì mất. Cược tối đa bằng số xu đang có.',
+  taixiu: 'Nhà cái xoay vòng. Tài 11–17, Xỉu 4–10, ăn 1:1. Bộ ba thì nhà cái ăn hết. Cược tối đa bằng số xu đang có.',
   caro: 'Bàn 15×15, 5 quân liên tiếp thắng (+1 phần), thua −1 phần, hoà 0.',
   cangua: 'Gieo 1 hoặc 6 thì ra quân, ra 1 hoặc 6 được gieo thêm. Đi trúng ngựa đối thủ thì đá về chuồng. Vào đích phải đúng số. Ai về đủ 4 ngựa trước thắng.',
 };
@@ -1171,6 +1174,8 @@ function confetti() {
   }
 }
 function toast(msg) {
+  // Không hiện chồng nhiều thông báo giống nhau
+  if ([...$('#toast').children].some((x) => x.textContent === msg)) return;
   const d = document.createElement('div');
   d.textContent = msg;
   $('#toast').appendChild(d);
@@ -1188,7 +1193,7 @@ initLobby();
 showLobby();
 
 // ---------- Báo có bản mới ----------
-const APP_VERSION = '20261128-0621';
+const APP_VERSION = '20261128-0630';
 document.querySelectorAll('.lobby-card').forEach((c) => { const v = document.createElement('div'); v.className = 'app-ver'; v.textContent = 'Phiên bản ' + APP_VERSION; c.appendChild(v); });
 async function checkUpdate() {
   try {

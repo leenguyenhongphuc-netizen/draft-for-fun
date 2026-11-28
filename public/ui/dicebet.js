@@ -117,7 +117,7 @@ export function render(s, prev, ctx) {
     done.onclick = () => { ctx.socket.emit('act', { a: 'done' }); ctx.sfx.pop(); };
     chips.append(clear, done);
     box.appendChild(chips);
-    ctx.banner(`🪙 Chọn chip rồi chạm ô để đặt · lắc sau <span class="db-left"></span>s`, true, true);
+    ctx.banner(db.myCap <= 0 ? '🥲 Hết xu rồi · ra sảnh bấm 🧧 Nhận lì xì nha' : `🪙 Đã cược ${db.myTotal}/${db.myCap} phần · lắc sau <span class="db-left"></span>s`, true, true);
   } else if (db.phase === 'bet' && isDealer) {
     const b = document.createElement('button'); b.className = 'btn big pink'; b.textContent = '🥣 Lắc luôn';
     b.onclick = () => ctx.socket.emit('act', { a: 'shake' });

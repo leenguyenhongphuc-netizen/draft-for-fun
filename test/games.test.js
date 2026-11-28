@@ -185,3 +185,17 @@ for (const [name, R] of [['bầu cua', BauCuaRoom], ['tài xỉu', TaiXiuRoom]])
     r.destroy();
   });
 }
+
+test('bầu cua: cược tối đa theo xu đang có', () => {
+  const coins = { me: 35 };
+  const r = new BauCuaRoom({ code: 'X', name: 'x', theme: 'candy', isPublic: false, hooks: { ...hooks(), getCoins: (id) => coins[id] ?? 1000 } });
+  r.join({ id: 'host', name: 'H', avatar: '🐱' }); r.join({ id: 'me', name: 'M', avatar: '🐶' });
+  r.start(); r.destroy();
+  const me = r.seatOf('me') === r.g.dealer ? r.seatOf('host') : r.seatOf('me');
+  if (r.seats[me].id === 'me') {
+    assert.equal(r.action(me, { a: 'bet', on: 'cua', amt: 2 }), null);
+    assert.ok(r.action(me, { a: 'bet', on: 'cua', amt: 2 }));   // 35 xu = 3 phần, đã 2 -> thêm 2 bị chặn
+    assert.equal(r.action(me, { a: 'bet', on: 'tom', amt: 1 }), null);
+  }
+  r.destroy();
+});

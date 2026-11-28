@@ -64,6 +64,15 @@ class DiceBetRoom extends BaseRoom {
     this.action(s, { a: 'done' });
   }
 
+  // Giới hạn cược: theo số xu đang có (1 phần = 10 xu). Chế độ ghi sổ không trừ xu nên cho tối đa 50 phần.
+  betCap(s) {
+    const p = this.seats[s];
+    if (!p) return 0;
+    if (this.settings.debt) return 50;
+    const coins = p.isBot ? (p.botCoins ?? 1000) : this.hooks.getCoins(p.id);
+    return Math.max(0, Math.floor(coins / this.unitInfo().mult));
+  }
+
   myTotal(s) { return Object.values(this.g.bets[s] || {}).reduce((a, b) => a + b, 0); }
 
   action(s, p = {}) {
@@ -74,7 +83,12 @@ class DiceBetRoom extends BaseRoom {
       if (s === g.dealer) return 'Bạn đang làm nhà cái 🎩';
       if (!this.constructor.OPTIONS.includes(p.on)) return 'Ô cược không hợp lệ';
       const amt = [1, 2, 5].includes(+p.amt) ? +p.amt : 1;
-      if (this.myTotal(s) + amt > MAX_BET) return `Mỗi ván cược tối đa ${MAX_BET} phần thôi nha`;
+      const cap = this.betCap(s);
+      if (cap <= 0) return 'Hết xu rồi 🥲 Ra sảnh bấm 🧧 Nhận lì xì nha';
+      if (this.myTotal(s) + amt > cap) {
+        const left = cap - this.myTotal(s);
+        return left > 0 ? `Bạn chỉ còn đủ xu cược thêm ${left} phần thôi` : `Bạn đã cược hết số xu đang có (${cap} phần)`;
+      }
       const b = (g.bets[s] ||= {});
       b[p.on] = (b[p.on] || 0) + amt;
       g.done[s] = false;
@@ -174,7 +188,7 @@ class DiceBetRoom extends BaseRoom {
     v.turnMs = BET_MS;
     v.db = {
       phase: g.phase, dealer: g.dealer, dice: g.phase === 'open' || this.state === 'ended' ? g.dice : null,
-      myBets: (me >= 0 && g.bets[me]) || {}, totals, by, done: !!g.done[me],
+      myBets: (me >= 0 && g.bets[me]) || {}, totals, by, myCap: me >= 0 ? this.betCap(me) : 0, myTotal: me >= 0 ? this.myTotal(me) : 0, done: !!g.done[me],
       players: this.seats.map((p, s) => (p && g.inGame[s] ? { bet: this.myTotal(s), done: !!g.done[s] } : null)),
     };
     v.seats.forEach((p, s) => { if (p) p.status = s === g.dealer ? { cls: 'r1', text: '🎩 Nhà cái' } : null; });
