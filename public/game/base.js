@@ -135,7 +135,8 @@ export class BaseRoom {
   // ---------- Tính tiền ----------
   unitInfo() {
     const st = this.settings;
-    return st.debt ? { mult: st.unit, label: st.unitLabel } : { mult: COIN_UNIT, label: 'xu' };
+    const k = st.stake || 1;
+    return st.debt ? { mult: st.unit * k, label: st.unitLabel } : { mult: COIN_UNIT * k, label: 'xu' };
   }
 
   /** rows: [{seat, parts, rank?, badge?, note, show?}] -> chốt ván */

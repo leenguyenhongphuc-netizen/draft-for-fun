@@ -103,7 +103,7 @@ export function render(s, prev, ctx) {
   if (db.phase === 'bet' && !isDealer) {
     const chips = document.createElement('div');
     chips.className = 'db-chips';
-    [1, 2, 5].forEach((v) => {
+    [1, 5, 10, 50].forEach((v) => {
       const b = document.createElement('button');
       b.className = 'db-chip c' + v + (chip === v ? ' sel' : '');
       b.textContent = v;
@@ -117,7 +117,7 @@ export function render(s, prev, ctx) {
     done.onclick = () => { ctx.socket.emit('act', { a: 'done' }); ctx.sfx.pop(); };
     chips.append(clear, done);
     box.appendChild(chips);
-    ctx.banner(db.myCap <= 0 ? '🥲 Hết xu rồi · ra sảnh bấm 🧧 Nhận lì xì nha' : `🪙 Đã cược ${db.myTotal}/${db.myCap} phần · lắc sau <span class="db-left"></span>s`, true, true);
+    ctx.banner(db.myCap <= 0 ? '🥲 Hết xu rồi · ra sảnh bấm 🧧 Nhận lì xì nha' : (db.myCap >= 100000 ? `🪙 Đã cược ${db.myTotal} phần` : `🪙 Đã cược ${db.myTotal}/${db.myCap} phần`) + ` · lắc sau <span class="db-left"></span>s`, true, true);
   } else if (db.phase === 'bet' && isDealer) {
     const b = document.createElement('button'); b.className = 'btn big pink'; b.textContent = '🥣 Lắc luôn';
     b.onclick = () => ctx.socket.emit('act', { a: 'shake' });

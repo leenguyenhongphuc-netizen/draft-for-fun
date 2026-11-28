@@ -1,7 +1,7 @@
 import { createScene, THEMES } from './scene3d.js';
 import {
   RANKS, SUITS, rankOf, suitOf, getCombo, canBeat, allPlays, sortHand, TWO, cardLabel,
-  finishViolation, settleDebts, smartGroups, GROUP_LABEL, SMART_VARIANT, TURN_CHOICES, UNIT_CHOICES, UNIT_LABELS, PTS3_CHOICES,
+  finishViolation, settleDebts, smartGroups, GROUP_LABEL, SMART_VARIANT, TURN_CHOICES, UNIT_CHOICES, UNIT_LABELS, PTS3_CHOICES, STAKE_CHOICES,
 } from './shared/rules.js';
 import { createNet } from './net.js';
 import * as audio from './audio.js';
@@ -992,6 +992,7 @@ function renderRuleChips() {
   const chips = [];
   if (st.debt) chips.push(['📒 Ghi sổ · 1 phần = ' + fmtAmt(st.unit, st.unitLabel, false), true]);
   RULES.forEach((r) => { if (st[r.key]) chips.push([r.name, false]); });
+  if ((st.stake || 1) > 1) chips.push(['💰 Cược ×' + st.stake, true]);
   chips.push(['⏱ ' + st.turnSec + 's', false]);
   const el = $('#rulesChips');
   el.innerHTML = '';
@@ -1030,6 +1031,7 @@ function renderRules() {
     row('Mỗi phần =', 'Tiến Lên 4 người: nhất +3 phần, nhì +1, ba −1, bét −3.', seg(UNIT_CHOICES, st.unit, (v) => v, (v) => setRule({ unit: v })));
     row('Đơn vị', '"k" = nghìn đồng, hoặc chỉ tính điểm.', seg(UNIT_LABELS, st.unitLabel, (v) => v, (v) => setRule({ unitLabel: v })));
   }
+  row('💰 Mức cược', `Nhân tiền thắng thua: 1 phần = ${(st.debt ? st.unit : 10) * (st.stake || 1)} ${st.debt ? st.unitLabel : 'xu'}.`, seg(STAKE_CHOICES, st.stake || 1, (v) => '×' + v, (v) => setRule({ stake: v })));
   if ((state.game || 'tienlen') === 'tienlen') RULES.forEach((r) => row(r.name, r.desc, sw(r.key, st[r.key])));
   else row(`${GAMES[state.game].icon} Luật ${GAMES[state.game].name}`, GAME_RULE_TEXT[state.game], document.createElement('span'));
   if (state.game === 'caro') row('🚧 Chặn 2 đầu không tính', 'Hàng 5 quân bị quân đối thủ chặn cả 2 đầu thì không thắng (luật Việt Nam).', sw('caroBlock', st.caroBlock));
@@ -1272,7 +1274,7 @@ initLobby();
 showLobby();
 
 // ---------- Báo có bản mới ----------
-const APP_VERSION = '20261128-1030';
+const APP_VERSION = '20261128-1051';
 document.querySelectorAll('.lobby-card').forEach((c) => { const v = document.createElement('div'); v.className = 'app-ver'; v.textContent = 'Phiên bản ' + APP_VERSION; c.appendChild(v); });
 async function checkUpdate() {
   try {

@@ -68,7 +68,7 @@ class DiceBetRoom extends BaseRoom {
   betCap(s) {
     const p = this.seats[s];
     if (!p) return 0;
-    if (this.settings.debt) return 50;
+    if (this.settings.debt) return 100000; // ghi sổ: không giới hạn
     const coins = p.isBot ? (p.botCoins ?? 1000) : this.hooks.getCoins(p.id);
     return Math.max(0, Math.floor(coins / this.unitInfo().mult));
   }
@@ -82,7 +82,7 @@ class DiceBetRoom extends BaseRoom {
       if (g.phase !== 'bet') return 'Hết giờ đặt cược rồi, chờ ván sau nha';
       if (s === g.dealer) return 'Bạn đang làm nhà cái 🎩';
       if (!this.constructor.OPTIONS.includes(p.on)) return 'Ô cược không hợp lệ';
-      const amt = [1, 2, 5].includes(+p.amt) ? +p.amt : 1;
+      const amt = [1, 2, 5, 10, 50].includes(+p.amt) ? +p.amt : 1;
       const cap = this.betCap(s);
       if (cap <= 0) return 'Hết xu rồi 🥲 Ra sảnh bấm 🧧 Nhận lì xì nha';
       if (this.myTotal(s) + amt > cap) {

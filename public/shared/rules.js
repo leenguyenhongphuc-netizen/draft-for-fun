@@ -208,6 +208,7 @@ export const DEFAULT_SETTINGS = {
   cong: true,         // Cóng (bét còn nguyên 13 lá) thua gấp đôi
   instantWin: true,   // Tới trắng
   turnSec: 25,        // Thời gian mỗi lượt
+  stake: 1,           // Mức cược: nhân tiền thắng thua mọi game
   pts3: '2,1,-3',     // Cách tính khi chơi 3 người: nhất, nhì, bét
   caroBlock: true,    // Caro: bị chặn 2 đầu thì không thắng
   debt: false,        // Chế độ ghi nợ
@@ -217,6 +218,7 @@ export const DEFAULT_SETTINGS = {
 export const TURN_CHOICES = [15, 25, 40, 60];
 export const PTS3_CHOICES = ['2,1,-3', '3,1,-4', '2,0,-2'];
 export const UNIT_CHOICES = [1, 2, 5, 10];
+export const STAKE_CHOICES = [1, 2, 5, 10, 20, 50, 100];
 export const UNIT_LABELS = ['điểm', 'k'];
 
 export function normalizeSettings(s = {}) {
@@ -226,6 +228,7 @@ export function normalizeSettings(s = {}) {
   if (TURN_CHOICES.includes(s.turnSec)) out.turnSec = s.turnSec;
   if (PTS3_CHOICES.includes(s.pts3)) out.pts3 = s.pts3;
   if (UNIT_CHOICES.includes(s.unit)) out.unit = s.unit;
+  if (STAKE_CHOICES.includes(s.stake)) out.stake = s.stake;
   if (UNIT_LABELS.includes(s.unitLabel)) out.unitLabel = s.unitLabel;
   return out;
 }

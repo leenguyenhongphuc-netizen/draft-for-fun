@@ -889,7 +889,7 @@ body[data-scene="caro"] #board.caro { position: absolute; left: 50%; top: calc(1
 body[data-game="poker"] #meTag { display: none; }
 body[data-game="poker"] .my-cards .big-card { --cw: clamp(46px, 13vw, 72px); }
 body[data-game="poker"] #handArea { gap: 6px; }
-body[data-game="poker"] #stageCenter { margin-top: 12px; }
+body[data-game="poker"] #stageCenter { margin-top: 46px; }
 .pk-raise { padding: 8px 10px; gap: 6px; }
 .pk-presets .mini { padding: 4px 0; }
 
@@ -986,3 +986,24 @@ body[data-scene="dicebet"] #board.dicebet { gap: 6px; max-height: calc(100vh - 2
 .out-with { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
 .out-with span { font-size: 12px; font-weight: 800; color: var(--mint-d); }
 .out-with .mini-cards { margin-top: 0; }
+
+.db-chip.c10 { background: #b388ff; } .db-chip.c50 { background: #ffb300; }
+.seg button { min-width: 36px; }
+
+/* ---------- Phỉnh poker ---------- */
+.chip-stack { position: relative; display: inline-flex; align-items: flex-end; height: 34px; width: 34px; flex: none; }
+.chip-stack i { position: absolute; left: 3px; bottom: calc(var(--k) * 3px); width: 28px; height: 11px; border-radius: 50%; background: var(--c); box-shadow: inset 0 -3px 0 rgba(0,0,0,.25), 0 0 0 1.5px rgba(255,255,255,.8); }
+.chip-stack i::after { content: ''; position: absolute; inset: 2px 7px; border-radius: 50%; border: 1.5px dashed rgba(255,255,255,.85); }
+.chip-stack b { position: absolute; left: 50%; top: -14px; transform: translateX(-50%); font-size: 11px; font-weight: 800; color: #fff; background: rgba(0,0,0,.55); border-radius: 999px; padding: 0 5px; white-space: nowrap; }
+.chip-stack.big { width: 48px; height: 50px; }
+.chip-stack.big i { width: 42px; height: 15px; bottom: calc(var(--k) * 4px); }
+.chip-stack.big b { font-size: 13px; top: -18px; }
+.pk-pot { display: flex; align-items: flex-end; gap: 6px; margin-top: 18px; }
+.pk-seatbet { margin-top: 18px; display: flex; justify-content: center; }
+.score-chip .chip-stack.mine { vertical-align: middle; margin-right: 6px; height: 26px; }
+.score-chip .chip-stack.mine b { top: auto; bottom: -2px; left: 32px; transform: none; }
+.chip-fly { position: fixed; width: 22px; height: 22px; border-radius: 50%; background: var(--c); box-shadow: inset 0 -3px 0 rgba(0,0,0,.25), 0 0 0 2px #fff; z-index: 30; pointer-events: none; }
+
+.pk-pot { margin-top: 10px; align-items: center; }
+.chip-stack.big { height: 60px; }
+.chip-stack.big b { top: auto; bottom: -16px; }
