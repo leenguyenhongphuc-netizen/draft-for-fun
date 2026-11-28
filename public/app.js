@@ -80,15 +80,21 @@ const urlRoom = new URLSearchParams(location.search).get('room');
 const LOCAL = new URLSearchParams(location.search).has('local');
 const pageUrl = (code) => location.pathname + (code || LOCAL ? '?' : '') + (code ? 'room=' + code : '') + (code && LOCAL ? '&' : '') + (LOCAL ? 'local=1' : '');
 
-socket.on('welcome', ({ coins, lixi }) => {
+let lixiPrompted = false;
+function syncCoins(coins) {
   $('#myCoins').textContent = coins;
   $('#lixiBtn').classList.toggle('hidden', coins >= 500);
-  if (lixi) { toast('🧧 Nhận lì xì 1000 xu! Chúc mừng năm mới 🎉'); sfx.coin(); confetti(); }
+  // Dưới 500 xu: vòng quay lì xì tự bật lên (một lần mỗi lần mở game)
+  if (coins < 500 && !lixiPrompted && !state) { lixiPrompted = true; setTimeout(() => openLixi(), 700); }
+}
+socket.on('lixi', ({ amount, coins }) => spinLixi(amount, coins));
+socket.on('welcome', ({ coins }) => {
+  syncCoins(coins);
   if (urlRoom && !state) socket.emit('joinRoom', { code: urlRoom });
 });
 socket.on('rooms', renderRooms);
 socket.on('toast', toast);
-socket.on('left', () => { state = null; curGame = null; resetStage(); showLobby(); history.replaceState(null, '', pageUrl()); });
+socket.on('left', () => { setTimeout(() => socket.emit('coins'), 300); state = null; curGame = null; resetStage(); showLobby(); history.replaceState(null, '', pageUrl()); });
 socket.on('state', (s) => {
   const prev = state;
   state = s; window.__tlc = s;
@@ -225,7 +231,7 @@ function initLobby() {
     showStep('stepHub');
   };
   $('#nameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#toHubBtn').click(); });
-  $('#lixiBtn').onclick = () => { socket.emit('lixi'); };
+  $('#lixiBtn').onclick = () => openLixi();
   $('#editProfile').onclick = () => { showStep('stepProfile'); sfx.pop(); };
 
   const gp = $('#gamePick');
@@ -320,7 +326,7 @@ function onState(prev, s) {
   if (new URLSearchParams(location.search).get('room') !== s.code) history.replaceState(null, '', pageUrl(s.code));
 
   const me = s.seats[s.mySeat];
-  if (me) $('#myCoins').textContent = me.coins;
+  if (me && !s.settings?.debt) $('#myCoins').textContent = me.coins;
 
   // Bài trên tay: giữ thứ tự người chơi tự xếp
   const hand = s.hand || [];
@@ -1120,6 +1126,62 @@ const uiCtx = {
   playerId: () => playerId,
 };
 
+// ---------- 🧧 Vòng quay lì xì ----------
+const LIXI_SEGS = [100, 200, 300, 400, 500, 1000];
+let lixiBusy = false;
+function openLixi() {
+  let m = $('#lixiModal');
+  if (!m) {
+    m = document.createElement('div');
+    m.id = 'lixiModal';
+    m.className = 'modal lixi-modal';
+    const segs = LIXI_SEGS.map((v, i) => `<div class="lx-seg" style="--i:${i}"><span>${v}</span></div>`).join('');
+    m.innerHTML = `<div class="modal-card lixi-card">
+      <div class="lx-title">🧧 Lì xì may mắn 🧧</div>
+      <div class="lx-sub">Hết xu rồi nè, quay một vòng lấy hên nha!</div>
+      <div class="lx-wheel-wrap"><div class="lx-pointer">▼</div><div class="lx-wheel">${segs}</div><button class="lx-hub">QUAY</button></div>
+      <div class="lx-result"></div>
+      <div class="modal-actions"><button class="btn big pink lx-go">🎡 Quay ngay</button><button class="btn soft lx-close hidden">Nhận xu 💰</button></div>
+    </div>`;
+    document.body.appendChild(m);
+    const go = () => { if (lixiBusy) return; lixiBusy = true; m.querySelector('.lx-go').disabled = true; audio.unlock(); sfx.diceShake(); socket.emit('lixi'); };
+    m.querySelector('.lx-go').onclick = go;
+    m.querySelector('.lx-hub').onclick = go;
+    m.querySelector('.lx-close').onclick = () => { m.classList.add('hidden'); };
+  }
+  lixiBusy = false;
+  const w = m.querySelector('.lx-wheel');
+  w.style.transition = 'none'; w.style.transform = 'rotate(0deg)';
+  m.querySelector('.lx-result').textContent = '';
+  m.querySelector('.lx-go').disabled = false;
+  m.querySelector('.lx-go').classList.remove('hidden');
+  m.querySelector('.lx-close').classList.add('hidden');
+  m.classList.remove('hidden');
+}
+function spinLixi(amount, coins) {
+  const m = $('#lixiModal');
+  if (!m) return;
+  const w = m.querySelector('.lx-wheel');
+  const idx = LIXI_SEGS.indexOf(amount);
+  const seg = 360 / LIXI_SEGS.length;
+  // Ô idx nằm ở góc idx*seg (tính từ đỉnh, theo chiều kim đồng hồ) -> quay ngược lại để đưa lên dưới mũi tên
+  const target = 360 * 6 - idx * seg - seg / 2 + (Math.random() - 0.5) * seg * 0.6;
+  void w.offsetWidth;
+  w.style.transition = 'transform 4.2s cubic-bezier(.12,.6,.15,1)';
+  w.style.transform = `rotate(${target}deg)`;
+  let ticks = 0;
+  const tick = setInterval(() => { sfx.tick(); if (++ticks > 22) clearInterval(tick); }, 170);
+  setTimeout(() => {
+    clearInterval(tick);
+    m.querySelector('.lx-result').textContent = `+${amount} xu! ${amount >= 1000 ? 'Trúng lớn rồi 🎉🎉' : 'Năm mới phát tài 🧧'}`;
+    m.querySelector('.lx-go').classList.add('hidden');
+    m.querySelector('.lx-close').classList.remove('hidden');
+    sfx.win(); confetti();
+    syncCoins(coins);
+    lixiBusy = false;
+  }, 4300);
+}
+
 // ---------- Hiệu ứng ----------
 function bigText(text, gold = false) {
   const d = document.createElement('div');
@@ -1193,7 +1255,7 @@ initLobby();
 showLobby();
 
 // ---------- Báo có bản mới ----------
-const APP_VERSION = '20261128-0630';
+const APP_VERSION = '20261128-0636';
 document.querySelectorAll('.lobby-card').forEach((c) => { const v = document.createElement('div'); v.className = 'app-ver'; v.textContent = 'Phiên bản ' + APP_VERSION; c.appendChild(v); });
 async function checkUpdate() {
   try {

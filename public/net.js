@@ -116,8 +116,7 @@ export function createNet(playerId) {
   let lobby = null;
   let profile = { name: 'Bạn Nhỏ', avatar: AVATARS[0] };
   let coins = store.get('coins', 1000);
-  // 🧧 Lì xì Tết một lần: ai dưới 1000 xu được nâng lên 1000
-  if (!store.get('lixiTet2027', false)) { if (coins < 1000) coins = 1000; store.set('coins', coins); store.set('lixiTet2027', true); }
+
 
   // Trạng thái phòng hiện tại
   let roomCh = null;        // kênh của phòng
@@ -426,11 +425,16 @@ export function createNet(playerId) {
         });
         return;
       case 'listRooms': fire('rooms', roomList()); return;
-      case 'lixi':
+      case 'lixi': {
         if (coins >= 500) { fire('toast', 'Còn nhiều xu mà, để dành lì xì cho người khác nha 😆'); return; }
-        coins += 1000; store.set('coins', coins);
-        fire('welcome', { coins, lixi: true });
+        // Vòng quay may mắn: 1000 hiếm hơn
+        const pool = [100, 100, 200, 200, 300, 300, 400, 400, 500, 500, 1000];
+        const amount = pool[Math.floor(Math.random() * pool.length)];
+        coins += amount; store.set('coins', coins);
+        fire('lixi', { amount, coins });
         return;
+      }
+      case 'coins': fire('welcome', { coins }); return;
       case 'createRoom': createRoom(p); return;
       case 'joinRoom': joinRoom(p.code); return;
       case 'leaveRoom': leave(); return;
