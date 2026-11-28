@@ -461,13 +461,29 @@ function renderHand(deal) {
   const twoRows = n > 7 && window.innerWidth < 640;
   const perRow = twoRows ? Math.ceil(n / 2) : n;
   // Lá bài to nhất có thể mà vẫn vừa
-  const cw = Math.max(40, Math.min(twoRows ? 64 : 76, W / (twoRows ? Math.max(4, perRow * 0.72) : Math.max(5, n * 0.58))));
-  el.style.setProperty('--hcw', cw + 'px');
-  el.classList.toggle('two-rows', twoRows);
+
   // Xếp theo bộ: đánh dấu lá đầu mỗi bộ để chừa khoảng trống + ghi nhãn
   const groupStart = new Map();
-  if (sortMode === 'smart') smartGroups(handOrder).forEach((g) => groupStart.set(g.cards[0], GROUP_LABEL[g.type] + (g.type === 'straight' ? ' ' + g.cards.length : '')));
-  const rows = twoRows ? [handOrder.slice(0, perRow), handOrder.slice(perRow)] : [handOrder];
+  handGroups = sortMode === 'smart' ? smartGroups(handOrder) : [];
+  handGroups.forEach((g, gi) => groupStart.set(g.cards[0], { label: GROUP_LABEL[g.type] + (g.type === 'straight' ? ' ' + g.cards.length : ''), gi }));
+  let rows = twoRows ? [handOrder.slice(0, perRow), handOrder.slice(perRow)] : [handOrder];
+  // 2 hàng: chia theo ranh giới bộ, không cắt một bộ ra 2 hàng
+  if (twoRows && handGroups.length > 1) {
+    let best = null;
+    for (let cut = 1; cut < handGroups.length; cut++) {
+      const top = handGroups.slice(0, cut).reduce((a, g) => a + g.cards.length, 0);
+      if (Math.max(top, n - top) > 9) continue; // mỗi hàng tối đa 9 lá
+      const diff = Math.abs(top - (n - top));
+      if (!best || diff < best.diff) best = { cut, diff };
+    }
+    if (best) rows = [handGroups.slice(0, best.cut).flatMap((g) => g.cards), handGroups.slice(best.cut).flatMap((g) => g.cards)];
+    else if (n <= 9) rows = [handOrder]; // ít bài: để 1 hàng còn hơn cắt ngang một bộ
+  }
+  const multi = rows.length > 1;
+  const longest = Math.max(...rows.map((r) => r.length));
+  const cw = Math.max(40, Math.min(multi ? 64 : 76, W / (multi ? Math.max(4, longest * 0.72) : Math.max(5, n * 0.58))));
+  el.style.setProperty('--hcw', cw + 'px');
+  el.classList.toggle('two-rows', multi);
   let k = 0;
   rows.forEach((row) => {
     const r = document.createElement('div');
@@ -486,7 +502,13 @@ function renderHand(deal) {
       }
       const gs = groupStart.get(id);
       if (i > 0) c.style.marginLeft = (gs ? -overlap + gap : -overlap) + 'px';
-      if (gs) { c.dataset.grp = gs; c.classList.add('gs'); }
+      if (gs) {
+        c.classList.add('gs');
+        const tag = document.createElement('span');
+        tag.className = 'grp-tag t-' + handGroups[gs.gi].type; tag.textContent = gs.label; tag.dataset.gi = gs.gi;
+        tag.title = 'Chạm để chọn cả bộ';
+        c.appendChild(tag);
+      }
       r.appendChild(c);
     });
     el.appendChild(r);
@@ -495,8 +517,23 @@ function renderHand(deal) {
 
 // Chạm / kéo để chọn bài: một bộ xử lý cho cả tay bài (không giật, không cuộn trang)
 let drag = null;
+let handGroups = [];
 const cardAt = (x, y) => { const t = document.elementFromPoint(x, y); return t && t.closest('#hand .card'); };
 $('#hand').addEventListener('pointerdown', (e) => {
+  // Chạm nhãn bộ (Sảnh, Đôi thông…) -> chọn / bỏ chọn cả bộ
+  const tag = e.target.closest('.grp-tag');
+  if (tag) {
+    e.preventDefault();
+    const g = handGroups[+tag.dataset.gi];
+    if (!g) return;
+    const allSel = g.cards.every((id) => selected.has(id));
+    if (!allSel) selected.clear();
+    g.cards.forEach((id) => (allSel ? selected.delete(id) : selected.add(id)));
+    document.querySelectorAll('#hand .card').forEach((el) => el.classList.toggle('sel', selected.has(+el.dataset.id)));
+    (allSel ? sfx.deselect : sfx.select)();
+    renderControls();
+    return;
+  }
   const c = e.target.closest('.card');
   if (!c) return;
   e.preventDefault();
@@ -657,7 +694,8 @@ $('#actions').addEventListener('pointerdown', (e) => {
     const combo = getCombo([...selected]);
     const prev = state.lastPlay ? getCombo(state.lastPlay.cards) : null;
     const rule = combo && canBeat(prev, combo) ? ruleProblem(combo) : null;
-    why = !selected.size ? 'Chạm vào lá bài để chọn trước nha 👆' : !combo ? 'Bộ bài này không hợp lệ 🤔' : rule ? rule.msg : 'Bộ này chưa đè được 😅';
+    const picked = [...selected].sort((a, b) => a - b).map(cardLabel).join(' ');
+    why = !selected.size ? 'Chạm vào lá bài để chọn trước nha 👆' : !combo ? `${picked} chưa thành bộ 🤔 Chạm nhãn bộ để chọn nhanh` : rule ? rule.msg : `${picked} chưa đè được 😅`;
   } else if (b.id === 'passBtn') why = 'Bạn đang được đánh tự do, phải đánh 1 bộ nha';
   if (why) { toast(why); sfx.error(); }
 });

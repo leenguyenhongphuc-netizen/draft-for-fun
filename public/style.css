@@ -832,8 +832,14 @@ body[data-scene="typhu"] #board.typhu { top: var(--ttop); }
 .rule.rule-stack .seg button { height: auto; padding: 6px 10px; text-align: left; font-size: 13px; }
 
 /* Nhãn bộ bài khi xếp theo bộ */
-.hand .card.gs::before { content: attr(data-grp); position: absolute; left: 0; top: -15px; font-size: 10px; font-weight: 800; color: #fff; background: var(--mint-d); border-radius: 999px; padding: 0 6px; white-space: nowrap; line-height: 14px; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
-.hand .card.gs[data-grp="Heo"]::before { background: var(--pink-d); }
-.hand .card.gs[data-grp="Tứ quý"]::before, .hand .card.gs[data-grp="Đôi thông"]::before { background: #ff9800; }
-.hand .card.gs[data-grp="Rác"]::before { background: #b9a9c6; }
+.grp-tag { position: absolute; left: -2px; top: -20px; z-index: 3; font-size: 11px; font-weight: 800; color: #fff; background: var(--mint-d); border-radius: 999px; padding: 1px 8px; white-space: nowrap; line-height: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.25); cursor: pointer; }
+.grp-tag::after { content: ''; position: absolute; inset: -8px -6px; } /* vùng chạm rộng hơn */
+.grp-tag:is([data-gi]):active { transform: scale(1.1); }
 .hand.two-rows .hand-row + .hand-row { margin-top: calc(var(--ch) * -0.42 + 14px); }
+
+.hand .card .grp-tag { font-style: normal; }
+.grp-tag.t-two { background: var(--pink-d); }
+.grp-tag.t-quad, .grp-tag.t-pairseq { background: #ff9800; }
+.grp-tag.t-single { background: #b9a9c6; }
+.hand.two-rows .hand-row + .hand-row { margin-top: calc(var(--ch) * -0.42 + 20px); }
+.hand { padding-top: 22px; }

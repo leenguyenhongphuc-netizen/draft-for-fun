@@ -455,5 +455,6 @@ export function createNet(playerId) {
   // Chủ phòng đóng tab: báo mọi người (vẫn giữ bản lưu để mở lại tiếp tục)
   window.addEventListener('pagehide', () => { if (host && roomCh) roomCh.send({ t: 'event', ev: { kind: 'chat', seat: host.room.seatOf(playerId), name: '📢', text: 'Chủ phòng vừa rời trang, chờ xíu nha…' } }); });
 
+  if (useLocal) window.__tlcHost = () => host; // chỉ dùng khi thử nghiệm (?local=1)
   return { on, emit, get mode() { return useLocal ? 'local' : 'online'; } };
 }
