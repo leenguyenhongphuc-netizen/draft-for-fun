@@ -436,7 +436,7 @@ function statusOf(p) {
   if (p.status) return p.status;
   if (p.cong) return { cls: 'bad', text: '🥶 Cóng · bét' };
   if (p.bad) return { cls: 'bad', text: '🐷 về heo · bét' };
-  if (p.rank) return { cls: 'r' + Math.min(4, p.rank), text: MEDALS[p.rank - 1] + ' ' + RANK_TXT[p.rank - 1] };
+  if (p.rank) return { cls: 'r' + Math.min(4, p.rank), text: MEDALS[p.rank - 1] + ' ' + RANK_TXT[p.rank - 1] + (p.outWith ? ' · ' + p.outWith.name : '') };
   if (!p.connected) return { cls: 'pass', text: '💤 mất mạng' };
   if (p.passed) return { cls: 'pass', text: '🙅 bỏ lượt' };
   if (state.state === 'playing' && !p.inGame) return { cls: 'wait', text: 'chờ ván sau' };
@@ -873,7 +873,8 @@ function onEvent(ev) {
         sfx.lose(); scene3d.burst(['🐷', '💦'], 12, 0.8);
         break;
       }
-      sysChat(`${nameOf(ev.seat)} về ${RANK_TXT[ev.rank - 1]} ${MEDALS[ev.rank - 1]}`);
+      { const ow = ev.outWith; sysChat(`${nameOf(ev.seat)} về ${RANK_TXT[ev.rank - 1]} ${MEDALS[ev.rank - 1]}${ow ? ' bằng ' + ow.name + ' (' + ow.cards.map(cardLabel).join(' ') + ')' : ''}`); }
+      if (ev.seat !== state.mySeat && ev.outWith) toast(`${nameOf(ev.seat)} về ${RANK_TXT[ev.rank - 1]} bằng ${ev.outWith.name} ${ev.outWith.cards.map(cardLabel).join(' ')}`);
       if (ev.seat === state.mySeat) { sfx.win(); bigText(`Về ${RANK_TXT[ev.rank - 1]}! ${MEDALS[ev.rank - 1]}`, true); if (ev.rank === 1) confetti(); }
       if (ev.rank === 1) scene3d.burst(['🏆', '⭐', '🎉', '💖'], 20, 1.1);
       scene3d.hop(pos, 1.4);
@@ -927,6 +928,13 @@ function showResults(rows) {
     d.innerHTML = `<span class="medal">${r.badge || (r.bad ? '🐷' : MEDALS[r.rank - 1])}</span><span class="who"><span class="nmx"></span><span class="note"></span></span><span class="delta ${r.delta >= 0 ? 'plus' : 'minus'}">${r.delta >= 0 ? '+' : ''}${r.delta} 🪙</span>`;
     d.querySelector('.nmx').textContent = p ? `${p.avatar} ${p.name}${r.seat === state.mySeat ? ' (bạn)' : ''}` : 'Người chơi';
     d.querySelector('.note').textContent = r.note || (r.cardsLeft.length ? `còn ${r.cardsLeft.length} lá` : '');
+    if (r.outWith) {
+      const o = document.createElement('div');
+      o.className = 'out-with';
+      o.innerHTML = `<span>🏁 Về bằng ${r.outWith.name}:</span>`;
+      o.appendChild(miniCards(r.outWith.cards));
+      d.querySelector('.who').appendChild(o);
+    }
     if (r.cardsLeft.length && r.seat !== state.mySeat) d.querySelector('.who').appendChild(miniCards(r.cardsLeft));
     box.appendChild(d);
     countUp(d.querySelector('.delta'), r.delta, 300 + i * 120, unitLabel());
@@ -1264,7 +1272,7 @@ initLobby();
 showLobby();
 
 // ---------- Báo có bản mới ----------
-const APP_VERSION = '20261128-1016';
+const APP_VERSION = '20261128-1021';
 document.querySelectorAll('.lobby-card').forEach((c) => { const v = document.createElement('div'); v.className = 'app-ver'; v.textContent = 'Phiên bản ' + APP_VERSION; c.appendChild(v); });
 async function checkUpdate() {
   try {

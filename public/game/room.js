@@ -144,7 +144,7 @@ export class Room {
     this.game = {
       hands, inGame, turn, lastPlay: null, passed: new Set(), finished: [],
       deadline: 0, firstGame, startCard: firstGame ? Math.min(...hands.flat()) : null, round: 1,
-      chops: [], bad: [], cong: [],
+      chops: [], bad: [], cong: [], outWith: {},
     };
     this.state = 'playing';
     this.results = null;
@@ -279,8 +279,9 @@ export class Room {
 
     if (g.hands[seat].length === 0) {
       g.finished.push(seat);
+      g.outWith[seat] = { cards: combo.cards, name: comboName(combo) }; // về bằng bộ nào
       if (forcedBad) g.bad.push(seat);
-      this.hooks.emitEvent(this, { kind: 'out', seat, rank: g.finished.length, bad: forcedBad });
+      this.hooks.emitEvent(this, { kind: 'out', seat, rank: g.finished.length, bad: forcedBad, outWith: g.outWith[seat] });
       // Cóng: có người về nhất mà ai chưa đánh lá nào (còn nguyên 13 lá) thì bị cóng, dừng chơi luôn
       if (this.settings.cong && !forcedBad && g.finished.length - g.bad.length === 1) {
         const cong = this.activeSeats().filter((s) => g.hands[s].length === 13);
@@ -419,7 +420,8 @@ export class Room {
         if (p.isBot) p.botCoins = (p.botCoins || 1000) + delta;
         else this.hooks.addCoins(p.id, delta);
       }
-      return { seat: s, rank: i + 1, parts: parts[s], delta, note: notes[s].join(' · '), cardsLeft: g.hands[s], bad: g.bad.includes(s) };
+      const ow = (g.outWith || {})[s];
+      return { seat: s, rank: i + 1, parts: parts[s], delta, note: notes[s].join(' · '), cardsLeft: g.hands[s], bad: g.bad.includes(s), outWith: ow || null };
     });
     if (st.debt) this.recordDebt(rows, unit);
 
@@ -470,6 +472,7 @@ export class Room {
           ? ((this.results.find((r) => r.seat === s) || {}).rank ?? null)
           : g && this.state !== 'waiting' && g.finished.includes(s) && !(g.bad || []).includes(s) && !(g.cong || []).includes(s) ? g.finished.filter((x) => !(g.cong || []).includes(x)).indexOf(s) + 1 : null,
         cong: !!(g && this.state === 'playing' && (g.cong || []).includes(s)),
+        outWith: g && this.state !== 'waiting' && g.outWith ? g.outWith[s] || null : null,
         bad: !!(g && this.state !== 'waiting' && (g.bad || []).includes(s)),
         debt: this.ledger.players[p.id] ? this.ledger.players[p.id].total : 0,
         inGame: g ? !!g.inGame[s] && this.state !== 'waiting' : false,
