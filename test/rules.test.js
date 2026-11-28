@@ -147,3 +147,22 @@ test('chặt chồng: đè 3 đôi thông bằng 3 đôi thông lớn hơn, ngư
   room.destroy();
   assert.deepEqual(g.chops.map((x) => [x.from, x.to, x.parts]), [[1, 0, 5]]);
 });
+
+test('cóng: có người về nhất thì ai còn nguyên 13 lá bị cóng ngay, thua gấp đôi', () => {
+  const room = new Room({ code: 'CG', name: 't', theme: 'candy', isPublic: false, hooks: { emitState() {}, emitEvent() {}, getCoins: () => 1000, addCoins() {} } });
+  for (let i = 0; i < 3; i++) room.addBot();
+  room.setSettings({ penalty: false, chopPay: false });
+  room.start(); room.destroy();
+  const g = room.game;
+  g.hands[0] = [c(0, 0), c(1, 0), c(2, 0)];                // sắp về
+  g.hands[1] = [c(5, 0), c(6, 1)];                          // đã đánh vài lá
+  g.hands[2] = Array.from({ length: 13 }, (_, i) => c(i, 3)); // chưa đánh lá nào
+  g.turn = 0; g.lastPlay = null; g.passed = new Set(); g.startCard = null;
+  assert.equal(room.play(0, [c(0, 0), c(1, 0), c(2, 0)]), null);
+  room.destroy();
+  assert.equal(room.state, 'ended', 'chỉ còn 1 người chơi -> hết ván');
+  const by = Object.fromEntries(room.results.map((r) => [r.seat, r]));
+  assert.equal(by[2].rank, 3);
+  assert.equal(by[2].delta, -60, 'cóng = 2 × bét (−3 phần)');
+  assert.equal(room.results.reduce((a, r) => a + r.delta, 0), 0);
+});

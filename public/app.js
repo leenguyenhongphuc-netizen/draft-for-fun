@@ -410,6 +410,7 @@ function renderSeats() {
 
 function statusOf(p) {
   if (p.status) return p.status;
+  if (p.cong) return { cls: 'bad', text: '🥶 Cóng · bét' };
   if (p.bad) return { cls: 'bad', text: '🐷 về heo · bét' };
   if (p.rank) return { cls: 'r' + Math.min(4, p.rank), text: MEDALS[p.rank - 1] + ' ' + RANK_TXT[p.rank - 1] };
   if (!p.connected) return { cls: 'pass', text: '💤 mất mạng' };
@@ -843,6 +844,12 @@ function onEvent(ev) {
       if (ev.seat === state.mySeat) { sfx.win(); bigText(`Về ${RANK_TXT[ev.rank - 1]}! ${MEDALS[ev.rank - 1]}`, true); if (ev.rank === 1) confetti(); }
       if (ev.rank === 1) scene3d.burst(['🏆', '⭐', '🎉', '💖'], 20, 1.1);
       scene3d.hop(pos, 1.4);
+      break;
+    case 'cong':
+      ev.seats.forEach((s) => { bubble(s, '🥶 Cóng!'); scene3d.hop(relPos(s), 0.8); });
+      sysChat(`${ev.seats.map(nameOf).join(', ')} bị cóng (chưa đánh lá nào) 🥶`);
+      bigText(ev.seats.includes(state.mySeat) ? 'Bạn bị CÓNG! 🥶' : `${ev.seats.map(nameOf).join(', ')} bị CÓNG! 🥶`, true);
+      sfx.lose(); shake();
       break;
     case 'instant':
       bigText(`TỚI TRẮNG! ${ev.label} 🎆`, true);

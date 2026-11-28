@@ -144,7 +144,7 @@ export class Room {
     this.game = {
       hands, inGame, turn, lastPlay: null, passed: new Set(), finished: [],
       deadline: 0, firstGame, startCard: firstGame ? Math.min(...hands.flat()) : null, round: 1,
-      chops: [], bad: [],
+      chops: [], bad: [], cong: [],
     };
     this.state = 'playing';
     this.results = null;
@@ -281,6 +281,14 @@ export class Room {
       g.finished.push(seat);
       if (forcedBad) g.bad.push(seat);
       this.hooks.emitEvent(this, { kind: 'out', seat, rank: g.finished.length, bad: forcedBad });
+      // Cóng: có người về nhất mà ai chưa đánh lá nào (còn nguyên 13 lá) thì bị cóng, dừng chơi luôn
+      if (this.settings.cong && !forcedBad && g.finished.length - g.bad.length === 1) {
+        const cong = this.activeSeats().filter((s) => g.hands[s].length === 13);
+        if (cong.length) {
+          cong.forEach((s) => { g.cong.push(s); g.finished.push(s); });
+          this.hooks.emitEvent(this, { kind: 'cong', seats: cong, winner: seat });
+        }
+      }
       const remaining = this.activeSeats();
       if (remaining.length <= 1) {
         if (remaining.length === 1) g.finished.push(remaining[0]);
@@ -351,11 +359,12 @@ export class Room {
       order = [instantSeat, ...players.filter((s) => s !== instantSeat)];
     } else {
       // Người về đàng hoàng -> người còn bài -> người bị phạt "về heo"
-      order = g.finished.filter((s) => !g.bad.includes(s));
-      players.filter((s) => !order.includes(s) && !g.bad.includes(s))
+      order = g.finished.filter((s) => !g.bad.includes(s) && !g.cong.includes(s));
+      players.filter((s) => !order.includes(s) && !g.bad.includes(s) && !g.cong.includes(s))
         .sort((a, b) => g.hands[a].length - g.hands[b].length)
         .forEach((s) => order.push(s));
       [...g.bad].reverse().forEach((s) => order.push(s));
+      g.cong.forEach((s) => order.push(s)); // người bị cóng xếp cuối cùng
     }
     const parts = {};
     const notes = {};
@@ -369,12 +378,14 @@ export class Room {
       const pts = players.length === 3 ? st.pts3.split(',').map(Number) : POINTS[players.length];
       order.forEach((s, i) => { parts[s] += pts[i]; });
       if (g.bad.includes(last)) notes[last].push('Về heo chót → bét');
-      // Cóng: bét còn nguyên 13 lá -> thua gấp đôi
-      if (st.cong && g.hands[last].length === 13) {
-        const extra = -pts[pts.length - 1];
-        parts[last] -= extra; parts[winner] += extra;
-        notes[last].push('Cóng ×2');
-      }
+      // Cóng: mỗi người bị cóng thua gấp đôi mức bét, phần chênh trả cho người nhất
+      const cong = g.cong.length ? g.cong : st.cong && g.hands[last].length === 13 ? [last] : [];
+      cong.forEach((s) => {
+        const target = 2 * pts[pts.length - 1];
+        const diff = target - parts[s];
+        parts[s] += diff; parts[winner] -= diff;
+        notes[s].push('🥶 Cóng ×2');
+      });
       // Thối heo / thối hàng
       if (st.penalty) {
         const left = g.hands[last];
@@ -457,7 +468,8 @@ export class Room {
         passed: playing ? g.passed.has(s) : false,
         rank: this.state === 'ended' && this.results
           ? ((this.results.find((r) => r.seat === s) || {}).rank ?? null)
-          : g && this.state !== 'waiting' && g.finished.includes(s) && !(g.bad || []).includes(s) ? g.finished.indexOf(s) + 1 : null,
+          : g && this.state !== 'waiting' && g.finished.includes(s) && !(g.bad || []).includes(s) && !(g.cong || []).includes(s) ? g.finished.filter((x) => !(g.cong || []).includes(x)).indexOf(s) + 1 : null,
+        cong: !!(g && this.state === 'playing' && (g.cong || []).includes(s)),
         bad: !!(g && this.state !== 'waiting' && (g.bad || []).includes(s)),
         debt: this.ledger.players[p.id] ? this.ledger.players[p.id].total : 0,
         inGame: g ? !!g.inGame[s] && this.state !== 'waiting' : false,
