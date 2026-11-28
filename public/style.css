@@ -892,3 +892,59 @@ body[data-game="poker"] #handArea { gap: 6px; }
 body[data-game="poker"] #stageCenter { margin-top: 12px; }
 .pk-raise { padding: 8px 10px; gap: 6px; }
 .pk-presets .mini { padding: 4px 0; }
+
+/* ---------- Bầu Cua & Tài Xỉu ---------- */
+.scene-dicebet { background: radial-gradient(ellipse at 50% 42%, rgba(255,214,120,.35), transparent 60%), repeating-linear-gradient(45deg, rgba(255,255,255,.05) 0 12px, transparent 12px 24px), linear-gradient(180deg, #b71c2c, #7d0f1d); }
+.scene-dicebet::after { background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(40,0,5,.45)); }
+body[data-scene="dicebet"] #seats, body[data-scene="dicebet"] #meTag, body[data-scene="dicebet"] #diceTray, body[data-scene="dicebet"] #centerPile, body[data-scene="dicebet"] #stageCenter, body[data-scene="dicebet"] .emote-bar { display: none; }
+body[data-scene="dicebet"] .topbar .room-name { color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,.4); }
+body[data-scene="dicebet"] #board.dicebet { position: absolute; left: 50%; top: calc(62px + env(safe-area-inset-top)); transform: translateX(-50%); width: min(96vw, 620px); z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.db-players { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.db-p { display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,.92); border-radius: 999px; padding: 2px 9px 2px 4px; font-weight: 800; font-size: 12px; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+.db-p .av { font-size: 18px; }
+.db-p .nm { max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.db-p .bt { color: #b07c00; }
+.db-p.dealer { background: linear-gradient(180deg, #ffe680, #ffc93c); }
+.db-p.me { box-shadow: 0 0 0 2px var(--pink), 0 2px 6px rgba(0,0,0,.25); }
+.db-p.done .bt::after { content: ' ✓'; color: var(--mint-d); }
+.db-p.win .bt { color: var(--mint-d); } .db-p.lose .bt { color: var(--pink-d); }
+.db-plate-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.db-plate { position: relative; width: clamp(170px, 46vw, 230px); aspect-ratio: 1.5; border-radius: 50%; background: radial-gradient(ellipse at 50% 40%, #fff, #f3eadc 60%, #d8c7ad); box-shadow: 0 6px 0 #b9a383, 0 14px 24px rgba(0,0,0,.4); display: grid; place-items: center; }
+.db-dice { display: flex; gap: 10px; perspective: 600px; transition: opacity .3s; }
+.db-dice.hide { opacity: 0; }
+.db-dice .die-wrap { width: 40px; height: 40px; }
+.db-dice .die .face { padding: 4px; }
+.db-dice .die .f1 { transform: translateZ(20px); } .db-dice .die .f6 { transform: rotateY(180deg) translateZ(20px); }
+.db-dice .die .f2 { transform: rotateY(90deg) translateZ(20px); } .db-dice .die .f5 { transform: rotateY(-90deg) translateZ(20px); }
+.db-dice .die .f3 { transform: rotateX(90deg) translateZ(20px); } .db-dice .die .f4 { transform: rotateX(-90deg) translateZ(20px); }
+.die .face.lbl { display: grid; place-items: center; padding: 0; }
+.die .face.lbl span { font-size: 26px; line-height: 1; }
+.db-bowl { position: absolute; left: 50%; top: 50%; width: 74%; aspect-ratio: 1.25; transform: translate(-50%, -62%); border-radius: 50% 50% 46% 46% / 62% 62% 38% 38%; background: radial-gradient(ellipse at 35% 30%, #fff8e6, #e9c77d 45%, #b8862f); box-shadow: inset 0 -10px 18px rgba(120,70,10,.45), 0 8px 14px rgba(0,0,0,.35); transition: transform .9s cubic-bezier(.3,1.2,.4,1), opacity .9s; z-index: 2; }
+.db-bowl i { position: absolute; left: 50%; top: 6%; width: 26%; height: 14%; transform: translateX(-50%); border-radius: 50%; background: #c99a43; box-shadow: inset 0 3px 4px rgba(255,255,255,.5); }
+.db-bowl.shaking { animation: bowlShake .18s linear infinite; }
+@keyframes bowlShake { 0% { transform: translate(-54%, -62%) rotate(-6deg); } 50% { transform: translate(-46%, -70%) rotate(6deg); } 100% { transform: translate(-54%, -62%) rotate(-6deg); } }
+.db-bowl.lifted { transform: translate(-50%, -175%) rotate(-14deg); opacity: .0; }
+.db-sum { color: #fff3c4; font-weight: 800; font-size: 16px; text-shadow: 0 2px 3px rgba(0,0,0,.5); min-height: 22px; }
+.db-mat { display: grid; gap: 8px; width: 100%; }
+.db-mat.baucua { grid-template-columns: repeat(3, 1fr); }
+.db-mat.taixiu { grid-template-columns: 1fr 1fr; }
+.db-opt { position: relative; border: 3px solid #ffd54f; border-radius: 16px; background: linear-gradient(180deg, #fff8e8, #ffe8c2); padding: 6px 4px 8px; display: flex; flex-direction: column; align-items: center; gap: 0; cursor: pointer; font-family: inherit; box-shadow: 0 4px 0 #c98f2b; min-height: 92px; transition: transform .1s; }
+.db-opt .ic { font-size: clamp(34px, 10vw, 50px); line-height: 1.1; }
+.db-opt b { font-size: 15px; color: #7d0f1d; }
+.db-opt small { font-size: 11px; color: #9a6b3a; font-weight: 700; }
+.db-opt .tot { font-size: 11px; font-weight: 700; color: #9a6b3a; min-height: 14px; }
+.db-opt .mine { position: absolute; top: -9px; right: -6px; background: var(--pink); color: #fff; font-weight: 800; font-size: 12px; border-radius: 999px; padding: 0 7px; border: 2px solid #fff; }
+.db-opt .mine:empty { display: none; }
+.db-opt.has { border-color: var(--pink); }
+.db-opt.tap { animation: pop .25s; }
+.db-opt:disabled { cursor: default; }
+.db-opt.win { background: linear-gradient(180deg, #fff59d, #ffd54f); box-shadow: 0 4px 0 #c98f2b, 0 0 0 4px rgba(255,255,255,.8), 0 0 24px #ffe066; animation: pulse .7s infinite; }
+.db-opt.lose { filter: grayscale(.6) brightness(.85); }
+.db-mat.taixiu .db-opt { min-height: 120px; }
+.db-mat.taixiu .db-opt b { font-size: 26px; }
+.db-chips { display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; }
+.db-chip { width: 50px; height: 50px; border-radius: 50%; border: 4px dashed #fff; font-weight: 800; font-size: 18px; color: #fff; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,.25); font-family: inherit; }
+.db-chip.c1 { background: #3fc97f; } .db-chip.c2 { background: #4f9dff; } .db-chip.c5 { background: #ff6b81; }
+.db-chip.sel { transform: translateY(-6px) scale(1.1); box-shadow: 0 0 0 3px var(--yellow), 0 6px 10px rgba(0,0,0,.3); }
+.db-open { animation: pulse .7s infinite; min-width: 200px; }
+body[data-scene="caro"] #sceneBg, body[data-scene="dicebet"] #sceneBg { display: block; }

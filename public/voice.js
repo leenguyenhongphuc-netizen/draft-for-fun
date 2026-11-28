@@ -3,7 +3,7 @@
 //    "Microsoft HoaiMy/NamMinh Online (Natural)") thì tự ưu tiên.
 // 2) Giọng Microsoft Neural qua Azure Speech (đọc hay trên mọi máy, kể cả iPhone) — chỉ bật khi
 //    đã cấu hình TTS_URL (hàm Supabase giữ khoá Azure, xem supabase/functions/tts).
-import { TTS_URL, SUPABASE_KEY } from './config.js';
+import { TTS_URL, SUPABASE_KEY, SUPABASE_ANON_JWT } from './config.js';
 import { playAudioBuffer } from './audio.js';
 
 export const CLOUD_VOICES = [
@@ -13,12 +13,16 @@ export const CLOUD_VOICES = [
 
 const KEY = 'tlc:voice';
 const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } };
-let cfg = { engine: TTS_URL ? 'cloud' : 'device', voiceURI: '', cloudVoice: CLOUD_VOICES[0].id, rate: 1.05, pitch: 1.1, on: true, ...load() };
+let cfg = { engine: TTS_URL ? 'cloud' : 'device', voiceURI: '', cloudVoice: CLOUD_VOICES[0].id, rate: 1.05, pitch: 1.2, on: true, ...load() };
+let cloudDownUntil = 0; // chưa có khoá Azure / lỗi mạng -> tạm dùng giọng máy
 if (!TTS_URL && cfg.engine === 'cloud') cfg.engine = 'device';
+// Bản trước chưa có giọng mây nên ai cũng lưu 'device': chuyển sang giọng Microsoft một lần
+if (TTS_URL && cfg.ver !== 2) { cfg.engine = 'cloud'; cfg.ver = 2; try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch { /* bỏ qua */ } }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch { /* bỏ qua */ } };
 
 export const getConfig = () => ({ ...cfg });
 export const cloudAvailable = () => !!TTS_URL;
+export const cloudWorking = () => !!TTS_URL && Date.now() > cloudDownUntil;
 export function setConfig(patch) { cfg = { ...cfg, ...patch }; save(); }
 
 // Danh sách giọng tiếng Việt trong máy, giọng Microsoft / Natural lên đầu
@@ -26,7 +30,8 @@ export function deviceVoices() {
   if (!window.speechSynthesis) return [];
   const all = speechSynthesis.getVoices();
   const vi = all.filter((v) => (v.lang || '').toLowerCase().startsWith('vi'));
-  const score = (v) => (/natural|online/i.test(v.name) ? 2 : 0) + (/microsoft/i.test(v.name) ? 1 : 0) + (/google/i.test(v.name) ? 0.5 : 0);
+  // Ưu tiên: giọng Natural/Online, Microsoft, giọng nữ (HoaiMy, Linh, An…), bản Nâng cao (Enhanced/Premium)
+  const score = (v) => (/natural|online/i.test(v.name) ? 3 : 0) + (/microsoft/i.test(v.name) ? 1 : 0) + (/hoaimy|linh|\ban\b|nữ|female/i.test(v.name) ? 1.5 : 0) + (/enhanced|premium|nâng cao/i.test(v.name) ? 1 : 0) + (/google/i.test(v.name) ? 0.3 : 0);
   return vi.sort((a, b) => score(b) - score(a));
 }
 export function onVoicesChanged(fn) { if (window.speechSynthesis) speechSynthesis.addEventListener('voiceschanged', fn); }
@@ -57,7 +62,7 @@ async function speakCloud(text) {
     if (!buf) {
       const r = await fetch(TTS_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY },
+        headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_JWT },
         body: JSON.stringify({ text, voice: cfg.cloudVoice, rate: cfg.rate, pitch: cfg.pitch }),
       });
       if (!r.ok) throw new Error('tts ' + r.status);
@@ -68,7 +73,8 @@ async function speakCloud(text) {
     if (my !== seq) return; // đã có câu mới hơn
     await playAudioBuffer(buf.slice(0));
   } catch (e) {
-    console.warn('Giọng Microsoft lỗi, dùng giọng máy', e);
+    console.warn('Giọng Microsoft chưa dùng được, tạm dùng giọng máy', e);
+    cloudDownUntil = Date.now() + 5 * 60e3;
     speakDevice(text);
   }
 }
@@ -76,6 +82,6 @@ async function speakCloud(text) {
 export function speak(text) {
   if (!cfg.on || !text) return;
   try { if (localStorage.getItem('tlc:muted') === 'true') return; } catch { /* bỏ qua */ }
-  if (cfg.engine === 'cloud' && TTS_URL) speakCloud(text);
+  if (cfg.engine === 'cloud' && cloudWorking()) speakCloud(text);
   else speakDevice(text);
 }

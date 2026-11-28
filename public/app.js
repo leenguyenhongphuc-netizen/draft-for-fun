@@ -14,6 +14,7 @@ import * as uiTyPhu from './ui/typhu.js';
 import * as uiLoTo from './ui/loto.js';
 import * as uiPoker from './ui/poker.js';
 import * as uiCaro from './ui/caro.js';
+import * as uiDiceBet from './ui/dicebet.js';
 
 const GAMES = {
   tienlen: { icon: '🃏', name: 'Tiến Lên', desc: 'Miền Nam · 2–4 người', ui: null },
@@ -24,6 +25,8 @@ const GAMES = {
   loto: { icon: '🎪', name: 'Lô Tô', desc: 'Sân khấu hội chợ · tới 10 người', ui: uiLoTo },
   poker: { icon: '♠️', name: 'Poker', desc: "Texas Hold'em · 2–4 người", ui: uiPoker },
   caro: { icon: '⭕', name: 'Cờ Caro', desc: '5 quân liền · 2 người', ui: uiCaro },
+  baucua: { icon: '🦀', name: 'Bầu Cua', desc: 'Tôm cá nai gà · tới 6 người', ui: uiDiceBet },
+  taixiu: { icon: '🎲', name: 'Tài Xỉu', desc: 'Lắc 3 hột · tới 6 người', ui: uiDiceBet },
 };
 
 const $ = (s) => document.querySelector(s);
@@ -113,13 +116,15 @@ const HOWTO = {
   cangua: ['Gieo 1 hoặc 6 thì ra quân, ra 1 hoặc 6 được gieo thêm.', 'Đi trúng ngựa đối thủ thì đá về chuồng.', 'Vào đích phải đúng số. Ai về đủ 4 ngựa trước thắng.'],
   typhu: ['Gieo 2 xúc xắc, mua tỉnh thành, xây nhà, thu tiền thuê.', 'Đủ cặp tỉnh cùng màu thì tiền thuê gấp đôi. Gieo đôi đi thêm.', 'Hết 15 vòng ai giàu nhất thắng, hết tiền là phá sản.'],
   poker: ['Mỗi ván mỗi người cầm 100 chip, mù 1/2. Nhận 2 lá tẩy + 5 lá chung.', 'Bỏ bài, Xem, Theo, Tố hoặc All-in. Ai còn bài mạnh nhất (5 lá tốt nhất) ăn pot.', 'Mạnh dần: mậu thầu < đôi < thú < sám < sảnh < thùng < cù lũ < tứ quý < thùng phá sảnh. 10 chip = 1 phần.'],
+  baucua: ['Nhà cái xoay vòng mỗi ván. Chọn chip 1/2/5 rồi chạm con muốn đặt (tối đa 20 phần/ván).', 'Nhà cái lắc 3 hột rồi mở bát. Mỗi hột ra đúng con mình đặt thì ăn 1 lần tiền cược, không ra thì mất.'],
+  taixiu: ['Nhà cái xoay vòng mỗi ván. Đặt TÀI (tổng 11–17) hoặc XỈU (tổng 4–10), ăn 1:1.', 'Ra bộ ba (3 hột giống nhau) thì nhà cái ăn hết.'],
   caro: ['2 người, ✕ đi trước (đổi lượt mỗi ván).', 'Ai có 5 quân liên tiếp ngang, dọc hoặc chéo là thắng.', 'Luật Việt Nam: bị chặn cả 2 đầu thì không tính (chủ phòng tắt được trong ⚙️ Luật).'],
   loto: ['Sân khấu xổ liên tục: mở bán vé → xổ số → có người KINH.', 'Mỗi vòng mua tối đa 3 vé. Hàng nào đủ 5 số là KINH!', 'Vào phòng lúc nào cũng được, chờ vòng sau mua vé.'],
 };
 
 // ---------- Cảnh riêng từng game ----------
 // Game bài dùng phòng 3D (tự đổi phòng ngẫu nhiên mỗi ván); Cá Ngựa, Tỷ Phú, Lô Tô có cảnh riêng.
-const SCENE_OF = { tienlen: 'room', xidach: 'room', baicao: 'room', cangua: 'ludo', typhu: 'typhu', loto: 'loto', poker: 'room', caro: 'caro' };
+const SCENE_OF = { tienlen: 'room', xidach: 'room', baicao: 'room', cangua: 'ludo', typhu: 'typhu', loto: 'loto', poker: 'room', caro: 'caro', baucua: 'dicebet', taixiu: 'dicebet' };
 let curScene = null, curGame = null;
 const d = (e, l, t, size = 38, cls = 'float', delay = 0) => `<span class="decor ${cls}" style="left:${l};top:${t};font-size:${size}px;animation-delay:${delay}s">${e}</span>`;
 const lights = (n, colors) => `<div class="lights">${Array.from({ length: n }, (_, i) => `<i style="--c:${colors[i % colors.length]};--d:${(i % 3) * 0.4}s"></i>`).join('')}</div>`;
@@ -131,6 +136,8 @@ const SCENE_DECOR = {
   typhu: d('☁️', '0', '9%', 56, 'drift') + d('☁️', '0', '24%', 40, 'drift', -12) + d('⛵', '4%', '82%', 40, 'bob') + d('🛳️', '80%', '86%', 46, 'bob', 1)
     + d('🐋', '84%', '70%', 40, 'bob', .6) + d('🏝️', '2%', '66%', 42, 'float', 1.4) + d('🐬', '44%', '92%', 32, 'bob', .2),
   // Hội chợ đêm: dây đèn, đèn lồng, đu quay
+  // Chiếu Tết: lì xì, mai, pháo
+  dicebet: d('🧧', '3%', '11%', 40, 'bob') + d('🌼', '86%', '10%', 42, 'float') + d('🏮', '90%', '45%', 38, 'bob', .7) + d('🧨', '2%', '48%', 36, 'float', 1.2) + d('🍊', '4%', '88%', 38, 'bob', .4) + d('💰', '86%', '88%', 38, 'float', .9),
   // Bàn học: giấy ô li, bút chì, thước
   caro: d('✏️', '4%', '86%', 46, 'float') + d('📏', '80%', '88%', 46, 'float', 1) + d('🧃', '4%', '10%', 36, 'bob') + d('🍬', '88%', '11%', 34, 'bob', .6) + d('⭐', '90%', '62%', 28, 'float', .3) + d('🖍️', '2%', '62%', 34, 'float', 1.4),
   loto: lights(18, ['#ffd54f', '#ff8a80', '#80d8ff', '#b9f6ca']) + d('🏮', '2%', '10%', 40, 'bob') + d('🏮', '89%', '10%', 40, 'bob', 1)
@@ -306,7 +313,7 @@ function onState(prev, s) {
   if (gameKey !== curGame) { curGame = gameKey; resetStage(); }
   setScene(SCENE_OF[gameKey]);
   if (SCENE_OF[gameKey] === 'room') { scene3d.setTheme(s.theme); audio.setTheme(s.theme); }
-  else audio.setTheme({ cangua: 'garden', typhu: 'rainbow', loto: 'tet', caro: 'cafe' }[gameKey]);
+  else audio.setTheme({ cangua: 'garden', typhu: 'rainbow', loto: 'tet', caro: 'cafe', dicebet: 'tet' }[SCENE_OF[gameKey]] || { cangua: 'garden', typhu: 'rainbow', loto: 'tet', caro: 'cafe' }[gameKey]);
   if (new URLSearchParams(location.search).get('room') !== s.code) history.replaceState(null, '', pageUrl(s.code));
 
   const me = s.seats[s.mySeat];
@@ -938,6 +945,8 @@ const GAME_RULE_TEXT = {
   xidach: 'Xì bàn > Xì dách > Ngũ linh > điểm. Quá 21 là quắc. Người chơi đủ 16, nhà cái đủ 15 mới được dằn. Thắng thường +1 phần, thắng bằng xì bàn / xì dách / ngũ linh +2 phần. Nhà cái xoay vòng mỗi ván.',
   baicao: 'Mỗi người 3 lá, điểm = hàng đơn vị của tổng (10/J/Q/K = 0). Ba tây (3 lá J/Q/K) lớn nhất. Ai cao nhất ăn: mỗi người thua trả 1 phần.',
   poker: "Texas Hold'em: 2 lá tẩy + 5 lá chung, mỗi ván 100 chip, mù 1/2, chia pot phụ khi all-in. Lời/lỗ: 10 chip = 1 phần.",
+  baucua: 'Nhà cái xoay vòng. Mỗi hột ra đúng con đã đặt ăn 1 lần tiền cược (ra 2 hột ăn gấp 2…), không ra thì mất. Tối đa 20 phần/ván.',
+  taixiu: 'Nhà cái xoay vòng. Tài 11–17, Xỉu 4–10, ăn 1:1. Bộ ba thì nhà cái ăn hết. Tối đa 20 phần/ván.',
   caro: 'Bàn 15×15, 5 quân liên tiếp thắng (+1 phần), thua −1 phần, hoà 0.',
   cangua: 'Gieo 1 hoặc 6 thì ra quân, ra 1 hoặc 6 được gieo thêm. Đi trúng ngựa đối thủ thì đá về chuồng. Vào đích phải đúng số. Ai về đủ 4 ngựa trước thắng.',
 };
@@ -1179,7 +1188,7 @@ initLobby();
 showLobby();
 
 // ---------- Báo có bản mới ----------
-const APP_VERSION = '20261128-0523';
+const APP_VERSION = '20261128-0537';
 document.querySelectorAll('.lobby-card').forEach((c) => { const v = document.createElement('div'); v.className = 'app-ver'; v.textContent = 'Phiên bản ' + APP_VERSION; c.appendChild(v); });
 async function checkUpdate() {
   try {

@@ -12,8 +12,9 @@ import { TyPhuRoom } from './game/typhu.js';
 import { LoToRoom } from './game/loto.js';
 import { PokerRoom } from './game/poker.js';
 import { CaroRoom } from './game/caro.js';
+import { BauCuaRoom, TaiXiuRoom } from './game/dicebet.js';
 
-const GAME_CLASSES = { tienlen: Room, xidach: XiDachRoom, baicao: BaiCaoRoom, cangua: CaNguaRoom, typhu: TyPhuRoom, loto: LoToRoom, poker: PokerRoom, caro: CaroRoom };
+const GAME_CLASSES = { tienlen: Room, xidach: XiDachRoom, baicao: BaiCaoRoom, cangua: CaNguaRoom, typhu: TyPhuRoom, loto: LoToRoom, poker: PokerRoom, caro: CaroRoom, baucua: BauCuaRoom, taixiu: TaiXiuRoom };
 import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
 
 const THEMES = ['candy', 'garden', 'night', 'tet', 'ocean', 'winter', 'sakura', 'cafe', 'rainbow'];

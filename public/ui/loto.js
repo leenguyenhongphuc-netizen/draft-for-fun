@@ -210,29 +210,44 @@ function renderActions(s, ctx) {
   }
 }
 
+let warned = false;
+const pickLine = (a) => a[Math.floor(Math.random() * a.length)];
+const plain = (n) => String(n).replace(/^\S+\s/, ''); // bỏ emoji avatar trước tên
+const SELL_LINES = [
+  'Mở bán vé vòng {n} rồi bà con ơi! Mua vé lẹ lên nè!',
+  'Vòng {n} tới rồi! Ai mua vé thì mua lẹ nha, sắp xổ rồi đó!',
+  'Bà con ơi, vé vòng {n} nóng hổi đây! Mua liền tay, kinh liền tay!',
+];
 export function tick(s, ctx) {
   const el = document.querySelector('.sell-left');
-  if (el && s.lt) el.textContent = Math.max(0, Math.ceil((s.lt.sellEnd - ctx.now()) / 1000));
+  if (!s.lt) return;
+  const left = Math.max(0, Math.ceil((s.lt.sellEnd - ctx.now()) / 1000));
+  if (el) el.textContent = left;
+  if (s.lt.phase === 'sell' && left === 5 && !warned) { warned = true; speak('Còn năm giây nữa thôi! Chuẩn bị xổ nha!'); }
 }
 
 export function onEvent(ev, ctx) {
   if (ev.kind !== 'lt') return;
   const { sfx } = ctx;
-  if (ev.what === 'sell') { sfx.newRound(); ctx.bigText(`🎫 Mở bán vé vòng ${ev.round}!`, true); marked.clear(); }
-  if (ev.what === 'calling') { sfx.train(); ctx.toast('🎡 Lồng cầu bắt đầu quay!'); speak('Bắt đầu xổ lô tô! Bà con chuẩn bị dò nha!'); }
+  if (ev.what === 'sell') {
+    sfx.newRound(); ctx.bigText(`🎫 Mở bán vé vòng ${ev.round}!`, true); marked.clear(); warned = false;
+    speak(pickLine(SELL_LINES).replace('{n}', ev.round));
+  }
+  if (ev.what === 'calling') { sfx.train(); ctx.toast('🎡 Lồng cầu bắt đầu quay!'); speak('Lồng cầu quay rồi! Bà con cầm vé lên, mình bắt đầu xổ nha!'); }
   if (ev.what === 'call') {
     sfx.coin();
     speak(ev.rhyme);
     if (ui) { ui.ball.classList.remove('pop'); void ui.ball.offsetWidth; ui.ball.classList.add('pop'); }
   }
-  if (ev.what === 'almost') { sfx.tick(); ctx.toast('😱 Có người kinh rồi kìa!'); }
-  if (ev.what === 'shout') { ctx.bigText(`${ctx.nameOf(ev.seat)}: KINH!!! 🙌`, true); sfx.stamp(); }
-  if (ev.what === 'noTickets') ctx.toast('Chưa ai mua vé, mở bán lại nha 🎫');
+  if (ev.what === 'almost') { sfx.tick(); ctx.toast('😱 Có người kinh rồi kìa!'); setTimeout(() => speak('Ơ kìa, hình như có người đủ hàng rồi đó!'), 1400); }
+  if (ev.what === 'shout') { ctx.bigText(`${ctx.nameOf(ev.seat)}: KINH!!! 🙌`, true); sfx.stamp(); speak(`Ối! ${plain(ctx.nameOf(ev.seat))} hô kinh rồi kìa! Để em dò lại nha!`); }
+  if (ev.what === 'noTickets') { ctx.toast('Chưa ai mua vé, mở bán lại nha 🎫'); speak('Ủa, chưa ai mua vé hết trơn! Em mở bán lại nha!'); }
   if (ev.what === 'kinh') {
     const me = ev.seats.includes(ctx.mySeat());
     ctx.bigText(me ? 'BẠN KINH RỒI!!! 🎉💰' : `${ev.seats.map((s) => ctx.nameOf(s)).join(', ')} KINH! 🎉`, true);
     (me ? sfx.win : sfx.bigCombo)();
     ctx.confetti();
-    speak(me ? 'Chúc mừng! Bạn kinh rồi!' : 'Có người kinh rồi! Chúc mừng!');
+    const who = ev.seats.map((s) => plain(ctx.nameOf(s))).join(' và ');
+    speak(`Kinh rồi! Kinh rồi! Chúc mừng ${who} ăn trọn ${ev.pot} vé nha! Vỗ tay cái nào!`);
   }
 }

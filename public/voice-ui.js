@@ -1,5 +1,5 @@
 // Bảng chọn giọng MC (dùng chung)
-import { CLOUD_VOICES, cloudAvailable, deviceVoices, getConfig, onVoicesChanged, setConfig, speak } from './voice.js';
+import { CLOUD_VOICES, cloudAvailable, cloudWorking, deviceVoices, getConfig, onVoicesChanged, setConfig, speak } from './voice.js';
 
 const SAMPLE = 'Lô tô đây bà con ơi! Con số sáu mươi tám, lộc phát lộc phát!';
 let box = null;
@@ -22,7 +22,7 @@ function render() {
   const head = (t) => { const h = document.createElement('div'); h.className = 'vp-head'; h.textContent = t; list.appendChild(h); };
 
   head('⭐ Giọng Microsoft Neural (hay nhất, chạy mọi máy)');
-  CLOUD_VOICES.forEach((v) => add(v.name, cloudAvailable() ? 'Đọc qua mạng' : 'Chưa bật — chủ nhà cần cài khoá Azure', c.engine === 'cloud' && c.cloudVoice === v.id, () => setConfig({ engine: 'cloud', cloudVoice: v.id }), !cloudAvailable()));
+  CLOUD_VOICES.forEach((v) => add(v.name, cloudWorking() ? 'Giọng tự nhiên, đọc qua mạng' : 'Chưa có khoá Azure — đang tạm dùng giọng máy', c.engine === 'cloud' && c.cloudVoice === v.id, () => setConfig({ engine: 'cloud', cloudVoice: v.id }), !cloudAvailable()));
 
   head('📱 Giọng có sẵn trong máy này');
   if (!dev.length) {

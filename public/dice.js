@@ -4,14 +4,15 @@
 const FACE_ROT = { 1: [90, 0, 0], 2: [0, 0, -90], 3: [0, 0, 0], 4: [180, 0, 0], 5: [0, 0, 90], 6: [-90, 0, 0] };
 const PIPS = { 1: [5], 2: [1, 9], 3: [1, 5, 9], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9] };
 
-function faceHTML(n) {
+function faceHTML(n, labels) {
+  if (labels) return `<div class="face f${n} lbl"><span>${labels[n]}</span></div>`;
   return `<div class="face f${n}">` + Array.from({ length: 9 }, (_, i) => `<i class="${PIPS[n].includes(i + 1) ? 'on' : ''}"></i>`).join('') + '</div>';
 }
 
-export function dieEl(v = 1) {
+export function dieEl(v = 1, labels = null) {
   const w = document.createElement('div');
   w.className = 'die-wrap';
-  w.innerHTML = `<div class="die-shadow"></div><div class="die-tilt"><div class="die">${[1, 2, 3, 4, 5, 6].map(faceHTML).join('')}</div></div>`;
+  w.innerHTML = `<div class="die-shadow"></div><div class="die-tilt"><div class="die">${[1, 2, 3, 4, 5, 6].map((n) => faceHTML(n, labels)).join('')}</div></div>`;
   setFace(w, v);
   return w;
 }
@@ -23,23 +24,23 @@ function rotFor(v, spins = 0, dz = 0) {
 export function setFace(w, v) { w.querySelector('.die').style.transform = rotFor(v); }
 
 /** Hiện xúc xắc đứng yên */
-export function showDice(tray, values) {
+export function showDice(tray, values, labels = null) {
   if (tray.dataset.rolling === '1') return;
   const key = values.join(',');
   if (tray.dataset.key === key && tray.children.length) return;
   tray.dataset.key = key;
   tray.innerHTML = '';
-  values.forEach((v) => tray.appendChild(dieEl(v)));
+  values.forEach((v) => tray.appendChild(dieEl(v, labels)));
 }
 
 /** Tung xúc xắc. Trả về Promise khi đã dừng hẳn. */
-export function rollDice(tray, values, { onBounce } = {}) {
+export function rollDice(tray, values, { onBounce, labels = null } = {}) {
   tray.innerHTML = '';
   tray.dataset.rolling = '1';
   tray.dataset.key = values.join(',');
   const dur = 1150;
   values.forEach((v, i) => {
-    const w = dieEl(v);
+    const w = dieEl(v, labels);
     tray.appendChild(w);
     const die = w.querySelector('.die');
     const shadow = w.querySelector('.die-shadow');

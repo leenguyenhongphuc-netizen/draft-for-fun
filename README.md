@@ -1,6 +1,6 @@
 # 🐷 Game nhà Pum
 
-Cổng 8 game chơi online cùng gia đình, bạn bè: **Tiến Lên Miền Nam**, **Xì Dách**, **Bài Cào**, **Cờ Cá Ngựa**, **Cờ Tỷ Phú Việt Nam**, **Lô Tô**, **Poker**, **Cờ Caro**, giao diện pastel dễ thương, có **phòng chơi 3D** (Three.js) với bàn tròn, ghế đệm, nhân vật thú bông, bóng bay, đèn nháy, kệ sách, mèo ngủ, cửa sổ có mây/trăng…
+Cổng 10 game chơi online cùng gia đình, bạn bè: **Tiến Lên Miền Nam**, **Xì Dách**, **Bài Cào**, **Cờ Cá Ngựa**, **Cờ Tỷ Phú Việt Nam**, **Lô Tô**, **Poker**, **Cờ Caro**, **Bầu Cua**, **Tài Xỉu**, giao diện pastel dễ thương, có **phòng chơi 3D** (Three.js) với bàn tròn, ghế đệm, nhân vật thú bông, bóng bay, đèn nháy, kệ sách, mèo ngủ, cửa sổ có mây/trăng…
 
 ## Các trò chơi
 | | Trò chơi | Cách chơi |
@@ -13,6 +13,8 @@ Cổng 8 game chơi online cùng gia đình, bạn bè: **Tiến Lên Miền Nam
 | 🎪 | **Lô Tô hội chợ** | Sân khấu xổ liên tục: mở bán vé → lồng cầu quay, MC hò số (có đọc thành tiếng) → ai đủ 5 số một hàng là KINH. Tới 10 người, vào lúc nào cũng được. |
 | ♠️ | **Poker (Texas Hold'em)** | 2 lá tẩy + 5 lá chung, mỗi ván 100 chip, mù 1/2, Bỏ/Xem/Theo/Tố/All-in, chia pot phụ khi all-in. 10 chip = 1 phần. |
 | ⭕ | **Cờ Caro** | 2 người, bàn 15×15, 5 quân liền thắng; tuỳ chọn luật chặn 2 đầu không tính. |
+| 🦀 | **Bầu Cua Tôm Cá** | Nhà cái xoay vòng, đặt chip 1/2/5 vào Nai–Bầu–Gà–Cá–Cua–Tôm, lắc bát, mở bát; ra bao nhiêu hột ăn bấy nhiêu lần. Tới 6 người. |
+| 🎲 | **Tài Xỉu** | Nhà cái xoay vòng, đặt Tài (11–17) / Xỉu (4–10) ăn 1:1, bộ ba nhà cái ăn hết. Tới 6 người. |
 
 Tất cả đều có: phòng chơi (2–4 người, Lô Tô tới 10), bot, chế độ ghi nợ, chat/emoji, 9 kiểu phòng 3D.
 
@@ -36,6 +38,7 @@ Tất cả đều có: phòng chơi (2–4 người, Lô Tô tới 10), bot, ch�
 - Chủ phòng lỡ tải lại trang → ván được khôi phục. Người chơi mất mạng → bot đánh thay, vào lại trong 45 giây là ngồi đúng chỗ.
 - Xu lưu trên máy từng người (localStorage).
 - Cấu hình Supabase ở `public/config.js`.
+- Giọng MC Lô Tô (Microsoft HoaiMy Neural): hàm Supabase `tts` (đã triển khai); cần thêm secret `AZURE_SPEECH_KEY` và `AZURE_SPEECH_REGION` trong Supabase › Edge Functions › Secrets. Chưa có khoá thì tự dùng giọng có sẵn trong máy.
 
 ## Đưa lên Vercel
 1. vercel.com → **Add New… → Project** → chọn repo `draft-for-fun` → **Import**.

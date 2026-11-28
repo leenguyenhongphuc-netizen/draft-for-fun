@@ -153,3 +153,35 @@ test('caro: 2 bot đánh tới khi có kết quả', async () => {
   }
   r.destroy();
 });
+
+import { BauCuaRoom, TaiXiuRoom, settle } from '../public/game/dicebet.js';
+
+test('bầu cua / tài xỉu: tính tiền', () => {
+  // xúc xắc 1..6 = nai, bầu, gà, cá, cua, tôm
+  assert.equal(settle('baucua', { cua: 2 }, [5, 5, 1]), 4);   // ra 2 con cua -> ăn 2 lần
+  assert.equal(settle('baucua', { tom: 3 }, [1, 2, 3]), -3);
+  assert.equal(settle('baucua', { nai: 1, ga: 1 }, [1, 4, 4]), 0);
+  assert.equal(settle('taixiu', { tai: 5 }, [6, 5, 1]), 5);   // 12 = tài
+  assert.equal(settle('taixiu', { xiu: 2 }, [6, 5, 1]), -2);
+  assert.equal(settle('taixiu', { tai: 3 }, [4, 4, 4]), -3);  // bộ ba: nhà cái ăn
+});
+
+for (const [name, R] of [['bầu cua', BauCuaRoom], ['tài xỉu', TaiXiuRoom]]) {
+  test(`${name}: 6 bot, 20 ván, nhà cái xoay vòng, tổng bằng 0`, () => {
+    const r = new R({ code: 'D', name: 'd', theme: 'candy', isPublic: false, hooks: hooks() });
+    for (let i = 0; i < 6; i++) r.addBot();
+    const dealers = new Set();
+    for (let k = 0; k < 20; k++) {
+      r.start();
+      dealers.add(r.g.dealer);
+      r.seats.forEach((p, s) => { if (s !== r.g.dealer) r.botBet(s); });
+      if (r.g.phase === 'bet') r.shake();
+      r.ready(); r.open(); r.clearTimer('fin');
+      r.finish(r.pendingRows);
+      assert.equal(r.state, 'ended');
+      assert.ok(Math.abs(r.results.reduce((a, x) => a + x.delta, 0)) < 0.01);
+    }
+    assert.ok(dealers.size >= 5);
+    r.destroy();
+  });
+}

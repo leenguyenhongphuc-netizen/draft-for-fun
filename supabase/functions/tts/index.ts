@@ -19,6 +19,7 @@ Deno.serve(async (req) => {
     const r = Math.round((Math.min(1.5, Math.max(0.6, Number(rate))) - 1) * 100);
     const p = Math.round((Math.min(1.5, Math.max(0.6, Number(pitch))) - 1) * 50);
     const ssml = `<speak version="1.0" xml:lang="vi-VN"><voice name="${v}"><prosody rate="${r}%" pitch="${p}%">${esc(t)}</prosody></voice></speak>`;
+    if (!Deno.env.get('AZURE_SPEECH_KEY')) return new Response('missing AZURE_SPEECH_KEY', { status: 503, headers: cors });
     const region = Deno.env.get('AZURE_SPEECH_REGION') || 'southeastasia';
     const res = await fetch(`https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`, {
       method: 'POST',
