@@ -168,6 +168,13 @@ export class BaseRoom {
     return unit;
   }
 
+  /** Trả tiền giữa chừng (game chơi liên tục như Lô Tô, Lì Xì): tính tiền + báo cho từng máy cập nhật xu */
+  payout(rows) {
+    const unit = this.applyDeltas(rows);
+    this.hooks.emitEvent(this, { kind: 'coins', results: rows.map((r) => ({ seat: r.seat, delta: r.delta })), debt: this.settings.debt });
+    return unit;
+  }
+
   recordDebt(rows, unit) {
     const L = this.ledger;
     const game = { at: Date.now(), label: unit.label, rows: [] };

@@ -142,7 +142,7 @@ export class LoToRoom extends BaseRoom {
       const parts = Math.round((gain - cost) * 100) / 100;
       return { seat: s, parts, rank: win[s] ? 1 : 2, note: win[s] ? `KINH! ${win[s]} vé` : `${cost} vé`, badge: win[s] ? '🎉' : '🎫' };
     });
-    const unit = this.applyDeltas(rows);
+    const unit = this.payout(rows);
     g.phase = 'win';
     g.winners = { seats: Object.keys(win).map(Number), rows, unit, pot };
     this.hooks.emitEvent(this, { kind: 'lt', what: 'kinh', seats: g.winners.seats, pot, unit });

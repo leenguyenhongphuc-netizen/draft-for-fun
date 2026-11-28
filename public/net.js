@@ -13,8 +13,10 @@ import { LoToRoom } from './game/loto.js';
 import { PokerRoom } from './game/poker.js';
 import { CaroRoom } from './game/caro.js';
 import { BauCuaRoom, TaiXiuRoom } from './game/dicebet.js';
+import { SpinRoom } from './game/spin.js';
+import { LiXiRoom } from './game/lixi.js';
 
-const GAME_CLASSES = { tienlen: Room, xidach: XiDachRoom, baicao: BaiCaoRoom, cangua: CaNguaRoom, typhu: TyPhuRoom, loto: LoToRoom, poker: PokerRoom, caro: CaroRoom, baucua: BauCuaRoom, taixiu: TaiXiuRoom };
+const GAME_CLASSES = { tienlen: Room, xidach: XiDachRoom, baicao: BaiCaoRoom, cangua: CaNguaRoom, typhu: TyPhuRoom, loto: LoToRoom, poker: PokerRoom, caro: CaroRoom, baucua: BauCuaRoom, taixiu: TaiXiuRoom, spin: SpinRoom, lixi: LiXiRoom };
 import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
 
 const THEMES = ['candy', 'garden', 'night', 'tet', 'ocean', 'winter', 'sakura', 'cafe', 'rainbow', 'space', 'icecream', 'jungle', 'autumn', 'midautumn', 'bakery', 'disco', 'farm', 'castle', 'milktea'];
@@ -171,7 +173,7 @@ export function createNet(playerId) {
       if (!host || host.room !== room) return;
       fire('event', ev);
       roomCh && roomCh.send({ t: 'event', ev });
-      if (ev.kind === 'end' && !ev.debt) applyMyCoins(room, ev);
+      if ((ev.kind === 'end' || ev.kind === 'coins') && !ev.debt) applyMyCoins(room, ev);
     },
     getCoins: (id) => (host && host.members.get(id)?.coins) ?? 1000,
     addCoins: (id, n) => { if (!host) return; const m = host.members.get(id) || { coins: 1000 }; m.coins += n; host.members.set(id, m); },
@@ -360,7 +362,7 @@ export function createNet(playerId) {
       }
       case 'event':
         fire('event', m.ev);
-        if (m.ev.kind === 'end' && !m.ev.debt && lastView) applyMyCoins(null, { ...m.ev, mySeat: lastView.mySeat });
+        if ((m.ev.kind === 'end' || m.ev.kind === 'coins') && !m.ev.debt && lastView) applyMyCoins(null, { ...m.ev, mySeat: lastView.mySeat });
         break;
       case 'toast': toast(m.msg); break;
       case 'full': clearInterval(joinTimer); toast('Phòng đã đầy mất rồi 🥲'); leave(); break;

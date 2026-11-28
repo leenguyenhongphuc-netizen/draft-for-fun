@@ -199,3 +199,58 @@ test('bầu cua: cược tối đa theo xu đang có', () => {
   }
   r.destroy();
 });
+
+import { SpinRoom, SEGMENTS } from '../public/game/spin.js';
+import { LiXiRoom, splitLixi } from '../public/game/lixi.js';
+
+test('vòng quay: lần lượt quay, làm xong được sao', () => {
+  const r = new SpinRoom({ code: 'S', name: 's', theme: 'candy', isPublic: false, hooks: hooks() });
+  r.join({ id: 'host', name: 'H', avatar: '🐱' }); r.addBot(); r.addBot();
+  assert.equal(r.start(), null);
+  const order = [];
+  for (let k = 0; k < 6; k++) {
+    const s = r.g.turn; order.push(s);
+    assert.ok(r.action((s + 1) % 3, { a: 'spin' }));       // chưa tới lượt
+    assert.equal(r.action(s, { a: 'spin' }), null);
+    assert.equal(r.g.phase, 'spinning');
+    assert.ok(SEGMENTS[r.g.seg].list.includes(r.g.text));
+    r.g.phase = 'task'; r.clearTimer('phase');
+    r.action(s, { a: 'done' });
+    assert.equal(r.g.stars[r.seats[s].id] >= 1, true);
+  }
+  assert.deepEqual(order, [0, 1, 2, 0, 1, 2]);
+  r.destroy();
+});
+
+test('lì xì: chia đủ tổng, mỗi người 1 bao, tổng tiền bằng 0', () => {
+  for (let k = 0; k < 200; k++) {
+    const total = [200, 500, 1000, 37][k % 4], n = 2 + (k % 9);
+    const a = splitLixi(total, n, total >= n * 10 ? 10 : 1);
+    assert.equal(a.length, n);
+    assert.equal(a.reduce((x, y) => x + y, 0), total);
+    assert.ok(a.every((x) => x >= 1));
+  }
+  const coins = { host: 1000 };
+  const r = new LiXiRoom({ code: 'L', name: 'l', theme: 'candy', isPublic: false, hooks: { ...hooks(), getCoins: (id) => coins[id] ?? 1000, addCoins: (id, d) => { coins[id] = (coins[id] ?? 1000) + d; } } });
+  r.join({ id: 'host', name: 'H', avatar: '🐱' }); r.join({ id: 'me', name: 'M', avatar: '🐶' }); r.addBot();
+  r.start();
+  assert.ok(r.action(1, { a: 'deal' }));                  // không phải chủ phòng
+  assert.ok(r.action(0, { a: 'setup', total: 5000, count: 4 }) === null && r.action(0, { a: 'deal' })); // quá số xu
+  r.action(0, { a: 'setup', total: 500, count: 4 });
+  assert.equal(r.action(0, { a: 'deal' }), null);
+  assert.ok(r.action(0, { a: 'grab', i: 0 }));            // người phát không được giành
+  assert.equal(r.action(1, { a: 'grab', i: 1 }), null);
+  assert.ok(r.action(1, { a: 'grab', i: 2 }));            // 1 người 1 bao
+  r.action(2, { a: 'grab', i: 3 });
+  r.reveal();
+  assert.equal(r.g.phase, 'done');
+  const got = r.g.envs[1].amt + r.g.envs[3].amt;
+  assert.equal(coins.host, 1000 - got);
+  assert.equal(coins.me, 1000 + r.g.envs[1].amt);
+  assert.ok(Math.abs(r.g.rows.reduce((a, x) => a + x.delta, 0)) < 0.01);
+  assert.equal(r.action(0, { a: 'again' }), null);
+  assert.equal(r.g.phase, 'setup');
+  r.action(0, { a: 'auto' });
+  assert.ok(r.g.total > 0 && r.g.count >= 2);
+  r.destroy();
+});

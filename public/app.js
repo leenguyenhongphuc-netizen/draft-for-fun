@@ -15,6 +15,8 @@ import * as uiLoTo from './ui/loto.js';
 import * as uiPoker from './ui/poker.js';
 import * as uiCaro from './ui/caro.js';
 import * as uiDiceBet from './ui/dicebet.js';
+import * as uiSpin from './ui/spin.js';
+import * as uiLiXi from './ui/lixi.js';
 
 const GAMES = {
   tienlen: { icon: '🃏', name: 'Tiến Lên', desc: 'Miền Nam · 2–4 người', ui: null },
@@ -27,6 +29,8 @@ const GAMES = {
   caro: { icon: '⭕', name: 'Cờ Caro', desc: '5 quân liền · 2 người', ui: uiCaro },
   baucua: { icon: '🦀', name: 'Bầu Cua', desc: 'Tôm cá nai gà · tới 6 người', ui: uiDiceBet },
   taixiu: { icon: '🎲', name: 'Tài Xỉu', desc: 'Lắc 3 hột · tới 6 người', ui: uiDiceBet },
+  spin: { icon: '🎡', name: 'Vòng Quay', desc: 'Thử thách vui · tới 10 người', ui: uiSpin },
+  lixi: { icon: '🧧', name: 'Bao Lì Xì', desc: 'Giành bao may mắn · tới 10 người', ui: uiLiXi },
 };
 
 const $ = (s) => document.querySelector(s);
@@ -127,12 +131,14 @@ const HOWTO = {
   baucua: ['Nhà cái xoay vòng mỗi ván. Chọn chip 1/2/5 rồi chạm con muốn đặt (cược tối đa bằng số xu đang có; 1 phần = 10 xu).', 'Nhà cái lắc 3 hột rồi mở bát. Mỗi hột ra đúng con mình đặt thì ăn 1 lần tiền cược, không ra thì mất.'],
   taixiu: ['Nhà cái xoay vòng mỗi ván. Đặt TÀI (tổng 11–17) hoặc XỈU (tổng 4–10), ăn 1:1.', 'Ra bộ ba (3 hột giống nhau) thì nhà cái ăn hết.'],
   caro: ['2 người, ✕ đi trước (đổi lượt mỗi ván).', 'Ai có 5 quân liên tiếp ngang, dọc hoặc chéo là thắng.', 'Luật Việt Nam: bị chặn cả 2 đầu thì không tính (chủ phòng tắt được trong ⚙️ Luật).'],
+  spin: ['Lần lượt từng người bấm quay. Trúng ô nào làm thử thách ô đó: hát, nhảy, gây cười, bắt chước, chúc Tết, đố vui, nâng ly…', 'Làm xong được 1 ⭐, chịu thua thì bị phạt nhẹ cho vui. Ô 🍀 May mắn luôn được sao.', 'Thử thách vui vẻ cho cả nhà, không tính xu. Chủ phòng dừng lúc nào cũng được.'],
+  lixi: ['Chủ phòng chọn tổng tiền và số bao (hoặc bấm 🎲 Máy tự chọn) rồi phát.', 'Mọi người chạm nhanh để giành 1 bao, tiền trong mỗi bao ngẫu nhiên.', 'Ai trúng bao to nhất là 👑 Vua may mắn. Chủ phòng trả đúng số đã giành, bao thừa trả lại.'],
   loto: ['Sân khấu xổ liên tục: mở bán vé → xổ số → có người KINH.', 'Mỗi vòng mua tối đa 3 vé. Hàng nào đủ 5 số là KINH!', 'Vào phòng lúc nào cũng được, chờ vòng sau mua vé.'],
 };
 
 // ---------- Cảnh riêng từng game ----------
 // Game bài dùng phòng 3D (tự đổi phòng ngẫu nhiên mỗi ván); Cá Ngựa, Tỷ Phú, Lô Tô có cảnh riêng.
-const SCENE_OF = { tienlen: 'room', xidach: 'room', baicao: 'room', cangua: 'ludo', typhu: 'typhu', loto: 'loto', poker: 'room', caro: 'caro', baucua: 'dicebet', taixiu: 'dicebet' };
+const SCENE_OF = { tienlen: 'room', xidach: 'room', baicao: 'room', cangua: 'ludo', typhu: 'typhu', loto: 'loto', poker: 'room', caro: 'caro', baucua: 'dicebet', taixiu: 'dicebet', spin: 'dicebet', lixi: 'dicebet' };
 let curScene = null, curGame = null;
 const d = (e, l, t, size = 38, cls = 'float', delay = 0) => `<span class="decor ${cls}" style="left:${l};top:${t};font-size:${size}px;animation-delay:${delay}s">${e}</span>`;
 const lights = (n, colors) => `<div class="lights">${Array.from({ length: n }, (_, i) => `<i style="--c:${colors[i % colors.length]};--d:${(i % 3) * 0.4}s"></i>`).join('')}</div>`;
@@ -668,13 +674,14 @@ function renderControls() {
     const count = s.seats.filter(Boolean).length;
     const max = s.maxSeats || 4;
     const isLoto = s.game === 'loto';
+    const solo = { loto: 1, spin: 1 }[s.game] || 2;
     $('#waitTitle').textContent = s.state === 'ended' ? 'Làm thêm ván nữa không? 🃏' : isLoto ? `🎪 Sân khấu lô tô (${count}/${max} khán giả)` : count < 2 ? 'Đang chờ người chơi…' : `Đã có ${count}/${max} người 🎈`;
     $('#waitSub').textContent = isLoto ? (isHost ? 'Bấm mở sân khấu là xổ liên tục, ai vào cũng mua vé được!' : 'Chờ chủ phòng 👑 mở sân khấu nha…') : isHost ? (count < max ? 'Gửi mã phòng cho bạn bè hoặc thêm bot nhé!' : 'Đủ người rồi, bắt đầu thôi!') : 'Chờ chủ phòng 👑 bắt đầu nha…';
     renderRuleChips();
     $('#startBtn').classList.toggle('hidden', !isHost);
     $('#addBotBtn').classList.toggle('hidden', !isHost || count >= max);
-    $('#startBtn').disabled = count < (isLoto ? 1 : 2);
-    $('#startBtn').textContent = isLoto ? 'Mở sân khấu 🎪' : 'Bắt đầu 🃏';
+    $('#startBtn').disabled = count < solo;
+    $('#startBtn').textContent = isLoto ? 'Mở sân khấu 🎪' : s.game === 'spin' ? 'Bắt đầu quay 🎡' : s.game === 'lixi' ? 'Mở tiệc lì xì 🧧' : 'Bắt đầu 🃏';
   }
 }
 
@@ -973,6 +980,8 @@ const GAME_RULE_TEXT = {
   poker: "Texas Hold'em: 2 lá tẩy + 5 lá chung, mỗi ván 100 chip, mù 1/2, chia pot phụ khi all-in. Lời/lỗ: 10 chip = 1 phần.",
   baucua: 'Nhà cái xoay vòng. Mỗi hột ra đúng con đã đặt ăn 1 lần tiền cược (ra 2 hột ăn gấp 2…), không ra thì mất. Cược tối đa bằng số xu đang có.',
   taixiu: 'Nhà cái xoay vòng. Tài 11–17, Xỉu 4–10, ăn 1:1. Bộ ba thì nhà cái ăn hết. Cược tối đa bằng số xu đang có.',
+  spin: 'Lần lượt quay, làm thử thách được ⭐. Chỉ để vui, không tính xu.',
+  lixi: 'Chủ phòng phát lì xì: tổng tiền chia ngẫu nhiên vào các bao, mỗi người giành 1 bao. Bao to nhất là Vua may mắn. Mức cược nhân các mức tổng tiền gợi ý.',
   caro: 'Bàn 15×15, 5 quân liên tiếp thắng (+1 phần), thua −1 phần, hoà 0.',
   cangua: 'Gieo 1 hoặc 6 thì ra quân, ra 1 hoặc 6 được gieo thêm. Đi trúng ngựa đối thủ thì đá về chuồng. Vào đích phải đúng số. Ai về đủ 4 ngựa trước thắng.',
 };
@@ -1026,12 +1035,12 @@ function renderRules() {
     r.appendChild(control); list.appendChild(r);
     return r;
   };
-  row('📒 Chế độ ghi sổ', 'Chơi cho vui: không trừ xu, ghi lại điểm thắng thua qua các ván, cuối buổi xem tổng kết.', sw('debt', st.debt), 'debt');
-  if (st.debt) {
+  if (state.game !== 'spin') row('📒 Chế độ ghi sổ', 'Chơi cho vui: không trừ xu, ghi lại điểm thắng thua qua các ván, cuối buổi xem tổng kết.', sw('debt', st.debt), 'debt');
+  if (st.debt && state.game !== 'spin') {
     row('Mỗi phần =', 'Tiến Lên 4 người: nhất +3 phần, nhì +1, ba −1, bét −3.', seg(UNIT_CHOICES, st.unit, (v) => v, (v) => setRule({ unit: v })));
     row('Đơn vị', '"k" = nghìn đồng, hoặc chỉ tính điểm.', seg(UNIT_LABELS, st.unitLabel, (v) => v, (v) => setRule({ unitLabel: v })));
   }
-  row('💰 Mức cược', `Nhân tiền thắng thua: 1 phần = ${(st.debt ? st.unit : 10) * (st.stake || 1)} ${st.debt ? st.unitLabel : 'xu'}.`, seg(STAKE_CHOICES, st.stake || 1, (v) => '×' + v, (v) => setRule({ stake: v })));
+  if (state.game !== 'spin') row('💰 Mức cược', `Nhân tiền thắng thua: 1 phần = ${(st.debt ? st.unit : 10) * (st.stake || 1)} ${st.debt ? st.unitLabel : 'xu'}.`, seg(STAKE_CHOICES, st.stake || 1, (v) => '×' + v, (v) => setRule({ stake: v })));
   if ((state.game || 'tienlen') === 'tienlen') RULES.forEach((r) => row(r.name, r.desc, sw(r.key, st[r.key])));
   else row(`${GAMES[state.game].icon} Luật ${GAMES[state.game].name}`, GAME_RULE_TEXT[state.game], document.createElement('span'));
   if (state.game === 'caro') row('🚧 Chặn 2 đầu không tính', 'Hàng 5 quân bị quân đối thủ chặn cả 2 đầu thì không thắng (luật Việt Nam).', sw('caroBlock', st.caroBlock));
@@ -1274,7 +1283,7 @@ initLobby();
 showLobby();
 
 // ---------- Báo có bản mới ----------
-const APP_VERSION = '20261128-1051';
+const APP_VERSION = '20261128-1119';
 document.querySelectorAll('.lobby-card').forEach((c) => { const v = document.createElement('div'); v.className = 'app-ver'; v.textContent = 'Phiên bản ' + APP_VERSION; c.appendChild(v); });
 async function checkUpdate() {
   try {
