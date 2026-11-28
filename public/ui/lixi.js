@@ -1,6 +1,6 @@
 // Giao diện 🧧 Bao Lì Xì May Mắn: chủ phòng chọn tổng tiền + số bao, mọi người chạm giành bao.
 import { avaHTML } from '../ava.js';
-import { fmtK } from '../game/lixi.js';
+import { fmtK, XAM } from '../game/lixi.js';
 
 let draft = null; // {total, count} chủ phòng đang chỉnh
 const fmt = (v, lx) => (lx.mode === 'tien' ? fmtK(v) : `${v} xu`);
@@ -39,6 +39,16 @@ export function render(s, prev, ctx) {
     d.querySelector('.nm').textContent = p.name;
     pl.appendChild(d);
   });
+
+  // 🎋 Xin xăm: ai cũng xin được, mỗi vòng 1 quẻ
+  if (me >= 0) {
+    const xb = document.createElement('button');
+    const mineX = lx.xam && lx.xam[me];
+    xb.className = 'lx-xam-btn' + (mineX != null ? ' done' : '');
+    xb.innerHTML = mineX != null ? `🎋 Quẻ của bạn: <b>${XAM[mineX][0]}</b>` : '🎋 Xin xăm đầu năm';
+    xb.onclick = () => { ctx.sfx.pop(); if (mineX != null) showXam(mineX, ctx); else ctx.socket.emit('act', { a: 'xam' }); };
+    pl.after(xb);
+  }
 
   if (lx.phase === 'setup') {
     if (!isHost) board.querySelector('.lx-cap').textContent = `${giver ? giver.name : 'Chủ phòng'} đang chuẩn bị lì xì…`;
@@ -130,6 +140,22 @@ export function render(s, prev, ctx) {
   }
 }
 
+function showXam(n, ctx, shake = false) {
+  document.querySelector('.xam-ov')?.remove();
+  const [rank, topic, text] = XAM[n];
+  const ov = document.createElement('div');
+  ov.className = 'xam-ov' + (shake ? ' shaking' : '');
+  ov.innerHTML = `<div class="xam-tube"><i></i><i></i><i></i><i></i><i></i><span class="xam-stick"></span></div>
+    <div class="xam-card"><div class="xam-no">Quẻ số ${n + 1}</div><div class="xam-rank">${rank}</div><div class="xam-topic">${topic}</div><div class="xam-text"></div><div class="xam-close">Chạm để đóng</div></div>`;
+  ov.querySelector('.xam-text').textContent = text;
+  ov.onclick = () => ov.remove();
+  document.body.appendChild(ov);
+  if (shake) {
+    [0, 250, 500, 750].forEach((t) => setTimeout(() => ctx.sfx.diceShake(), t));
+    setTimeout(() => { ov.classList.remove('shaking'); ov.classList.add('open'); ctx.sfx.bigCombo(); ctx.confetti(); }, 1300);
+  } else ov.classList.add('open');
+}
+
 export function tick(s, ctx) {
   const el = document.querySelector('.lx-left');
   if (el && s.lx && s.lx.phase === 'open') el.textContent = Math.max(0, Math.ceil((s.deadline - ctx.now()) / 1000));
@@ -142,6 +168,10 @@ export function onEvent(ev, ctx) {
     ctx.sfx.coin();
     if (ev.seat === ctx.mySeat()) { ctx.bigText(`+${ev.txt || ev.amt} 🧧`, true); ctx.confetti(); }
     else ctx.sysChat(`${ctx.nameOf(ev.seat)} giành được 1 bao 🧧`);
+  }
+  if (ev.what === 'xam') {
+    if (ev.seat === ctx.mySeat()) showXam(ev.n, ctx, true);
+    else ctx.sysChat(`🎋 ${ctx.nameOf(ev.seat)} xin được quẻ ${XAM[ev.n][0]} · ${XAM[ev.n][1]}`);
   }
   if (ev.what === 'reveal' && ev.king != null) {
     setTimeout(() => { ctx.bigText(`👑 ${ctx.nameOf(ev.king)}`, true); ctx.toast("Trúng bao to nhất! 🧧"); ctx.sfx.win(); ctx.confetti(); }, 300);

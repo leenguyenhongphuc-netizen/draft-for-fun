@@ -265,3 +265,59 @@ test('lì xì: chia đủ tổng, mỗi người 1 bao, tổng tiền bằng 0',
   assert.ok(r.ledger.games.length === 1 && r.ledger.games[0].label === 'k');
   r.destroy();
 });
+
+import { DuoiHinhRoom, PUZZLES, isRight, maskAnswer } from '../public/game/duoihinh.js';
+import { DuaThuRoom, makeRace, progressAt, ANIMALS } from '../public/game/duathu.js';
+
+test('đuổi hình bắt chữ: so đáp án không dấu, gợi ý, chấm điểm', () => {
+  const p = ['🐟 ➡️ 🐉', 'cá chép hoá rồng', 'Thành ngữ'];
+  assert.ok(isRight('Cá chép hóa rồng', p));
+  assert.ok(isRight('ca chep hoa rong', p));
+  assert.ok(!isRight('cá chép', p));
+  assert.equal(maskAnswer('lì xì', 0, [0, 1, 3, 4]), '__ __');
+  assert.ok(PUZZLES.every((x) => x[0] && x[1] && x[2]));
+  const r = new DuoiHinhRoom({ code: 'D', name: 'd', theme: 'candy', isPublic: false, hooks: hooks() });
+  r.join({ id: 'host', name: 'H', avatar: '🐱' }); r.join({ id: 'b', name: 'B', avatar: '🐶' });
+  r.start(); r.destroy();
+  const ans = PUZZLES[r.g.list[0]][1];
+  r.action(1, { a: 'guess', text: 'sai bét' });
+  assert.equal(r.g.feed[0].ok, false);
+  r.action(1, { a: 'guess', text: ans }); r.action(0, { a: 'guess', text: ans });
+  assert.equal(r.g.score.b, 6); assert.equal(r.g.score.host, 5); // người đầu +5 (+1 chưa gợi ý), người sau +4 (+1)
+  r.destroy();
+  while (r.state === 'playing') { r.reveal(); r.destroy(); r.next(); r.destroy(); }
+  assert.equal(r.state, 'ended');
+  assert.equal(r.results[0].seat, 1);
+});
+
+test('đua thú: đường chạy hợp lệ, chọn thú, người có thú về trước ăn hũ', () => {
+  const race = makeRace(ANIMALS.length);
+  race.forEach((x) => { assert.equal(progressAt(x, 0), 0); assert.equal(progressAt(x, x.T), 1); assert.ok(progressAt(x, x.T / 2) > 0 && progressAt(x, x.T / 2) < 1); });
+  for (let k = 0; k < 10; k++) {
+    const r = new DuaThuRoom({ code: 'R', name: 'r', theme: 'candy', isPublic: false, hooks: hooks() });
+    r.join({ id: 'host', name: 'H', avatar: '🐱' }); r.addBot(); r.addBot();
+    r.start(); r.destroy();
+    assert.equal(r.action(0, { a: 'pick', i: 3 }), null);
+    assert.ok(r.action(1, { a: 'pick', i: 3 }));              // con này có người chọn rồi
+    r.go(); r.destroy();
+    assert.equal(Object.keys(r.g.pick).length, 3);
+    r.settle();
+    assert.equal(r.state, 'ended');
+    const sum = r.results.reduce((a, x) => a + x.delta, 0);
+    assert.ok(Math.abs(sum) < 0.01);
+    const best = r.results.find((x) => x.rank === 1);
+    const firstOwned = r.g.order.find((i) => Object.values(r.g.pick).includes(i));
+    assert.equal(r.g.pick[best.seat], firstOwned);
+    assert.equal(best.parts, 2);
+  }
+});
+
+test('lì xì: xin xăm mỗi vòng 1 quẻ', () => {
+  const r = new LiXiRoom({ code: 'X', name: 'x', theme: 'candy', isPublic: false, hooks: hooks() });
+  r.join({ id: 'host', name: 'H', avatar: '🐱' }); r.addBot();
+  r.start();
+  assert.equal(r.action(1, { a: 'xam' }), null);
+  assert.ok(r.action(1, { a: 'xam' }));
+  assert.ok(r.viewFor('host').lx.xam[1] != null);
+  r.destroy();
+});

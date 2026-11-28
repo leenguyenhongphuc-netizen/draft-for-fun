@@ -12,6 +12,30 @@ export const TOTAL_XU = [100, 200, 500, 1000, 2000];
 export const STEPS_K = [1, 5, 10, 20, 50];
 export const TOTAL_MUL = [10, 20, 50, 100]; // tổng gợi ý = mệnh giá × …
 
+// 🎋 Xin xăm đầu năm: quẻ nào cũng tốt lành, chỉ để vui
+export const XAM = [
+  ['Đại cát', 'Tài lộc', 'Năm nay tiền vào như nước, nhớ mở ví cho rộng 💰'],
+  ['Đại cát', 'Sức khoẻ', 'Ăn ngon ngủ kỹ, khoẻ như voi con 🐘'],
+  ['Đại cát', 'Gia đạo', 'Nhà cửa êm ấm, cả nhà cười nhiều hơn năm ngoái 🏡'],
+  ['Đại cát', 'Học hành', 'Học đâu nhớ đó, thi đâu trúng đó 📚'],
+  ['Đại cát', 'Công việc', 'Việc thuận buồm xuôi gió, sếp khen liên tục 🚀'],
+  ['Thượng cát', 'May mắn', 'Ra đường gặp toàn người tốt, đèn xanh suốt đường 🚦'],
+  ['Thượng cát', 'Tài lộc', 'Có lộc bất ngờ giữa năm, nhớ khao cả nhà 🧧'],
+  ['Thượng cát', 'Bạn bè', 'Bạn bè quý mến, đi đâu cũng có người rủ ăn 🍜'],
+  ['Thượng cát', 'Sức khoẻ', 'Năm nay chăm vận động, dáng đẹp da hồng ✨'],
+  ['Thượng cát', 'Du lịch', 'Có chuyến đi chơi xa thật vui cùng người thương 🧳'],
+  ['Trung cát', 'Học hành', 'Chịu khó một chút là tiến bộ vượt bậc 📈'],
+  ['Trung cát', 'Tài lộc', 'Tiêu ít lại một chút, cuối năm sẽ dư dả 🐷'],
+  ['Trung cát', 'Công việc', 'Đầu năm hơi bận, cuối năm hái quả ngọt 🍊'],
+  ['Trung cát', 'Gia đạo', 'Gọi điện cho ông bà nhiều hơn, phúc đức đầy nhà 📞'],
+  ['Trung cát', 'May mắn', 'Thử món mới, đi đường mới, gặp điều hay mới 🌱'],
+  ['Tiểu cát', 'Sức khoẻ', 'Bớt thức khuya là năm nay hoàn hảo 😴'],
+  ['Tiểu cát', 'Tài lộc', 'Lộc nhỏ mà đều, như mưa xuân thấm đất 🌧️'],
+  ['Tiểu cát', 'Bạn bè', 'Một người bạn cũ sẽ hẹn gặp lại, nhớ đi nha 🤝'],
+  ['Tiểu cát', 'Niềm vui', 'Cười nhiều lên, vận may tự tìm tới 😆'],
+  ['Tiểu cát', 'Gia đạo', 'Phụ việc nhà nhiều hơn, được cả nhà thương thêm 🧹'],
+];
+
 /** 1500 -> "1,5tr", 200 -> "200k" */
 export function fmtK(v) { return v >= 1000 ? `${(v / 1000).toLocaleString('vi-VN', { maximumFractionDigits: 3 })}tr` : `${v}k`; }
 
@@ -139,6 +163,15 @@ export class LiXiRoom extends BaseRoom {
       this.hooks.emitState(this);
       return null;
     }
+    if (p.a === 'xam') {
+      const xam = (g.xam ||= {});
+      if (xam[s] && xam[s].round === g.round) return 'Mỗi vòng xin 1 quẻ thôi nha 🎋';
+      const n = Math.floor(Math.random() * XAM.length);
+      xam[s] = { n, round: g.round };
+      this.hooks.emitEvent(this, { kind: 'lx', what: 'xam', seat: s, n });
+      this.hooks.emitState(this);
+      return null;
+    }
     if (p.a === 'again') {
       if (!isHost || g.phase !== 'done') return null;
       g.phase = 'setup'; g.envs = []; g.king = null; g.rows = null;
@@ -182,6 +215,7 @@ export class LiXiRoom extends BaseRoom {
       mode: g.mode, step: g.step, steps: STEPS_K, presets: this.presets(), hostCoins: this.isTien() ? null : this.hostCoins(), king: g.king, rows: g.rows,
       envs: g.envs.map((e) => ({ seat: e.seat, amt: showAll || e.seat != null ? e.amt : null })),
       mine: g.envs.findIndex((e) => e.seat === me && me >= 0),
+      xam: Object.fromEntries(Object.entries(g.xam || {}).filter(([, x]) => x.round === g.round).map(([k, x]) => [k, x.n])),
     };
     v.seats.forEach((p, s) => { if (p) p.status = s === v.lx.giver ? { cls: 'r1', text: '🧧 Người phát' } : null; });
     return v;
