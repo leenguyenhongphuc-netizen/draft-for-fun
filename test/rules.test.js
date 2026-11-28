@@ -132,6 +132,7 @@ test('tiến lên 3 người: nhì được +1 (mặc định), tổng bằng 0'
 test('chặt chồng: đè 3 đôi thông bằng 3 đôi thông lớn hơn, người bị chặt cuối trả hết', () => {
   const room = new Room({ code: 'CC', name: 't', theme: 'candy', isPublic: false, hooks: { emitState() {}, emitEvent() {}, getCoins: () => 1000, addCoins() {} } });
   for (let i = 0; i < 3; i++) room.addBot();
+  room.setSettings({ instantWin: false });
   room.start(); room.destroy();
   const g = room.game;
   // A (0) đánh heo cơ (2 phần), B (1) chặt bằng 3 đôi thông 3-4-5, A chặt lại bằng 3 đôi thông 6-7-8
@@ -151,7 +152,7 @@ test('chặt chồng: đè 3 đôi thông bằng 3 đôi thông lớn hơn, ngư
 test('cóng: có người về nhất thì ai còn nguyên 13 lá bị cóng ngay, thua gấp đôi', () => {
   const room = new Room({ code: 'CG', name: 't', theme: 'candy', isPublic: false, hooks: { emitState() {}, emitEvent() {}, getCoins: () => 1000, addCoins() {} } });
   for (let i = 0; i < 3; i++) room.addBot();
-  room.setSettings({ penalty: false, chopPay: false });
+  room.setSettings({ penalty: false, chopPay: false, instantWin: false });
   room.start(); room.destroy();
   const g = room.game;
   g.hands[0] = [c(0, 0), c(1, 0), c(2, 0)];                // sắp về
