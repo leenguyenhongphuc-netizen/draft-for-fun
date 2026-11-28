@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server/index.js",
     "test": "node --test test/*.test.js",
-    "vendor": "cp node_modules/three/build/three.module.min.js public/vendor/ && echo \"export { createClient } from '@supabase/supabase-js';\" > .sb.mjs && esbuild .sb.mjs --bundle --format=esm --minify --platform=browser --outfile=public/vendor/supabase.js && rm .sb.mjs"
+    "vendor": "cp node_modules/three/build/three.module.min.js public/vendor/ && echo \"export { createClient } from '@supabase/supabase-js';\" > .sb.mjs && esbuild .sb.mjs --bundle --format=esm --minify --platform=browser --outfile=public/vendor/supabase.js && rm .sb.mjs",
+    "bump": "node scripts/bump-version.mjs"
   },
   "engines": {
     "node": ">=18"

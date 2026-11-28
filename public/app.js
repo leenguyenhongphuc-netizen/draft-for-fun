@@ -1166,4 +1166,23 @@ function sysChat(text) {
 
 initLobby();
 showLobby();
+
+// ---------- Báo có bản mới ----------
+const APP_VERSION = '20261128-0456';
+document.querySelectorAll('.lobby-card').forEach((c) => { const v = document.createElement('div'); v.className = 'app-ver'; v.textContent = 'Phiên bản ' + APP_VERSION; c.appendChild(v); });
+async function checkUpdate() {
+  try {
+    const r = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
+    const { v } = await r.json();
+    if (v && v !== APP_VERSION && !document.querySelector('.update-bar')) {
+      const b = document.createElement('button');
+      b.className = 'update-bar';
+      b.textContent = state && state.hostId === playerId ? '🆕 Có bản mới · hết ván rồi chạm để tải lại (phòng vẫn giữ nguyên)' : '🆕 Có bản mới · chạm để tải lại';
+      b.onclick = () => location.reload();
+      document.body.appendChild(b);
+    }
+  } catch { /* không có mạng thì thôi */ }
+}
+setInterval(checkUpdate, 90000);
+setTimeout(checkUpdate, 5000);
 socket.emit('hello', { name: myName || randomName(), avatar: myAvatar, acc: myAcc });
