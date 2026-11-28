@@ -128,3 +128,22 @@ test('tiến lên 3 người: nhì được +1 (mặc định), tổng bằng 0'
   }
   room.destroy();
 });
+
+test('chặt chồng: đè 3 đôi thông bằng 3 đôi thông lớn hơn, người bị chặt cuối trả hết', () => {
+  const room = new Room({ code: 'CC', name: 't', theme: 'candy', isPublic: false, hooks: { emitState() {}, emitEvent() {}, getCoins: () => 1000, addCoins() {} } });
+  for (let i = 0; i < 3; i++) room.addBot();
+  room.start(); room.destroy();
+  const g = room.game;
+  // A (0) đánh heo cơ (2 phần), B (1) chặt bằng 3 đôi thông 3-4-5, A chặt lại bằng 3 đôi thông 6-7-8
+  g.hands[0] = [c(12, 3), c(3, 0), c(3, 1), c(4, 0), c(4, 1), c(5, 0), c(5, 1), c(10, 0)];
+  g.hands[1] = [c(0, 0), c(0, 1), c(1, 0), c(1, 1), c(2, 0), c(2, 1), c(9, 0)];
+  g.hands[2] = [c(8, 0), c(8, 1)];
+  g.turn = 0; g.lastPlay = null; g.passed = new Set(); g.startCard = null;
+  assert.equal(room.play(0, [c(12, 3)]), null);
+  room.destroy(); g.turn = 1;
+  assert.equal(room.play(1, [c(0, 0), c(0, 1), c(1, 0), c(1, 1), c(2, 0), c(2, 1)]), null);
+  room.destroy(); g.turn = 0;
+  assert.equal(room.play(0, [c(3, 0), c(3, 1), c(4, 0), c(4, 1), c(5, 0), c(5, 1)]), null);
+  room.destroy();
+  assert.deepEqual(g.chops.map((x) => [x.from, x.to, x.parts]), [[1, 0, 5]]);
+});

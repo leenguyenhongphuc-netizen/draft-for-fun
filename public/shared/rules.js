@@ -65,9 +65,12 @@ export function getCombo(cards) {
 }
 
 /** Có phải là "chặt" (bộ đặc biệt đè heo / hàng) không. */
+const isBomb = (c) => c.type === 'quad' || c.type === 'pairseq';
+/** Có phải "chặt" không: đè heo bằng hàng, hoặc đè hàng bằng hàng (kể cả hàng cùng loại lớn hơn). */
 export function isChop(prev, cur) {
-  if (!prev || !cur) return false;
-  return prev.type !== cur.type && canBeat(prev, cur);
+  if (!prev || !cur || !canBeat(prev, cur)) return false;
+  if (isBomb(prev)) return isBomb(cur);
+  return rankOf(prev.top) === TWO && isBomb(cur);
 }
 
 /** cur có đè được prev không. prev null = được đánh tự do. */

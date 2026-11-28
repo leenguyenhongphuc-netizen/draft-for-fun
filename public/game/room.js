@@ -257,7 +257,14 @@ export class Room {
     if (chop) {
       // Chặt chồng: cộng dồn giá trị lần chặt trước
       chopParts = chopValue(prev) + (g.lastPlay.chopParts || 0);
-      if (this.settings.chopPay) g.chops.push({ from: g.lastPlay.seat, to: seat, parts: chopParts, label: comboName(prev) });
+      if (this.settings.chopPay) {
+        // Chặt chồng: huỷ khoản chặt trước, người bị chặt sau cùng trả hết phần cộng dồn
+        if (g.lastPlay.chopParts) {
+          const k = g.chops.map((c) => c.to).lastIndexOf(g.lastPlay.seat);
+          if (k >= 0) g.chops.splice(k, 1);
+        }
+        g.chops.push({ from: g.lastPlay.seat, to: seat, parts: chopParts, label: comboName(prev) });
+      }
     }
     g.hands[seat] = hand.filter((c) => !cards.includes(c));
     const victim = chop ? g.lastPlay.seat : null;
