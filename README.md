@@ -1,6 +1,6 @@
 # 🐷 Game nhà Pum
 
-Cổng 6 game chơi online cùng gia đình, bạn bè: **Tiến Lên Miền Nam**, **Xì Dách**, **Bài Cào**, **Cờ Cá Ngựa**, **Cờ Tỷ Phú Việt Nam**, **Lô Tô**, giao diện pastel dễ thương, có **phòng chơi 3D** (Three.js) với bàn tròn, ghế đệm, nhân vật thú bông, bóng bay, đèn nháy, kệ sách, mèo ngủ, cửa sổ có mây/trăng…
+Cổng 8 game chơi online cùng gia đình, bạn bè: **Tiến Lên Miền Nam**, **Xì Dách**, **Bài Cào**, **Cờ Cá Ngựa**, **Cờ Tỷ Phú Việt Nam**, **Lô Tô**, **Poker**, **Cờ Caro**, giao diện pastel dễ thương, có **phòng chơi 3D** (Three.js) với bàn tròn, ghế đệm, nhân vật thú bông, bóng bay, đèn nháy, kệ sách, mèo ngủ, cửa sổ có mây/trăng…
 
 ## Các trò chơi
 | | Trò chơi | Cách chơi |
@@ -11,6 +11,8 @@ Cổng 6 game chơi online cùng gia đình, bạn bè: **Tiến Lên Miền Nam
 | 🐴 | **Cờ Cá Ngựa** | Gieo 1 hoặc 6 ra quân và được gieo thêm, đá ngựa đối thủ về chuồng, vào đích phải đúng số. |
 | 🏙️ | **Cờ Tỷ Phú Việt Nam** | 28 ô từ Cà Mau tới Hà Nội, mua đất, xây nhà/khách sạn, Cơ hội & Khí vận lì xì Tết, vào tù, phá sản. 15 vòng, ai giàu nhất thắng. |
 | 🎪 | **Lô Tô hội chợ** | Sân khấu xổ liên tục: mở bán vé → lồng cầu quay, MC hò số (có đọc thành tiếng) → ai đủ 5 số một hàng là KINH. Tới 10 người, vào lúc nào cũng được. |
+| ♠️ | **Poker (Texas Hold'em)** | 2 lá tẩy + 5 lá chung, mỗi ván 100 chip, mù 1/2, Bỏ/Xem/Theo/Tố/All-in, chia pot phụ khi all-in. 10 chip = 1 phần. |
+| ⭕ | **Cờ Caro** | 2 người, bàn 15×15, 5 quân liền thắng; tuỳ chọn luật chặn 2 đầu không tính. |
 
 Tất cả đều có: phòng chơi (2–4 người, Lô Tô tới 10), bot, chế độ ghi nợ, chat/emoji, 9 kiểu phòng 3D.
 
@@ -53,7 +55,7 @@ Thử nhiều người trên 1 máy không cần mạng: mở nhiều tab `http:
 public/shared/rules.js  Luật chơi
 public/game/room.js     Tiến Lên: chia bài, lượt, vòng, chặt, kết quả
 public/game/base.js     Khung chung cho các game mới (ghế, bot, sổ nợ, hẹn giờ)
-public/game/xidach.js, baicao.js, cangua.js, typhu.js, loto.js   Luật từng game
+public/game/xidach.js, baicao.js, cangua.js, typhu.js, loto.js, poker.js, caro.js   Luật từng game
 public/ui/              Giao diện riêng từng game mới
 public/game/bot.js      AI bot
 public/net.js           Kết nối online (Supabase Realtime / thử nhiều tab)

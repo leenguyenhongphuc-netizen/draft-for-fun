@@ -209,6 +209,7 @@ export const DEFAULT_SETTINGS = {
   instantWin: true,   // Tới trắng
   turnSec: 25,        // Thời gian mỗi lượt
   pts3: '2,1,-3',     // Cách tính khi chơi 3 người: nhất, nhì, bét
+  caroBlock: true,    // Caro: bị chặn 2 đầu thì không thắng
   debt: false,        // Chế độ ghi nợ
   unit: 1,            // 1 phần = bao nhiêu (điểm / nghìn)
   unitLabel: 'điểm',

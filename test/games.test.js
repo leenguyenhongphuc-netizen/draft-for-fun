@@ -107,3 +107,49 @@ test('lô tô: một vòng có người kinh, tiền vé chia đúng (tổng b�
   assert.ok(Math.abs(sum) < 0.01);
   } finally { r.destroy(); }
 });
+
+import { PokerRoom, bestHand, cmpHand } from '../public/game/poker.js';
+import { CaroRoom, winLine, N as CN } from '../public/game/caro.js';
+
+test('poker: so bài', () => {
+  // c(r,s): r 0='3'…11='A',12='2'
+  const royal = bestHand([c(7, 3), c(8, 3), c(9, 3), c(10, 3), c(11, 3), c(0, 0), c(1, 1)]);
+  assert.equal(royal.score[0], 8);
+  const wheel = bestHand([c(11, 0), c(12, 1), c(0, 2), c(1, 3), c(2, 0), c(9, 1), c(8, 2)]);
+  assert.deepEqual(wheel.score, [4, 5]);
+  const full = bestHand([c(5, 0), c(5, 1), c(5, 2), c(9, 0), c(9, 1), c(0, 3), c(2, 2)]);
+  assert.equal(full.score[0], 6);
+  const twoPair = bestHand([c(5, 0), c(5, 1), c(9, 2), c(9, 0), c(11, 1), c(0, 3), c(2, 2)]);
+  assert.ok(cmpHand(full.score, twoPair.score) > 0);
+});
+
+test('poker: bot chơi 60 ván, tổng chip luôn bằng 0', async () => {
+  await playOut(PokerRoom, 60, (r) => {
+    const g = r.g;
+    if (g.turn == null) { r.clearTimer('turn'); r.finishHand(); return; }
+    r.botMove(g.turn);
+  });
+});
+
+test('caro: 5 quân thắng, bị chặn 2 đầu thì không', () => {
+  const b = new Array(CN * CN).fill(0);
+  for (let x = 3; x < 8; x++) b[7 * CN + x] = 1;
+  assert.ok(winLine(b, 5, 7, true));
+  b[7 * CN + 2] = 2; b[7 * CN + 8] = 2;
+  assert.equal(winLine(b, 5, 7, true), null);
+  assert.ok(winLine(b, 5, 7, false));
+});
+
+test('caro: 2 bot đánh tới khi có kết quả', async () => {
+  const r = new CaroRoom({ code: 'C', name: 'c', theme: 'candy', isPublic: false, hooks: hooks() });
+  r.addBot(); r.addBot();
+  assert.equal(r.seats.length, 2);
+  for (let k = 0; k < 5; k++) {
+    r.start();
+    let guard = 0;
+    while (r.state === 'playing' && guard++ < 300) r.botMove(r.g.turn);
+    assert.equal(r.state, 'ended');
+    assert.equal(r.results.reduce((a, x) => a + x.delta, 0), 0);
+  }
+  r.destroy();
+});

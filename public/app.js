@@ -12,6 +12,8 @@ import * as uiBaiCao from './ui/baicao.js';
 import * as uiCaNgua from './ui/cangua.js';
 import * as uiTyPhu from './ui/typhu.js';
 import * as uiLoTo from './ui/loto.js';
+import * as uiPoker from './ui/poker.js';
+import * as uiCaro from './ui/caro.js';
 
 const GAMES = {
   tienlen: { icon: '🃏', name: 'Tiến Lên', desc: 'Miền Nam · 2–4 người', ui: null },
@@ -20,6 +22,8 @@ const GAMES = {
   cangua: { icon: '🐴', name: 'Cá Ngựa', desc: 'Gieo xúc xắc · 2–4 người', ui: uiCaNgua },
   typhu: { icon: '🏙️', name: 'Tỷ Phú', desc: 'Bản đồ Việt Nam · 2–4 người', ui: uiTyPhu },
   loto: { icon: '🎪', name: 'Lô Tô', desc: 'Sân khấu hội chợ · tới 10 người', ui: uiLoTo },
+  poker: { icon: '♠️', name: 'Poker', desc: "Texas Hold'em · 2–4 người", ui: uiPoker },
+  caro: { icon: '⭕', name: 'Cờ Caro', desc: '5 quân liền · 2 người', ui: uiCaro },
 };
 
 const $ = (s) => document.querySelector(s);
@@ -108,12 +112,14 @@ const HOWTO = {
   baicao: ['Mỗi người 3 lá, chạm từng lá để nặn.', 'Điểm = hàng đơn vị của tổng (10/J/Q/K = 0). Ba tây lớn nhất.', 'Người cao nhất ăn hết.'],
   cangua: ['Gieo 1 hoặc 6 thì ra quân, ra 1 hoặc 6 được gieo thêm.', 'Đi trúng ngựa đối thủ thì đá về chuồng.', 'Vào đích phải đúng số. Ai về đủ 4 ngựa trước thắng.'],
   typhu: ['Gieo 2 xúc xắc, mua tỉnh thành, xây nhà, thu tiền thuê.', 'Đủ cặp tỉnh cùng màu thì tiền thuê gấp đôi. Gieo đôi đi thêm.', 'Hết 15 vòng ai giàu nhất thắng, hết tiền là phá sản.'],
+  poker: ['Mỗi ván mỗi người cầm 100 chip, mù 1/2. Nhận 2 lá tẩy + 5 lá chung.', 'Bỏ bài, Xem, Theo, Tố hoặc All-in. Ai còn bài mạnh nhất (5 lá tốt nhất) ăn pot.', 'Mạnh dần: mậu thầu < đôi < thú < sám < sảnh < thùng < cù lũ < tứ quý < thùng phá sảnh. 10 chip = 1 phần.'],
+  caro: ['2 người, ✕ đi trước (đổi lượt mỗi ván).', 'Ai có 5 quân liên tiếp ngang, dọc hoặc chéo là thắng.', 'Luật Việt Nam: bị chặn cả 2 đầu thì không tính (chủ phòng tắt được trong ⚙️ Luật).'],
   loto: ['Sân khấu xổ liên tục: mở bán vé → xổ số → có người KINH.', 'Mỗi vòng mua tối đa 3 vé. Hàng nào đủ 5 số là KINH!', 'Vào phòng lúc nào cũng được, chờ vòng sau mua vé.'],
 };
 
 // ---------- Cảnh riêng từng game ----------
 // Game bài dùng phòng 3D (tự đổi phòng ngẫu nhiên mỗi ván); Cá Ngựa, Tỷ Phú, Lô Tô có cảnh riêng.
-const SCENE_OF = { tienlen: 'room', xidach: 'room', baicao: 'room', cangua: 'ludo', typhu: 'typhu', loto: 'loto' };
+const SCENE_OF = { tienlen: 'room', xidach: 'room', baicao: 'room', cangua: 'ludo', typhu: 'typhu', loto: 'loto', poker: 'room', caro: 'caro' };
 let curScene = null, curGame = null;
 const d = (e, l, t, size = 38, cls = 'float', delay = 0) => `<span class="decor ${cls}" style="left:${l};top:${t};font-size:${size}px;animation-delay:${delay}s">${e}</span>`;
 const lights = (n, colors) => `<div class="lights">${Array.from({ length: n }, (_, i) => `<i style="--c:${colors[i % colors.length]};--d:${(i % 3) * 0.4}s"></i>`).join('')}</div>`;
@@ -125,6 +131,8 @@ const SCENE_DECOR = {
   typhu: d('☁️', '0', '9%', 56, 'drift') + d('☁️', '0', '24%', 40, 'drift', -12) + d('⛵', '4%', '82%', 40, 'bob') + d('🛳️', '80%', '86%', 46, 'bob', 1)
     + d('🐋', '84%', '70%', 40, 'bob', .6) + d('🏝️', '2%', '66%', 42, 'float', 1.4) + d('🐬', '44%', '92%', 32, 'bob', .2),
   // Hội chợ đêm: dây đèn, đèn lồng, đu quay
+  // Bàn học: giấy ô li, bút chì, thước
+  caro: d('✏️', '4%', '86%', 46, 'float') + d('📏', '80%', '88%', 46, 'float', 1) + d('🧃', '4%', '10%', 36, 'bob') + d('🍬', '88%', '11%', 34, 'bob', .6) + d('⭐', '90%', '62%', 28, 'float', .3) + d('🖍️', '2%', '62%', 34, 'float', 1.4),
   loto: lights(18, ['#ffd54f', '#ff8a80', '#80d8ff', '#b9f6ca']) + d('🏮', '2%', '10%', 40, 'bob') + d('🏮', '89%', '10%', 40, 'bob', 1)
     + d('🎡', '-2%', '86%', 70, 'float') + d('🎠', '84%', '87%', 56, 'float', 1) + d('🎈', '92%', '50%', 34, 'float', .4) + d('🎈', '1%', '46%', 30, 'float', 1.3),
 };
@@ -298,7 +306,7 @@ function onState(prev, s) {
   if (gameKey !== curGame) { curGame = gameKey; resetStage(); }
   setScene(SCENE_OF[gameKey]);
   if (SCENE_OF[gameKey] === 'room') { scene3d.setTheme(s.theme); audio.setTheme(s.theme); }
-  else audio.setTheme({ cangua: 'garden', typhu: 'rainbow', loto: 'tet' }[gameKey]);
+  else audio.setTheme({ cangua: 'garden', typhu: 'rainbow', loto: 'tet', caro: 'cafe' }[gameKey]);
   if (new URLSearchParams(location.search).get('room') !== s.code) history.replaceState(null, '', pageUrl(s.code));
 
   const me = s.seats[s.mySeat];
@@ -929,6 +937,8 @@ function ruleProblem(combo) {
 const GAME_RULE_TEXT = {
   xidach: 'Xì bàn > Xì dách > Ngũ linh > điểm. Quá 21 là quắc. Người chơi đủ 16, nhà cái đủ 15 mới được dằn. Thắng thường +1 phần, thắng bằng xì bàn / xì dách / ngũ linh +2 phần. Nhà cái xoay vòng mỗi ván.',
   baicao: 'Mỗi người 3 lá, điểm = hàng đơn vị của tổng (10/J/Q/K = 0). Ba tây (3 lá J/Q/K) lớn nhất. Ai cao nhất ăn: mỗi người thua trả 1 phần.',
+  poker: "Texas Hold'em: 2 lá tẩy + 5 lá chung, mỗi ván 100 chip, mù 1/2, chia pot phụ khi all-in. Lời/lỗ: 10 chip = 1 phần.",
+  caro: 'Bàn 15×15, 5 quân liên tiếp thắng (+1 phần), thua −1 phần, hoà 0.',
   cangua: 'Gieo 1 hoặc 6 thì ra quân, ra 1 hoặc 6 được gieo thêm. Đi trúng ngựa đối thủ thì đá về chuồng. Vào đích phải đúng số. Ai về đủ 4 ngựa trước thắng.',
 };
 const RULES = [
@@ -987,6 +997,7 @@ function renderRules() {
   }
   if ((state.game || 'tienlen') === 'tienlen') RULES.forEach((r) => row(r.name, r.desc, sw(r.key, st[r.key])));
   else row(`${GAMES[state.game].icon} Luật ${GAMES[state.game].name}`, GAME_RULE_TEXT[state.game], document.createElement('span'));
+  if (state.game === 'caro') row('🚧 Chặn 2 đầu không tính', 'Hàng 5 quân bị quân đối thủ chặn cả 2 đầu thì không thắng (luật Việt Nam).', sw('caroBlock', st.caroBlock));
   if ((state.game || 'tienlen') === 'tienlen') {
     const lbl = (v) => v.split(',').map((x, i) => ['Nhất ', 'Nhì ', 'Bét '][i] + (+x > 0 ? '+' : '') + x).join(' · ');
     const r3 = row('👥 Chơi 3 người tính sao?', 'Bàn 3 người: về nhì có được phần không. Bàn 4 người luôn là +3 / +1 / −1 / −3.', seg(PTS3_CHOICES, st.pts3, lbl, (v) => setRule({ pts3: v })));
@@ -1168,7 +1179,7 @@ initLobby();
 showLobby();
 
 // ---------- Báo có bản mới ----------
-const APP_VERSION = '20261128-0456';
+const APP_VERSION = '20261128-0523';
 document.querySelectorAll('.lobby-card').forEach((c) => { const v = document.createElement('div'); v.className = 'app-ver'; v.textContent = 'Phiên bản ' + APP_VERSION; c.appendChild(v); });
 async function checkUpdate() {
   try {
