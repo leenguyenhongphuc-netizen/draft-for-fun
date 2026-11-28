@@ -51,7 +51,7 @@ test('bài cào: bot chơi 50 ván', async () => {
 test('cá ngựa: bot chơi 5 ván tới khi có người về đủ 4 ngựa', async () => {
   const r = await playOut(CaNguaRoom, 5, (room) => {
     const g = room.g;
-    if (g.phase === 'wait') { room.clearTimer('turn'); room.endTurn(g.dice === 6 && g.lastMove && g.lastMove.seat === g.turn ? true : g.dice === 6); return; }
+    if (g.phase === 'wait') { room.clearTimer('turn'); room.endTurn(g.dice === 6 || g.dice === 1); return; }
     room.autoMove(g.turn);
   });
   assert.ok(r.g.horses.some((hs) => hs.every((x) => x === FINISH)));

@@ -204,8 +204,10 @@ export function onEvent(ev, ctx) {
   const { sfx } = ctx;
   if (ev.what === 'roll') {
     lastDice = ev.d;
-    rollingUntil = Date.now() + 1200;
+    rollingUntil = Date.now() + 5000; // khoá tới khi xúc xắc dừng hẳn (mở ở .then)
     rollDice(document.querySelector('#diceTray'), ev.d, { onBounce: (i) => sfx.diceHit(i) }).then(() => {
+      rollingUntil = 0;
+      ctx.rerender();
       if (ev.d[0] === ev.d[1]) { ctx.toast('Gieo đôi! Được gieo thêm 🎲'); sfx.bigCombo(); }
     });
   }

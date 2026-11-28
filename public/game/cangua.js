@@ -1,5 +1,5 @@
 // 🐴 CỜ CÁ NGỰA
-// - Mỗi người 4 ngựa trong chuồng. Gieo được 6 mới ra quân. Gieo 6 được gieo thêm lượt nữa.
+// - Mỗi người 4 ngựa trong chuồng. Gieo được 1 hoặc 6 thì ra quân. Gieo 1 hoặc 6 được gieo thêm lượt nữa.
 // - Đường đua 52 ô, mỗi màu xuất phát cách nhau 13 ô. Đi hết 50 ô thì rẽ vào 6 ô về đích (phải đúng số mới vào đích).
 // - Đi trúng ô có ngựa đối thủ thì "đá" ngựa đó về chuồng (trừ khi nó đang đứng ở cửa nhà của chính nó).
 // - Không được đứng chồng lên ngựa của mình. Ai đưa đủ 4 ngựa về đích trước thì thắng.
@@ -50,7 +50,7 @@ export class CaNguaRoom extends BaseRoom {
     const out = [];
     hs.forEach((step, h) => {
       let to;
-      if (step === -1) { if (d !== 6) return; to = 0; }
+      if (step === -1) { if (d !== 6 && d !== 1) return; to = 0; }
       else if (step === FINISH) return;
       else { to = step + d; if (to > FINISH) return; }
       // không chồng lên ngựa nhà
@@ -101,13 +101,13 @@ export class CaNguaRoom extends BaseRoom {
       if (g.phase !== 'roll') return 'Chọn ngựa để đi nha';
       const d = 1 + Math.floor(Math.random() * 6);
       g.dice = d;
-      g.sixes = d === 6 ? g.sixes + 1 : 0;
+      g.sixes = d === 6 || d === 1 ? g.sixes + 1 : 0;
       g.movable = this.movesFor(seat, d);
       this.hooks.emitEvent(this, { kind: 'cn', what: 'roll', seat, d });
       if (!g.movable.length) {
         g.phase = 'wait';
         this.hooks.emitState(this);
-        this.setTimer('turn', 2000, () => this.endTurn(d === 6));
+        this.setTimer('turn', 2000, () => this.endTurn(d === 6 || d === 1));
         return null;
       }
       g.phase = 'move';
@@ -142,7 +142,7 @@ export class CaNguaRoom extends BaseRoom {
       this.hooks.emitState(this);
       // Chờ ngựa đi từng ô xong rồi mới qua lượt
       const steps = from === -1 ? 1 : to - from;
-      this.setTimer('turn', 350 + steps * 170 + (kicks.length ? 500 : 0), () => this.endTurn(g.dice === 6));
+      this.setTimer('turn', 350 + steps * 170 + (kicks.length ? 500 : 0), () => this.endTurn(g.dice === 6 || g.dice === 1));
       return null;
     }
     return 'Không hiểu thao tác';

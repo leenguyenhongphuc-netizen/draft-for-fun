@@ -106,7 +106,7 @@ const HOWTO = {
   tienlen: ['Bài từ nhỏ tới lớn: 3 → … → A → 2. Chất ♠ < ♣ < ♦ < ♥.', 'Đánh cùng loại, cùng số lá và lớn hơn. Bỏ lượt thì chờ vòng mới.', 'Chặt heo bằng 3 đôi thông / tứ quý; tới trắng; cóng; thối heo.', 'Chủ phòng chỉnh thêm luật (cấm về heo…) trong ⚙️ Luật.'],
   xidach: ['Xì bàn > Xì dách > Ngũ linh > điểm. Quá 21 là quắc (bí mật, không ai biết).', 'Người chơi đủ 16 nút, nhà cái đủ 15 nút mới được dằn.', 'Nhà cái xoay vòng mỗi ván.'],
   baicao: ['Mỗi người 3 lá, chạm từng lá để nặn.', 'Điểm = hàng đơn vị của tổng (10/J/Q/K = 0). Ba tây lớn nhất.', 'Người cao nhất ăn hết.'],
-  cangua: ['Gieo 6 mới ra quân, ra 6 được gieo thêm.', 'Đi trúng ngựa đối thủ thì đá về chuồng.', 'Vào đích phải đúng số. Ai về đủ 4 ngựa trước thắng.'],
+  cangua: ['Gieo 1 hoặc 6 thì ra quân, ra 1 hoặc 6 được gieo thêm.', 'Đi trúng ngựa đối thủ thì đá về chuồng.', 'Vào đích phải đúng số. Ai về đủ 4 ngựa trước thắng.'],
   typhu: ['Gieo 2 xúc xắc, mua tỉnh thành, xây nhà, thu tiền thuê.', 'Đủ cặp tỉnh cùng màu thì tiền thuê gấp đôi. Gieo đôi đi thêm.', 'Hết 15 vòng ai giàu nhất thắng, hết tiền là phá sản.'],
   loto: ['Sân khấu xổ liên tục: mở bán vé → xổ số → có người KINH.', 'Mỗi vòng mua tối đa 3 vé. Hàng nào đủ 5 số là KINH!', 'Vào phòng lúc nào cũng được, chờ vòng sau mua vé.'],
 };
@@ -868,7 +868,7 @@ function ruleProblem(combo) {
 const GAME_RULE_TEXT = {
   xidach: 'Xì bàn > Xì dách > Ngũ linh > điểm. Quá 21 là quắc. Người chơi đủ 16, nhà cái đủ 15 mới được dằn. Thắng thường +1 phần, thắng bằng xì bàn / xì dách / ngũ linh +2 phần. Nhà cái xoay vòng mỗi ván.',
   baicao: 'Mỗi người 3 lá, điểm = hàng đơn vị của tổng (10/J/Q/K = 0). Ba tây (3 lá J/Q/K) lớn nhất. Ai cao nhất ăn: mỗi người thua trả 1 phần.',
-  cangua: 'Gieo 6 mới ra quân, ra 6 được gieo thêm. Đi trúng ngựa đối thủ thì đá về chuồng. Vào đích phải đúng số. Ai về đủ 4 ngựa trước thắng.',
+  cangua: 'Gieo 1 hoặc 6 thì ra quân, ra 1 hoặc 6 được gieo thêm. Đi trúng ngựa đối thủ thì đá về chuồng. Vào đích phải đúng số. Ai về đủ 4 ngựa trước thắng.',
 };
 const RULES = [
   { key: 'noTwoLast', name: '🐷 Cấm về heo chót', desc: 'Lá cuối cùng không được là heo (2). Hết đường mà phải về heo thì bị xếp bét.' },

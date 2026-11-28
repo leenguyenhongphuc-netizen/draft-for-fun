@@ -243,8 +243,9 @@ export function onEvent(ev, ctx) {
   const { sfx } = ctx;
   if (ev.what === 'roll') {
     lastDice = ev.d;
-    rollingUntil = Date.now() + 1200;
+    rollingUntil = Date.now() + 5000; // khoá tới khi xúc xắc dừng hẳn (mở ở .then)
     rollDice(document.querySelector('#diceTray'), [ev.d], { onBounce: (i) => sfx.diceHit(i) }).then(() => {
+      rollingUntil = 0;
       if (ev.d === 6) { sfx.bigCombo(); ctx.burst(ctx.center(), ['✨', '6️⃣', '⭐'], 10); }
       ctx.rerender();
     });
@@ -258,6 +259,6 @@ export function onEvent(ev, ctx) {
     if (ev.home) setTimeout(() => { sfx.coin(); ctx.burst(ctx.center(), ['🏁', '⭐', '🐴'], 12); }, 200 + steps * 165);
     if (ev.from === -1) { sfx.pop(); ctx.toast(`${ctx.nameOf(ev.seat)} ra quân! 🐴`); }
   }
-  if (ev.what === 'again' && ev.seat === ctx.mySeat()) ctx.toast('Ra 6! Được gieo thêm 🎲');
+  if (ev.what === 'again' && ev.seat === ctx.mySeat()) ctx.toast('Được gieo thêm 1 lượt nữa 🎲');
   if (ev.what === 'win') { ctx.bigText(`${ctx.nameOf(ev.seat)} về đích! 🏆`, true); sfx.win(); ctx.confetti(); }
 }

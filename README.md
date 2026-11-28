@@ -8,7 +8,7 @@ Cổng 6 game chơi online cùng gia đình, bạn bè: **Tiến Lên Miền Nam
 | 🃏 | **Tiến Lên** | Luật miền Nam đầy đủ, chặt heo, tới trắng, luật tuỳ chỉnh (cấm về heo…). |
 | 🂡 | **Xì Dách** | Nhà cái xoay vòng. Xì bàn > xì dách > ngũ linh > điểm; quá 21 là quắc. Người chơi đủ 16, nhà cái đủ 15 mới được dằn. |
 | 🎴 | **Bài Cào** | 3 lá, chạm từng lá để nặn bài. Điểm = hàng đơn vị; ba tây lớn nhất; người cao nhất ăn hết. |
-| 🐴 | **Cờ Cá Ngựa** | Gieo 6 ra quân, ra 6 gieo thêm, đá ngựa đối thủ về chuồng, vào đích phải đúng số. |
+| 🐴 | **Cờ Cá Ngựa** | Gieo 1 hoặc 6 ra quân và được gieo thêm, đá ngựa đối thủ về chuồng, vào đích phải đúng số. |
 | 🏙️ | **Cờ Tỷ Phú Việt Nam** | 28 ô từ Cà Mau tới Hà Nội, mua đất, xây nhà/khách sạn, Cơ hội & Khí vận lì xì Tết, vào tù, phá sản. 15 vòng, ai giàu nhất thắng. |
 | 🎪 | **Lô Tô hội chợ** | Sân khấu xổ liên tục: mở bán vé → lồng cầu quay, MC hò số (có đọc thành tiếng) → ai đủ 5 số một hàng là KINH. Tới 10 người, vào lúc nào cũng được. |
 
