@@ -18,7 +18,7 @@ function build(board, s, ctx) {
   board.innerHTML = `
     <div class="db-players"></div>
     <div class="db-plate-wrap"><div class="db-plate"><div class="db-dice"></div><div class="db-bowl"><i></i></div></div><div class="db-sum"></div></div>
-    <div class="db-mat ${kind}">${opts.map((o) => `<button class="db-opt" data-on="${o.id}"><span class="ic">${o.icon}</span><b>${o.name}</b>${o.sub ? `<small>${o.sub}</small>` : ''}<span class="tot"></span><span class="mine"></span></button>`).join('')}</div>`;
+    <div class="db-mat ${kind}">${opts.map((o) => `<button class="db-opt" data-on="${o.id}"><span class="ic">${o.icon}</span><b>${o.name}</b>${o.sub ? `<small>${o.sub}</small>` : ''}<span class="tot"></span><span class="who"></span><span class="mine"></span></button>`).join('')}</div>`;
   const u = { board, kind, players: board.querySelector('.db-players'), bowl: board.querySelector('.db-bowl'), dice: board.querySelector('.db-dice'), sum: board.querySelector('.db-sum'), opts: {} };
   board.querySelectorAll('.db-opt').forEach((b) => {
     u.opts[b.dataset.on] = b;
@@ -57,7 +57,24 @@ export function render(s, prev, ctx) {
     else { const sum = dice[0] + dice[1] + dice[2]; if (!(dice[0] === dice[1] && dice[1] === dice[2])) winSet.add(sum >= 11 ? 'tai' : 'xiu'); }
   }
   Object.entries(ui.opts).forEach(([f, b]) => {
-    b.querySelector('.tot').textContent = db.totals[f] ? `Bàn: ${db.totals[f]}` : '';
+    b.querySelector('.tot').textContent = db.totals[f] ? `Tổng: ${db.totals[f]}` : '';
+    // Ai đặt ô này: avatar + số tiền
+    const who = b.querySelector('.who');
+    const list = (db.by && db.by[f]) || [];
+    const key = list.map((x) => x.seat + ':' + x.amt).join(',');
+    if (who.dataset.key !== key) {
+      who.dataset.key = key;
+      who.innerHTML = '';
+      list.sort((a, c) => c.amt - a.amt).forEach((x) => {
+        const p = s.seats[x.seat];
+        if (!p) return;
+        const t = document.createElement('span');
+        t.className = 'bettor' + (x.seat === me ? ' me' : '');
+        t.title = p.name;
+        t.innerHTML = `<i>${avaHTML(p.avatar, p.acc)}</i><b>${x.amt}</b>`;
+        who.appendChild(t);
+      });
+    }
     b.querySelector('.mine').textContent = db.myBets[f] ? `🪙 ${db.myBets[f]}` : '';
     b.classList.toggle('has', !!db.myBets[f]);
     b.classList.toggle('win', !!dice && winSet.has(f));

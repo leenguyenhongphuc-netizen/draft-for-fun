@@ -165,12 +165,16 @@ class DiceBetRoom extends BaseRoom {
     if (!g || this.state === 'waiting') return v;
     const me = v.mySeat;
     const totals = {};
-    Object.values(g.bets).forEach((b) => Object.entries(b).forEach(([f, x]) => { totals[f] = (totals[f] || 0) + x; }));
+    const by = {}; // ô cược -> [{seat, amt}]
+    Object.entries(g.bets).forEach(([seat, b]) => Object.entries(b).forEach(([f, x]) => {
+      totals[f] = (totals[f] || 0) + x;
+      (by[f] ||= []).push({ seat: +seat, amt: x });
+    }));
     v.deadline = g.phase === 'bet' ? g.deadline : 0;
     v.turnMs = BET_MS;
     v.db = {
       phase: g.phase, dealer: g.dealer, dice: g.phase === 'open' || this.state === 'ended' ? g.dice : null,
-      myBets: (me >= 0 && g.bets[me]) || {}, totals, done: !!g.done[me],
+      myBets: (me >= 0 && g.bets[me]) || {}, totals, by, done: !!g.done[me],
       players: this.seats.map((p, s) => (p && g.inGame[s] ? { bet: this.myTotal(s), done: !!g.done[s] } : null)),
     };
     v.seats.forEach((p, s) => { if (p) p.status = s === g.dealer ? { cls: 'r1', text: '🎩 Nhà cái' } : null; });

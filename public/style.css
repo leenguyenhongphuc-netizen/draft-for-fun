@@ -948,3 +948,21 @@ body[data-scene="dicebet"] #board.dicebet { position: absolute; left: 50%; top: 
 .db-chip.sel { transform: translateY(-6px) scale(1.1); box-shadow: 0 0 0 3px var(--yellow), 0 6px 10px rgba(0,0,0,.3); }
 .db-open { animation: pulse .7s infinite; min-width: 200px; }
 body[data-scene="caro"] #sceneBg, body[data-scene="dicebet"] #sceneBg { display: block; }
+
+/* Ai đặt ô nào */
+.db-opt .who { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; min-height: 22px; margin-top: 2px; }
+.db-opt .bettor { display: inline-flex; align-items: center; gap: 1px; background: #fff; border-radius: 999px; padding: 0 5px 0 2px; box-shadow: 0 1px 3px rgba(0,0,0,.2); animation: pop .3s; }
+.db-opt .bettor i { font-style: normal; font-size: 15px; line-height: 20px; }
+.db-opt .bettor b { font-size: 11px; color: #7d0f1d; }
+.db-opt .bettor.me { background: var(--pink); }
+.db-opt .bettor.me b { color: #fff; }
+.db-opt .mine { display: none; }
+.db-opt .ic { font-size: clamp(30px, 9vw, 46px); }
+/* Bầu cua / tài xỉu: gọn lại để khu chip không che hàng ô dưới */
+.db-plate { width: clamp(140px, 38vw, 220px); }
+.db-mat.baucua .db-opt { min-height: 0; padding: 4px 3px 5px; }
+.db-mat.baucua .db-opt .ic { font-size: clamp(26px, 8vw, 42px); }
+.db-mat.taixiu .db-opt { min-height: 0; }
+body[data-scene="dicebet"] #board.dicebet { gap: 6px; max-height: calc(100vh - 230px - env(safe-area-inset-bottom)); }
+@supports (height: 100dvh) { body[data-scene="dicebet"] #board.dicebet { max-height: calc(100dvh - 230px - env(safe-area-inset-bottom)); } }
+@media (max-height: 760px) { .db-plate { width: clamp(120px, 32vw, 180px); } .db-sum { min-height: 0; } }
