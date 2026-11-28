@@ -825,3 +825,8 @@ body[data-scene="typhu"] #board.typhu { top: var(--ttop); }
 .game-card { position: relative; }
 .g-rooms { position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: 800; color: var(--mint-d); }
 .g-rooms:empty { display: none; }
+
+.rule.rule-stack { flex-wrap: wrap; }
+.rule.rule-stack .r-text { flex-basis: 100%; }
+.rule.rule-stack .seg { width: 100%; flex-direction: column; align-items: stretch; }
+.rule.rule-stack .seg button { height: auto; padding: 6px 10px; text-align: left; font-size: 13px; }

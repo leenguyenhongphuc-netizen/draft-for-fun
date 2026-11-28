@@ -114,3 +114,17 @@ test('ván bot với đủ luật + ghi nợ: tổng luôn bằng 0, không ai v
   assert.equal(room.ledger.games.length, 30);
   room.destroy();
 });
+
+test('tiến lên 3 người: nhì được +1 (mặc định), tổng bằng 0', () => {
+  const room = new Room({ code: 'P3', name: 't', theme: 'candy', isPublic: false, hooks: { emitState() {}, emitEvent() {}, getCoins: () => 1000, addCoins() {} } });
+  for (let i = 0; i < 3; i++) room.addBot();
+  room.setSettings({ cong: false, penalty: false, chopPay: false, instantWin: false });
+  for (let g = 0; g < 10; g++) {
+    room.start();
+    let guard = 0;
+    while (room.state === 'playing' && guard++ < 3000) room.autoMove(room.game.turn);
+    const byRank = room.results.map((r) => r.delta);
+    assert.deepEqual(byRank, [20, 10, -30]);
+  }
+  room.destroy();
+});

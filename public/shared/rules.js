@@ -204,11 +204,13 @@ export const DEFAULT_SETTINGS = {
   cong: true,         // Cóng (bét còn nguyên 13 lá) thua gấp đôi
   instantWin: true,   // Tới trắng
   turnSec: 25,        // Thời gian mỗi lượt
+  pts3: '2,1,-3',     // Cách tính khi chơi 3 người: nhất, nhì, bét
   debt: false,        // Chế độ ghi nợ
   unit: 1,            // 1 phần = bao nhiêu (điểm / nghìn)
   unitLabel: 'điểm',
 };
 export const TURN_CHOICES = [15, 25, 40, 60];
+export const PTS3_CHOICES = ['2,1,-3', '3,1,-4', '2,0,-2'];
 export const UNIT_CHOICES = [1, 2, 5, 10];
 export const UNIT_LABELS = ['điểm', 'k'];
 
@@ -217,6 +219,7 @@ export function normalizeSettings(s = {}) {
   const out = { ...d };
   for (const k of Object.keys(d)) if (typeof d[k] === 'boolean' && typeof s[k] === 'boolean') out[k] = s[k];
   if (TURN_CHOICES.includes(s.turnSec)) out.turnSec = s.turnSec;
+  if (PTS3_CHOICES.includes(s.pts3)) out.pts3 = s.pts3;
   if (UNIT_CHOICES.includes(s.unit)) out.unit = s.unit;
   if (UNIT_LABELS.includes(s.unitLabel)) out.unitLabel = s.unitLabel;
   return out;

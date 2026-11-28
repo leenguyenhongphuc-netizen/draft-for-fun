@@ -1,7 +1,7 @@
 import { createScene, THEMES } from './scene3d.js';
 import {
   RANKS, SUITS, rankOf, suitOf, getCombo, canBeat, allPlays, sortHand, TWO, cardLabel,
-  finishViolation, settleDebts, TURN_CHOICES, UNIT_CHOICES, UNIT_LABELS,
+  finishViolation, settleDebts, TURN_CHOICES, UNIT_CHOICES, UNIT_LABELS, PTS3_CHOICES,
 } from './shared/rules.js';
 import { createNet } from './net.js';
 import * as audio from './audio.js';
@@ -928,11 +928,16 @@ function renderRules() {
   };
   row('📒 Chế độ ghi sổ', 'Chơi cho vui: không trừ xu, ghi lại điểm thắng thua qua các ván, cuối buổi xem tổng kết.', sw('debt', st.debt), 'debt');
   if (st.debt) {
-    row('Mỗi phần =', 'Nhất +3 phần, nhì +1, ba −1, bét −3 (4 người).', seg(UNIT_CHOICES, st.unit, (v) => v, (v) => setRule({ unit: v })));
+    row('Mỗi phần =', 'Tiến Lên 4 người: nhất +3 phần, nhì +1, ba −1, bét −3.', seg(UNIT_CHOICES, st.unit, (v) => v, (v) => setRule({ unit: v })));
     row('Đơn vị', '"k" = nghìn đồng, hoặc chỉ tính điểm.', seg(UNIT_LABELS, st.unitLabel, (v) => v, (v) => setRule({ unitLabel: v })));
   }
   if ((state.game || 'tienlen') === 'tienlen') RULES.forEach((r) => row(r.name, r.desc, sw(r.key, st[r.key])));
   else row(`${GAMES[state.game].icon} Luật ${GAMES[state.game].name}`, GAME_RULE_TEXT[state.game], document.createElement('span'));
+  if ((state.game || 'tienlen') === 'tienlen') {
+    const lbl = (v) => v.split(',').map((x, i) => ['Nhất ', 'Nhì ', 'Bét '][i] + (+x > 0 ? '+' : '') + x).join(' · ');
+    const r3 = row('👥 Chơi 3 người tính sao?', 'Bàn 3 người: về nhì có được phần không. Bàn 4 người luôn là +3 / +1 / −1 / −3.', seg(PTS3_CHOICES, st.pts3, lbl, (v) => setRule({ pts3: v })));
+    r3.classList.add('rule-stack');
+  }
   row('⏱ Thời gian mỗi lượt', 'Hết giờ sẽ tự bỏ lượt (hoặc đánh lá nhỏ nhất).', seg(TURN_CHOICES, st.turnSec, (v) => v + 's', (v) => setRule({ turnSec: v })));
 }
 

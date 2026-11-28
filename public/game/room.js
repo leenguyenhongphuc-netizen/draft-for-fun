@@ -359,7 +359,7 @@ export class Room {
       players.forEach((s) => { if (s !== instantSeat) { parts[s] -= 2; parts[instantSeat] += 2; } });
       notes[instantSeat].push('Tới trắng: ' + instantLabel);
     } else {
-      const pts = POINTS[players.length];
+      const pts = players.length === 3 ? st.pts3.split(',').map(Number) : POINTS[players.length];
       order.forEach((s, i) => { parts[s] += pts[i]; });
       if (g.bad.includes(last)) notes[last].push('Về heo chót → bét');
       // Cóng: bét còn nguyên 13 lá -> thua gấp đôi
