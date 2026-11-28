@@ -184,7 +184,7 @@ export class BaseRoom {
 
   // ---------- Dữ liệu cho client ----------
   summary() {
-    return { code: this.code, name: this.name, theme: this.theme, game: this.gameType, players: this.playerCount(), humans: this.humans().length, state: this.state };
+    return { code: this.code, name: this.name, game: this.gameType, players: this.playerCount(), humans: this.humans().length, state: this.state };
   }
 
   baseView(id) {

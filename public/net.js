@@ -32,7 +32,7 @@ async function supabaseTransport(myId) {
   const { createClient } = await import('./vendor/supabase.js');
   const client = createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
-    realtime: { params: { eventsPerSecond: 30 } },
+    realtime: { params: { eventsPerSecond: 60 } },
   });
   return {
     channel(name) {
@@ -131,18 +131,25 @@ export function createNet(playerId) {
     return lobby.members()
       .filter((m) => m.room && m.room.isPublic)
       .map((m) => m.room)
-      .filter((r) => now - (r.at || 0) < 6 * 3600e3)
+      .filter((r) => now - (r.createdAt || 0) < 12 * 3600e3)
       .sort((a, b) => b.createdAt - a.createdAt)
       .slice(0, 30);
   };
+  // Chỉ báo lên sảnh khi thông tin phòng thật sự đổi (số người, đang chơi/chờ…).
+  // Trước đây báo sau MỖI nước đi -> Supabase giới hạn tần suất, phòng bị mất khỏi sảnh và kênh bị chậm.
   let lobbyTrackTimer = null;
+  let lastLobbyKey = null;
   const updateLobbyPresence = () => {
     clearTimeout(lobbyTrackTimer);
     lobbyTrackTimer = setTimeout(() => {
       if (!lobby) return;
-      if (host && host.room.isPublic) lobby.track({ room: { ...host.room.summary(), isPublic: true, createdAt: host.room.createdAt, at: Date.now() } });
+      const info = host && host.room.isPublic ? { ...host.room.summary(), isPublic: true, createdAt: host.room.createdAt } : null;
+      const key = JSON.stringify(info);
+      if (key === lastLobbyKey) return;
+      lastLobbyKey = key;
+      if (info) lobby.track({ room: info });
       else lobby.untrack();
-    }, 300);
+    }, 400);
   };
 
   // ----- Phía chủ phòng -----

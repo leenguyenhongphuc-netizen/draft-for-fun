@@ -39,7 +39,7 @@ export class TyPhuRoom extends BaseRoom {
 
   scheduleAuto() {
     if (this.state !== 'playing' || !this.g) return;
-    if (this.isAuto(this.g.turn)) this.setTimer('bot', 900 + Math.random() * 700, () => this.autoMove(this.g.turn));
+    if (this.isAuto(this.g.turn)) this.setTimer('bot', 500 + Math.random() * 400, () => this.autoMove(this.g.turn));
   }
 
   autoMove(seat, timeout = false) {
@@ -146,7 +146,7 @@ export class TyPhuRoom extends BaseRoom {
     this.moveTo(seat, g.moveTarget);
     g.moveTarget = null;
     this.hooks.emitState(this);
-    this.setTimer('turn', 350 + steps * 160, () => this.land(seat));
+    this.setTimer('turn', 250 + steps * 120, () => this.land(seat));
   }
 
   resume() {

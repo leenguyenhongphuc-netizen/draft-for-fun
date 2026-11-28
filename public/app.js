@@ -231,6 +231,13 @@ function initLobby() {
 
 function renderRooms(list) {
   lastRooms = list || [];
+  // Số phòng đang mở trên từng thẻ game ở sảnh
+  document.querySelectorAll('.game-card').forEach((c) => {
+    const n = lastRooms.filter((r) => (r.game || 'tienlen') === c.dataset.game).length;
+    let b = c.querySelector('.g-rooms');
+    if (!b) { b = document.createElement('span'); b.className = 'g-rooms'; c.appendChild(b); }
+    b.textContent = n ? `🟢 ${n} phòng` : '';
+  });
   const el = $('#roomList');
   if (!el) return;
   el.innerHTML = '';

@@ -196,6 +196,8 @@ function doRoll(ctx) {
   rolledByMe = Date.now();
   ctx.sfx.diceShake();
   ctx.socket.emit('act', { a: 'roll' });
+  // Lắc xúc xắc ngay khi chạm, không đợi mạng -> đỡ cảm giác trễ
+  const t = document.querySelector('#diceTray'); t.classList.remove('ready'); t.classList.add('shaking');
 }
 
 // ---------- Ngựa đi từng ô ----------
@@ -225,7 +227,7 @@ function walkTo(id, el, seat, h, target, T, ctx) {
     cur++; shown[id] = cur;
     place(el, seat, cur, h, T); hop(el);
     ctx.sfx.select();
-    walking[id] = setTimeout(step, 165);
+    walking[id] = setTimeout(step, 125);
   };
   step();
 }
@@ -244,6 +246,7 @@ export function onEvent(ev, ctx) {
   if (ev.what === 'roll') {
     lastDice = ev.d;
     rollingUntil = Date.now() + 5000; // khoá tới khi xúc xắc dừng hẳn (mở ở .then)
+    document.querySelector('#diceTray').classList.remove('shaking');
     rollDice(document.querySelector('#diceTray'), [ev.d], { onBounce: (i) => sfx.diceHit(i) }).then(() => {
       rollingUntil = 0;
       if (ev.d === 6) { sfx.bigCombo(); ctx.burst(ctx.center(), ['✨', '6️⃣', '⭐'], 10); }
@@ -253,10 +256,10 @@ export function onEvent(ev, ctx) {
   if (ev.what === 'move') {
     const steps = ev.from === -1 ? 1 : ev.to - ev.from;
     if (ev.kicks && ev.kicks.length) {
-      setTimeout(() => { ctx.bigText('ĐÁ! 🦵💥', true); sfx.bump(); ctx.shake(); ctx.burst(ctx.center(), ['🐴', '💥', '⭐'], 14); }, 200 + steps * 165);
+      setTimeout(() => { ctx.bigText('ĐÁ! 🦵💥', true); sfx.bump(); ctx.shake(); ctx.burst(ctx.center(), ['🐴', '💥', '⭐'], 14); }, 150 + steps * 125);
       ctx.sysChat(`${ctx.nameOf(ev.seat)} đá ngựa của ${ev.kicks.map(([s]) => ctx.nameOf(s)).join(', ')} về chuồng!`);
     }
-    if (ev.home) setTimeout(() => { sfx.coin(); ctx.burst(ctx.center(), ['🏁', '⭐', '🐴'], 12); }, 200 + steps * 165);
+    if (ev.home) setTimeout(() => { sfx.coin(); ctx.burst(ctx.center(), ['🏁', '⭐', '🐴'], 12); }, 150 + steps * 125);
     if (ev.from === -1) { sfx.pop(); ctx.toast(`${ctx.nameOf(ev.seat)} ra quân! 🐴`); }
   }
   if (ev.what === 'again' && ev.seat === ctx.mySeat()) ctx.toast('Được gieo thêm 1 lượt nữa 🎲');

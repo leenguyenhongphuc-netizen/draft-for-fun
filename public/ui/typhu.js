@@ -159,6 +159,8 @@ function doRoll(ctx) {
   rolledAt = Date.now();
   ctx.sfx.diceShake();
   ctx.socket.emit('act', { a: 'roll' });
+  // Lắc xúc xắc ngay khi chạm, không đợi mạng -> đỡ cảm giác trễ
+  const t = document.querySelector('#diceTray'); t.classList.remove('ready'); t.classList.add('shaking');
 }
 function placeTok(el, seat, pos) {
   const [x, y] = cellXY(pos);
@@ -178,7 +180,7 @@ function walkTo(seat, el, target, ctx) {
     placeTok(el, seat, cur);
     el.classList.remove('hop'); void el.offsetWidth; el.classList.add('hop');
     ctx.sfx.select();
-    walkT[seat] = setTimeout(step, 160);
+    walkT[seat] = setTimeout(step, 120);
   };
   step();
 }
@@ -205,6 +207,7 @@ export function onEvent(ev, ctx) {
   if (ev.what === 'roll') {
     lastDice = ev.d;
     rollingUntil = Date.now() + 5000; // khoá tới khi xúc xắc dừng hẳn (mở ở .then)
+    document.querySelector('#diceTray').classList.remove('shaking');
     rollDice(document.querySelector('#diceTray'), ev.d, { onBounce: (i) => sfx.diceHit(i) }).then(() => {
       rollingUntil = 0;
       ctx.rerender();

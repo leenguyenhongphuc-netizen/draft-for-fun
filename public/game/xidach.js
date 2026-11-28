@@ -107,7 +107,7 @@ export class XiDachRoom extends BaseRoom {
 
   scheduleAuto() {
     if (this.state !== 'playing' || !this.g || this.g.turn == null) return;
-    if (this.isAuto(this.g.turn)) this.setTimer('bot', 900 + Math.random() * 700, () => this.autoMove(this.g.turn));
+    if (this.isAuto(this.g.turn)) this.setTimer('bot', 550 + Math.random() * 450, () => this.autoMove(this.g.turn));
   }
 
   autoMove(seat) {

@@ -183,7 +183,7 @@ export class Room {
     const p = this.seats[this.game.turn];
     clearTimeout(this.botTimer);
     if (p && (p.isBot || !p.connected)) {
-      const delay = p.isBot ? 900 + Math.random() * 900 : 1500;
+      const delay = p.isBot ? 600 + Math.random() * 600 : 1200;
       const turnAtSchedule = this.game.turn;
       const roundAt = this.game.round;
       this.botTimer = setTimeout(() => {
@@ -431,7 +431,7 @@ export class Room {
   // ---------- Dữ liệu gửi xuống client ----------
   summary() {
     return {
-      code: this.code, name: this.name, theme: this.theme, game: 'tienlen',
+      code: this.code, name: this.name, game: 'tienlen',
       players: this.playerCount(), humans: this.humans().length, state: this.state,
     };
   }
