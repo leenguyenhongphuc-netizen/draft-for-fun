@@ -17,7 +17,7 @@ import { BauCuaRoom, TaiXiuRoom } from './game/dicebet.js';
 const GAME_CLASSES = { tienlen: Room, xidach: XiDachRoom, baicao: BaiCaoRoom, cangua: CaNguaRoom, typhu: TyPhuRoom, loto: LoToRoom, poker: PokerRoom, caro: CaroRoom, baucua: BauCuaRoom, taixiu: TaiXiuRoom };
 import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
 
-const THEMES = ['candy', 'garden', 'night', 'tet', 'ocean', 'winter', 'sakura', 'cafe', 'rainbow'];
+const THEMES = ['candy', 'garden', 'night', 'tet', 'ocean', 'winter', 'sakura', 'cafe', 'rainbow', 'space', 'icecream', 'jungle', 'autumn', 'midautumn', 'bakery', 'disco', 'farm', 'castle', 'milktea'];
 const ACCS = ['', '🎀', '🎩', '👑', '🕶️', '🌸', '🧢', '🎧', '🧣', '⭐'];
 const randTheme = (not) => { const t = THEMES.filter((x) => x !== not); return t[Math.floor(Math.random() * t.length)]; };
 const AVATARS = ['🐱', '🐶', '🐰', '🐼', '🦊', '🐸', '🐷', '🐹', '🐨', '🐯', '🐻', '🐧', '💕', '🌷'];

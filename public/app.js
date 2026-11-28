@@ -1272,7 +1272,7 @@ initLobby();
 showLobby();
 
 // ---------- Báo có bản mới ----------
-const APP_VERSION = '20261128-1021';
+const APP_VERSION = '20261128-1030';
 document.querySelectorAll('.lobby-card').forEach((c) => { const v = document.createElement('div'); v.className = 'app-ver'; v.textContent = 'Phiên bản ' + APP_VERSION; c.appendChild(v); });
 async function checkUpdate() {
   try {

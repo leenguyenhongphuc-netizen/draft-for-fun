@@ -24,7 +24,7 @@ Tất cả đều có: phòng chơi (2–4 người, Lô Tô tới 10), bot, ch�
 - 📒 Chế độ ghi nợ (chơi cho vui): không trừ xu, ghi lại ai thắng/thua qua các ván, bảng tổng, gợi ý "ai trả ai" ít lần chuyển nhất, lịch sử ván, sao chép sổ để dán vào Zalo/Messenger.
 - 🌐 Chơi online theo phòng 2–4 người: tạo phòng, gửi **link mời**/mã 4 chữ, danh sách phòng công khai.
 - 🤖 Thêm bot lấp chỗ trống; ai mất mạng thì bot đánh thay, vào lại trong 45 giây sẽ ngồi lại đúng chỗ.
-- 🏠 9 kiểu trang trí phòng 3D, mỗi phòng có nhạc riêng: **Kẹo Hồng**, **Vườn Xanh**, **Đêm Sao**, **Tết Sum Vầy**, **Biển Xanh**, **Mùa Đông**, **Anh Đào**, **Cà Phê Chill**, **Cầu Vồng** (chủ phòng đổi được bất cứ lúc nào).
+- 🏠 19 kiểu trang trí phòng 3D, mỗi phòng có nhạc riêng (tự đổi ngẫu nhiên mỗi ván): **Kẹo Hồng**, **Vườn Xanh**, **Đêm Sao**, **Tết Sum Vầy**, **Biển Xanh**, **Mùa Đông**, **Anh Đào**, **Cà Phê Chill**, **Cầu Vồng**, **Vũ Trụ**, **Kem Mát Lạnh**, **Rừng Nhiệt Đới**, **Thu Hà Nội**, **Đêm Trung Thu**, **Tiệm Bánh Ngọt**, **Sàn Nhảy Disco**, **Nông Trại Vui**, **Lâu Đài Cổ Tích**, **Quán Trà Sữa** (chủ phòng đổi được bất cứ lúc nào).
 - 🐱 14 avatar (thú cưng, 💕, 🌷) — người chơi khác hiện thành nhân vật 3D ngồi quanh bàn, nhún nhảy khi tới lượt.
 - 🎵 Nhạc nền riêng cho từng kiểu phòng + hiệu ứng âm thanh (tiếng bài, "ụt ịt" khi đánh heo, chặt, tích tắc sắp hết giờ…), tự tổng hợp bằng WebAudio, bật/tắt riêng nhạc và tiếng.
 - 💥 Hiệu ứng: bài bay từ người đánh vào bàn, rung màn hình + nổ hạt 3D khi chặt heo, chữ combo khi đánh sảnh dài/đôi thông/tứ quý, đếm xu khi kết thúc.

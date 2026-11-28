@@ -83,6 +83,114 @@ export const THEMES = {
     posters: ['🦄', '🌈', '🍭'], bulbs: [0xff8a80, 0xffe57f, 0x80d8ff, 0xb9f6ca],
     win: 'day', logo: '🌈', toy: '🐰', sleeper: '🐶', flower: '🌼', pot: 0xffffff, leaf: 0x7ccf86, lampI: 14, extra: 'rainbow',
   },
+  space: {
+    label: '🚀 Vũ Trụ',
+    wall: 0x1b1d4a, wall2: 0x23265e, floor: 0x2c2f6b, rug: 0x3b3f8f, rug2: 0x7c4dff,
+    felt: 0x5e35b1, rim: 0xb2ebf2, wood: 0x455a9a, sky: 0x0b0d2b, skyGlow: 0xfff59d,
+    ambient: 0xb3b8ff, ambientI: 0.45, sunI: 0.35, bg: 0x141633,
+    particles: ['⭐', '🪐', '✨', '🚀', '☄️'], balloons: [0x7c4dff, 0x40c4ff, 0xff4081, 0xffd740],
+    posters: ['🪐', '👽', '🛸'], bulbs: [0x40c4ff, 0xe040fb, 0xffd740],
+    win: 'night', logo: '🪐', toy: '🐧', sleeper: '🐱', flower: null, pot: 0x7c4dff, leaf: 0x69f0ae, lampI: 26, dark: true,
+    banner: ['🚀 Bay Vào Vũ Trụ 🚀', '#e1f5fe', '#311b92'],
+    props: [['🪐', -5, 5.6, -5.5, 1.4, 'spin'], ['🌙', 5, 6, -5.5, 1.1, 'bob'], ['🛸', 0, 6.3, -3, 0.9, 'fly'], ['🚀', -5.6, 1.2, 2.5, 1.2, 'bob'], ['👨‍🚀', 5.4, 1.1, 2, 1.1, 'bob'], ['☄️', 3, 6.5, -6, 0.8, 'fly']],
+  },
+  icecream: {
+    label: '🍦 Kem Mát Lạnh',
+    wall: 0xd7f7ef, wall2: 0xfff0f6, floor: 0xffe3c2, rug: 0xffffff, rug2: 0x7fdccb,
+    felt: 0xffb6d5, rim: 0xffffff, wood: 0xf2c49b, sky: 0xbdeaff, skyGlow: 0xffffff,
+    ambient: 0xffffff, ambientI: 0.85, sunI: 1.0, bg: 0xdff7f1,
+    particles: ['🍦', '🍨', '🍧', '🍒', '✨'], balloons: [0xffb6d5, 0x7fdccb, 0xfff59d, 0xcfa7ff],
+    posters: ['🍦', '🍓', '🍫'], bulbs: [0xffb6d5, 0x7fdccb, 0xfff59d],
+    win: 'day', logo: '🍦', toy: '🐰', sleeper: '🐱', flower: '🌸', pot: 0xffffff, leaf: 0x7ccf86, lampI: 14,
+    banner: ['🍦 Tiệm Kem Nhà Pum 🍦', '#ffffff', '#ff7eb6'],
+    props: [['🍦', -5.8, 1.4, 1.5, 1.6, 'bob'], ['🍨', 5.6, 1.1, 2, 1.2, 'bob'], ['🍧', -5.2, 1, -4, 1.1], ['🍒', 5.2, 0.6, -3.5, 0.8, 'bob'], ['🧇', 0, 6.4, -6.5, 1]],
+  },
+  jungle: {
+    label: '🌴 Rừng Nhiệt Đới',
+    wall: 0xc8ecc4, wall2: 0xe2f5d6, floor: 0xb58a5a, rug: 0xf3e2b8, rug2: 0x43a047,
+    felt: 0x2e7d32, rim: 0xffe082, wood: 0x8d6e63, sky: 0x9be7ff, skyGlow: 0xfff59d,
+    ambient: 0xf1fff0, ambientI: 0.8, sunI: 1.1, bg: 0xcdeccf,
+    particles: ['🍃', '🦜', '🦋', '🌺', '🍌'], balloons: [0x66bb6a, 0xffca28, 0xff7043, 0x29b6f6],
+    posters: ['🦁', '🐒', '🦜'], bulbs: [0xffeb3b, 0x8bc34a, 0xff9800],
+    win: 'day', logo: '🌴', toy: '🐯', sleeper: '🐸', flower: '🌺', pot: 0x8d6e63, leaf: 0x2e7d32, lampI: 14,
+    props: [['🌴', -5.8, 2.2, -4.5, 3, ''], ['🌴', 5.8, 2.2, -4, 2.6, ''], ['🦜', -4, 4.8, -5.5, 0.9, 'bob'], ['🐒', 5.3, 3.4, -3.2, 1, 'bob'], ['🍌', 4.8, 0.5, 2.5, 0.8], ['🦋', 0, 5.5, -4, 0.7, 'fly'], ['🌺', -5.4, 0.6, 2.4, 0.8]],
+  },
+  autumn: {
+    label: '🍁 Thu Hà Nội',
+    wall: 0xfbe3c7, wall2: 0xfdeedd, floor: 0xa9754f, rug: 0xfff4e0, rug2: 0xe67e22,
+    felt: 0x8d6e3f, rim: 0xffe0b2, wood: 0x8b5a3c, sky: 0xffd8a8, skyGlow: 0xfff3c4,
+    ambient: 0xfff3e0, ambientI: 0.75, sunI: 0.9, bg: 0xf4d9b8,
+    particles: ['🍁', '🍂', '🍂', '🌰', '☕'], balloons: [0xe67e22, 0xd35400, 0xf1c40f, 0xc0392b],
+    posters: ['🍁', '☕', '🚲'], bulbs: [0xffb74d, 0xffe082, 0xff8a65],
+    win: 'day', logo: '🍁', toy: '🦊', sleeper: '🐱', flower: null, pot: 0xc0392b, leaf: 0xe67e22, lampI: 18,
+    banner: ['🍁 Hà Nội Mùa Thu 🍁', '#fff3e0', '#8b5a3c'],
+    props: [['🚲', -5.6, 0.9, 2, 1.4], ['🌳', 5.7, 2.4, -4.2, 3], ['☕', 5.2, 0.6, 2.4, 0.8, 'bob'], ['🍂', -5, 0.15, -2, 0.7], ['🌰', 4, 0.15, 3.5, 0.6]],
+  },
+  midautumn: {
+    label: '🏮 Đêm Trung Thu',
+    wall: 0x2a2350, wall2: 0x352c66, floor: 0x4a3b6e, rug: 0x5e4a8a, rug2: 0xffb300,
+    felt: 0xc62828, rim: 0xffd54f, wood: 0x6d4c41, sky: 0x1a1640, skyGlow: 0xfff59d,
+    ambient: 0xffe0b2, ambientI: 0.5, sunI: 0.35, bg: 0x201b42,
+    particles: ['🏮', '🥮', '⭐', '🐇', '✨'], balloons: [0xff7043, 0xffd54f, 0xe53935, 0xff8a65],
+    posters: ['🥮', '🐇', '🌕'], bulbs: [0xffd54f, 0xff7043, 0xffab40],
+    win: 'night', logo: '🌕', toy: '🐰', sleeper: '🐶', flower: null, pot: 0xffb300, leaf: 0x66bb6a, lampI: 28, dark: true, extra: 'tet',
+    banner: ['🌕 Rước Đèn Trung Thu 🌕', '#ffe082', '#4a148c'],
+    props: [['🌕', 4.8, 6, -6.2, 1.8], ['⭐', -3.5, 6.5, -6.2, 0.9, 'bob'], ['🥮', 5.4, 0.6, 2.4, 0.9], ['🐇', -5.4, 0.8, 2.2, 1.1, 'bob'], ['🐉', 0, 6.4, -4, 1.2, 'fly']],
+  },
+  bakery: {
+    label: '🧁 Tiệm Bánh Ngọt',
+    wall: 0xfff1e0, wall2: 0xffe6ec, floor: 0xd9a77a, rug: 0xfffaf2, rug2: 0xf48fb1,
+    felt: 0xbcaaa4, rim: 0xffffff, wood: 0xa1887f, sky: 0xffe0b2, skyGlow: 0xffffff,
+    ambient: 0xfff8f0, ambientI: 0.8, sunI: 0.95, bg: 0xffeedd,
+    particles: ['🧁', '🍰', '🍩', '🍪', '🥐'], balloons: [0xf48fb1, 0xffcc80, 0xce93d8, 0xfff59d],
+    posters: ['🎂', '🍩', '🥐'], bulbs: [0xffe0b2, 0xf8bbd0, 0xfff9c4],
+    win: 'day', logo: '🧁', toy: '🐻', sleeper: '🐱', flower: '🌸', pot: 0xffffff, leaf: 0x81c784, lampI: 18,
+    banner: ['🧁 Pum Bakery 🧁', '#fff8e1', '#8d6e63'],
+    props: [['🎂', -5.7, 1.4, 1.8, 1.5, 'bob'], ['🍩', 5.6, 1, 2.2, 1, 'spin'], ['🥐', -5.2, 0.6, -3.5, 0.9], ['🍪', 5.2, 0.6, -3, 0.8, 'spin'], ['🍰', 0, 6.3, -6.5, 1]],
+  },
+  disco: {
+    label: '🪩 Sàn Nhảy Disco',
+    wall: 0x24123d, wall2: 0x2e1650, floor: 0x1a1030, rug: 0x3a1f66, rug2: 0xff4081,
+    felt: 0x00bcd4, rim: 0xffd740, wood: 0x512da8, sky: 0x120822, skyGlow: 0xff80ab,
+    ambient: 0xe1bee7, ambientI: 0.45, sunI: 0.3, bg: 0x180c2c,
+    particles: ['🎵', '🎶', '✨', '💜', '🪩'], balloons: [0xff4081, 0x00e5ff, 0xffd740, 0x76ff03],
+    posters: ['🎤', '🎧', '🕺'], bulbs: [0xff4081, 0x00e5ff, 0xffd740, 0x76ff03],
+    win: 'night', logo: '🪩', toy: '🐼', sleeper: '🐱', flower: null, pot: 0xff4081, leaf: 0x76ff03, lampI: 30, dark: true,
+    banner: ['🪩 Party Nhà Pum 🪩', '#ffffff', '#c2185b'],
+    props: [['🪩', 0, 6.6, -2, 1.4, 'spin'], ['🎧', -5.6, 1.1, 2, 1.1, 'bob'], ['🎤', 5.6, 1.1, 2.2, 1, 'bob'], ['🕺', -5, 1.2, -4, 1.4, 'bob'], ['💃', 5, 1.2, -4, 1.4, 'bob']],
+  },
+  farm: {
+    label: '🐄 Nông Trại Vui',
+    wall: 0xfff4d6, wall2: 0xf1f8e0, floor: 0xc9a46b, rug: 0xfffbe8, rug2: 0x8bc34a,
+    felt: 0x9ccc65, rim: 0xfff59d, wood: 0xa1745a, sky: 0xa6ddff, skyGlow: 0xffffff,
+    ambient: 0xffffff, ambientI: 0.85, sunI: 1.1, bg: 0xeef7d9,
+    particles: ['🌻', '🐝', '🌾', '🥕', '🐣'], balloons: [0xffeb3b, 0x8bc34a, 0xff7043, 0x4fc3f7],
+    posters: ['🐄', '🐔', '🚜'], bulbs: [0xfff176, 0xaed581, 0xffcc80],
+    win: 'day', logo: '🌻', toy: '🐷', sleeper: '🐶', flower: '🌻', pot: 0xa1745a, leaf: 0x7cb342, lampI: 14,
+    props: [['🐄', -5.5, 1.2, -3.5, 1.8, 'bob'], ['🚜', 5.4, 1, -3.8, 1.6], ['🐔', -5.2, 0.6, 2.4, 0.9, 'bob'], ['🌾', 5.5, 0.9, 2.3, 1.3], ['🐣', 4.4, 0.4, 3.4, 0.6, 'bob'], ['🥕', -4, 0.3, 3.6, 0.6]],
+  },
+  castle: {
+    label: '🏰 Lâu Đài Cổ Tích',
+    wall: 0xe9dcff, wall2: 0xf4ecff, floor: 0xb9a3d9, rug: 0xfff7ff, rug2: 0xba68c8,
+    felt: 0x7e57c2, rim: 0xffd54f, wood: 0x9575cd, sky: 0xd1c4e9, skyGlow: 0xfff9c4,
+    ambient: 0xfaf5ff, ambientI: 0.75, sunI: 0.9, bg: 0xeadcff,
+    particles: ['👑', '✨', '🦄', '💎', '⭐'], balloons: [0xba68c8, 0xffd54f, 0xf48fb1, 0x81d4fa],
+    posters: ['👑', '🦄', '🏰'], bulbs: [0xffd54f, 0xe1bee7, 0xb3e5fc],
+    win: 'day', logo: '👑', toy: '🐰', sleeper: '🐱', flower: '🌷', pot: 0xffd54f, leaf: 0x81c784, lampI: 18,
+    banner: ['👑 Vương Quốc Nhà Pum 👑', '#fff8e1', '#6a1b9a'],
+    props: [['🏰', -5.6, 2, -4.8, 3], ['🦄', 5.5, 1.3, -3.5, 1.8, 'bob'], ['👑', 0, 6.4, -6.4, 1.1, 'spin'], ['💎', 5.3, 0.6, 2.4, 0.8, 'spin'], ['🪄', -5.3, 0.9, 2.3, 0.9, 'bob']],
+  },
+  milktea: {
+    label: '🧋 Quán Trà Sữa',
+    wall: 0xf3e5d8, wall2: 0xfaf0e6, floor: 0x9c7457, rug: 0xfff8ef, rug2: 0xbc8f6f,
+    felt: 0xd7b59a, rim: 0xfff3e0, wood: 0x6d4c41, sky: 0xffe0c2, skyGlow: 0xfff8e1,
+    ambient: 0xfff3e6, ambientI: 0.75, sunI: 0.9, bg: 0xf1dfcc,
+    particles: ['🧋', '🫧', '🍵', '✨', '🧋'], balloons: [0xbc8f6f, 0xf8bbd0, 0xa5d6a7, 0xfff59d],
+    posters: ['🧋', '🍵', '🐼'], bulbs: [0xffe0b2, 0xffccbc, 0xfff9c4],
+    win: 'day', logo: '🧋', toy: '🐼', sleeper: '🐹', flower: null, pot: 0xffffff, leaf: 0x7cb342, lampI: 20,
+    banner: ['🧋 Trà Sữa Trân Châu 🧋', '#fff3e0', '#6d4c41'],
+    props: [['🧋', -5.7, 1.4, 1.8, 1.6, 'bob'], ['🧋', 5.6, 1.2, 2, 1.2, 'bob'], ['🍵', -5.2, 0.6, -3.5, 0.9], ['🫧', 0, 5.8, -5, 0.8, 'fly'], ['🍡', 5.2, 0.7, -3.3, 0.9]],
+  },
 };
 
 // Hình dáng nhân vật theo avatar
@@ -551,7 +659,9 @@ export function createScene(canvas) {
     animated.push({ obj: zzz, fn: (t) => { const k = (t * 0.4) % 1; zzz.position.set(-5.0 + k * 0.4, 1.1 + k * 0.8, -5.0); zzz.material.opacity = 1 - k; } });
 
     // Đồ trang trí riêng của từng phòng
-    if (T.extra) buildExtra(T);
+    if (T.extra && !T.banner) buildExtra(T);
+    else if (T.extra === 'tet') buildExtra({ ...T, extra: 'tet-lanterns' });
+    buildProps(T);
 
     // Hạt bay lơ lửng (emoji)
     for (let i = 0; i < 26; i++) {
@@ -604,11 +714,27 @@ export function createScene(canvas) {
     return g;
   }
 
+  // Đồ trang trí kiểu "danh sách": [emoji, x, y, z, cỡ, kiểu chuyển động]
+  function buildProps(T) {
+    if (T.banner) {
+      const [text, fg, bg] = T.banner;
+      const b = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 0.8), new THREE.MeshBasicMaterial({ map: textTexture(text, fg, bg) }));
+      b.position.set(0, 6.45, -6.9); room.add(b);
+    }
+    (T.props || []).forEach(([e, x, y, z, size, anim], i) => {
+      const sp = sprite(e, x, y, z, size);
+      if (anim === 'bob') animated.push({ obj: sp, fn: (t) => { sp.position.y = y + Math.sin(t * 1.6 + i) * 0.12; } });
+      if (anim === 'spin') animated.push({ obj: sp, fn: (t) => { sp.material.rotation = Math.sin(t * 0.8 + i) * 0.4; } });
+      if (anim === 'fly') animated.push({ obj: sp, fn: (t) => { sp.position.x = x + Math.sin(t * 0.4 + i) * 3; sp.position.y = y + Math.sin(t * 1.1 + i) * 0.3; } });
+    });
+  }
+
   function buildExtra(T) {
-    if (T.extra === 'tet') {
+    if (T.extra === 'tet' || T.extra === 'tet-lanterns') {
+      const full = T.extra === 'tet';
       // Câu chúc trên tường
-      const banner = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 0.8), new THREE.MeshBasicMaterial({ map: textTexture('🧧 Chúc Mừng Năm Mới 🧧', '#ffd54f', '#c62828') }));
-      banner.position.set(0, 6.45, -6.9); room.add(banner);
+      if (full) { const banner = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 0.8), new THREE.MeshBasicMaterial({ map: textTexture('🧧 Chúc Mừng Năm Mới 🧧', '#ffd54f', '#c62828') }));
+      banner.position.set(0, 6.45, -6.9); room.add(banner); }
       // Đèn lồng đỏ đung đưa
       [[-3.2, -3], [3.2, -3], [-4.5, 1.5], [4.5, 1.5]].forEach(([x, z], i) => {
         const g = new THREE.Group();
@@ -621,8 +747,10 @@ export function createScene(canvas) {
         animated.push({ obj: g, fn: (t) => { g.rotation.z = Math.sin(t * 1.2 + i) * 0.06; } });
       });
       // Cây mai vàng
-      tree(-5.4, -1.2, 0x5d4037, null, ['🌼', '🌼', '🌼', '🧧'], 1.1);
-      sprite('🍊', 5.0, 0.4, 2.4, 0.6); sprite('🍉', 5.6, 0.35, 1.8, 0.6);
+      if (full) {
+        tree(-5.4, -1.2, 0x5d4037, null, ['🌼', '🌼', '🌼', '🧧'], 1.1);
+        sprite('🍊', 5.0, 0.4, 2.4, 0.6); sprite('🍉', 5.6, 0.35, 1.8, 0.6);
+      }
     }
     if (T.extra === 'ocean') {
       // Phao tròn trên tường

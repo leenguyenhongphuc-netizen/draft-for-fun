@@ -184,6 +184,86 @@ const SONGS = {
       76, 79, 81, 79, 76, null, 72, null, 74, 77, 79, 77, 76, 74, 72, null],
     hat: true, kick: [0, 4, 8, 12], snare: [4, 12],
   },
+  // Vũ trụ: synth bồng bềnh
+  space: {
+    bpm: 90, lead: 'sine', leadVol: 0.08, padType: 'sawtooth', swing: 0,
+    chords: [[57, 64, 69, 72], [53, 60, 65, 69], [55, 62, 67, 71], [52, 59, 64, 67]],
+    melody: [81, null, 79, null, 76, null, null, null, 74, null, 76, null, 72, null, null, null,
+      81, null, 83, 84, 83, null, 79, null, 76, null, null, null, 74, null, null, null],
+    hat: true, kick: [0, 8], snare: [12],
+  },
+  // Kem: tung tăng hộp nhạc
+  icecream: {
+    bpm: 116, lead: 'triangle', leadVol: 0.08, padType: 'sine', swing: 0.1,
+    chords: [[65, 69, 72], [62, 65, 69], [70, 74, 77], [72, 76, 79]],
+    melody: [77, 81, 84, 81, 77, null, 74, null, 76, 79, 82, 79, 77, null, null, null,
+      84, null, 82, 81, 79, null, 77, null, 76, 77, 79, 77, 72, null, null, null],
+    hat: true, kick: [0, 8], snare: [4, 12],
+  },
+  // Rừng: nhịp trống bộ lạc
+  jungle: {
+    bpm: 108, lead: 'square', leadVol: 0.04, padType: 'triangle', swing: 0.2,
+    chords: [[62, 65, 69], [60, 64, 67], [58, 62, 65], [60, 64, 67]],
+    melody: [74, null, 74, 77, null, 74, 72, null, 69, null, 72, 74, null, null, null, null,
+      74, null, 77, 79, null, 77, 74, null, 72, 74, 72, 69, 67, null, null, null],
+    hat: true, kick: [0, 3, 6, 10, 12], snare: [4, 13],
+  },
+  // Thu Hà Nội: ballad nhẹ
+  autumn: {
+    bpm: 76, lead: 'triangle', leadVol: 0.08, padType: 'sine', swing: 0,
+    chords: [[57, 60, 64], [62, 65, 69], [55, 59, 62], [60, 64, 67]],
+    melody: [76, null, null, 74, 72, null, 71, null, 69, null, null, null, 72, null, 74, null,
+      76, null, 79, null, 77, 76, 74, null, 72, null, null, null, null, null, null, null],
+    hat: false, kick: [0, 8], snare: [],
+  },
+  // Trung thu: ngũ cung "rước đèn"
+  midautumn: {
+    bpm: 112, lead: 'square', leadVol: 0.045, padType: 'triangle', swing: 0,
+    chords: [[62, 67, 71], [60, 64, 67], [57, 62, 67], [62, 67, 71]],
+    melody: [74, 74, 76, 79, 76, null, 74, null, 71, 74, 76, null, 74, null, null, null,
+      79, null, 81, 79, 76, null, 74, 76, 71, null, 69, null, 67, null, null, null],
+    hat: true, kick: [0, 8], snare: [4, 12],
+  },
+  // Tiệm bánh: waltz
+  bakery: {
+    bpm: 132, lead: 'sine', leadVol: 0.09, padType: 'triangle', swing: 0,
+    chords: [[60, 64, 67], [65, 69, 72], [67, 71, 74], [60, 64, 67]],
+    melody: [72, null, 76, null, 79, null, 77, null, 76, null, 74, null, 72, null, null, null,
+      74, null, 77, null, 81, null, 79, null, 77, null, 76, null, 74, null, null, null],
+    hat: false, kick: [0, 6, 12], snare: [],
+  },
+  // Disco: bốn nhịp đều
+  disco: {
+    bpm: 124, lead: 'sawtooth', leadVol: 0.035, padType: 'square', swing: 0,
+    chords: [[57, 60, 64], [62, 65, 69], [60, 64, 67], [64, 68, 71]],
+    melody: [69, 69, 72, 69, 76, null, 74, 72, 69, 69, 72, 74, 72, null, null, null,
+      76, 76, 79, 76, 81, null, 79, 76, 74, 72, 74, 76, 69, null, null, null],
+    hat: true, kick: [0, 4, 8, 12], snare: [4, 12],
+  },
+  // Nông trại: đồng quê vui
+  farm: {
+    bpm: 128, lead: 'square', leadVol: 0.04, padType: 'triangle', swing: 0.15,
+    chords: [[67, 71, 74], [60, 64, 67], [62, 66, 69], [67, 71, 74]],
+    melody: [79, 79, 79, 74, 76, 76, 74, null, 83, 83, 81, 81, 79, null, null, null,
+      74, 79, 79, 79, 74, 76, 76, 74, 83, 83, 81, 81, 79, null, null, null],
+    hat: true, kick: [0, 8], snare: [4, 12],
+  },
+  // Lâu đài: cổ tích huyền diệu
+  castle: {
+    bpm: 88, lead: 'triangle', leadVol: 0.08, padType: 'sine', swing: 0,
+    chords: [[62, 66, 69], [59, 62, 66], [55, 59, 62], [57, 61, 64]],
+    melody: [78, null, 81, null, 86, null, 85, 83, 81, null, null, null, 78, null, 76, null,
+      74, null, 76, 78, 81, null, 79, 78, 76, null, null, null, null, null, null, null],
+    hat: false, kick: [0], snare: [],
+  },
+  // Trà sữa: lofi chill
+  milktea: {
+    bpm: 80, lead: 'triangle', leadVol: 0.07, padType: 'sine', swing: 0.2,
+    chords: [[65, 69, 72, 76], [64, 67, 71, 74], [62, 65, 69, 72], [60, 64, 67, 70]],
+    melody: [77, null, 76, null, 72, null, null, 69, 72, null, null, null, null, null, null, null,
+      74, null, 72, null, 69, null, 67, 69, 65, null, null, null, null, null, null, null],
+    hat: true, kick: [0, 7, 10], snare: [4, 12],
+  },
 };
 
 function scheduleStep(t, i) {
